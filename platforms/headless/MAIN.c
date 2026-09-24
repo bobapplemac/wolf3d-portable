@@ -1,4 +1,4 @@
-#include "wolf3dgeneric.h"
+#include "WOLF3DGENERIC.h"
 
 #include <stdio.h>
 #include <string.h>

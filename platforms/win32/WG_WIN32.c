@@ -1,4 +1,4 @@
-#include "wg_platform.h"
+#include "WG_PLATFORM.h"
 
 #include <windows.h>
 #include <mmsystem.h>

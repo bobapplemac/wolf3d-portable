@@ -1,4 +1,4 @@
-#include "wg_platform.h"
+#include "WG_PLATFORM.h"
 
 #include <stdio.h>
 

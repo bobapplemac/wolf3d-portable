@@ -1,6 +1,6 @@
 FROM debian:10-slim@sha256:bb3dc79fddbca7e8903248ab916bb775c96ec61014b3d02b4f06043b604726dc
 
-LABEL org.opencontainers.image.title="wolf3dgeneric Debian 10 portable builder" \
+LABEL org.opencontainers.image.title="wolf3d-portable Debian 10 builder" \
       org.opencontainers.image.description="Project-local glibc 2.28 Linux release toolchain"
 
 ARG CMAKE_VERSION=3.31.6

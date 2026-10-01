@@ -482,7 +482,7 @@ static int WG_OpenInputs(void)
     }
     if (keyboards == 0)
     {
-        fprintf(stderr, "wolf3dgeneric: no usable evdev keyboard found.\n");
+        fprintf(stderr, "wolf3d: no usable evdev keyboard found.\n");
         return 0;
     }
     return 1;
@@ -693,7 +693,7 @@ static int WG_OpenDRM(void)
     if (wg_drm_device[0] != '\0')
     {
         if (WG_OpenDRMCard(wg_drm_device)) return 1;
-        fprintf(stderr, "wolf3dgeneric: unable to initialize DRM device %s: %s\n",
+        fprintf(stderr, "wolf3d: unable to initialize DRM device %s: %s\n",
                 wg_drm_device, strerror(errno));
         return 0;
     }
@@ -704,7 +704,7 @@ static int WG_OpenDRM(void)
         (void)snprintf(path, sizeof(path), "/dev/dri/card%u", card);
         if (WG_OpenDRMCard(path)) return 1;
     }
-    fprintf(stderr, "wolf3dgeneric: no connected DRM/KMS display found.\n");
+    fprintf(stderr, "wolf3d: no connected DRM/KMS display found.\n");
     return 0;
 }
 
@@ -949,7 +949,7 @@ static void WG_LinuxConsoleSetWindowTitle(const char *title)
 
 static void WG_LinuxConsoleReportError(const char *message)
 {
-    fprintf(stderr, "wolf3dgeneric: %s\n", message);
+    fprintf(stderr, "wolf3d: %s\n", message);
 }
 
 static void WG_LinuxConsolePrintMessage(const char *message)
@@ -986,7 +986,7 @@ static int WG_LinuxConsolePCMInit(uint32_t sample_rate, uint16_t channels)
                               SND_PCM_ACCESS_RW_INTERLEAVED, channels,
                               sample_rate, 1, 40000U) < 0)
     {
-        fprintf(stderr, "wolf3dgeneric: ALSA device '%s' unavailable; "
+        fprintf(stderr, "wolf3d: ALSA device '%s' unavailable; "
                         "continuing without audio.\n", wg_alsa_device);
         WG_LinuxConsolePCMShutdown();
         return 0;

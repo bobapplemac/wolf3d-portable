@@ -44,14 +44,14 @@ static int WG_SDLSetFullscreen(int fullscreen)
     }
     if (!SDL_SetWindowFullscreen(wg_window, fullscreen != 0))
     {
-        fprintf(stderr, "wolf3dgeneric: could not change fullscreen mode: %s\n",
+        fprintf(stderr, "wolf3d: could not change fullscreen mode: %s\n",
                 SDL_GetError());
         return 0;
     }
     wg_fullscreen = fullscreen;
     if (!(fullscreen ? SDL_HideCursor() : SDL_ShowCursor()))
     {
-        fprintf(stderr, "wolf3dgeneric: could not change cursor visibility: %s\n",
+        fprintf(stderr, "wolf3d: could not change cursor visibility: %s\n",
                 SDL_GetError());
     }
     return 1;
@@ -246,15 +246,15 @@ static int WG_SDLInit(void)
 {
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD))
     {
-        fprintf(stderr, "wolf3dgeneric: SDL initialization failed: %s\n",
+        fprintf(stderr, "wolf3d: SDL initialization failed: %s\n",
                 SDL_GetError());
         return 0;
     }
-    wg_window = SDL_CreateWindow("wolf3dgeneric", 960, 720,
+    wg_window = SDL_CreateWindow("wolf3d", 960, 720,
                                  SDL_WINDOW_RESIZABLE);
     if (wg_window == NULL)
     {
-        fprintf(stderr, "wolf3dgeneric: SDL window creation failed: %s\n",
+        fprintf(stderr, "wolf3d: SDL window creation failed: %s\n",
                 SDL_GetError());
         SDL_Quit();
         return 0;
@@ -271,7 +271,7 @@ static int WG_SDLInit(void)
     wg_renderer = SDL_CreateRenderer(wg_window, NULL);
     if (wg_renderer == NULL)
     {
-        fprintf(stderr, "wolf3dgeneric: SDL renderer creation failed: %s\n",
+        fprintf(stderr, "wolf3d: SDL renderer creation failed: %s\n",
                 SDL_GetError());
         SDL_DestroyWindow(wg_window);
         wg_window = NULL;
@@ -288,7 +288,7 @@ static int WG_SDLInit(void)
                                              WG_SDL_LOGICAL_HEIGHT,
                                              SDL_LOGICAL_PRESENTATION_LETTERBOX))
     {
-        fprintf(stderr, "wolf3dgeneric: SDL renderer setup failed: %s\n",
+        fprintf(stderr, "wolf3d: SDL renderer setup failed: %s\n",
                 SDL_GetError());
         SDL_DestroyTexture(wg_texture);
         SDL_DestroyRenderer(wg_renderer);
@@ -302,7 +302,7 @@ static int WG_SDLInit(void)
     if (wg_mouse_enabled
         && !SDL_SetWindowRelativeMouseMode(wg_window, true))
     {
-        fprintf(stderr, "wolf3dgeneric: SDL relative mouse mode failed: %s\n",
+        fprintf(stderr, "wolf3d: SDL relative mouse mode failed: %s\n",
                 SDL_GetError());
         SDL_DestroyTexture(wg_texture);
         SDL_DestroyRenderer(wg_renderer);
@@ -500,7 +500,7 @@ static void WG_SDLReportError(const char *message)
         if (wg_window != NULL)
         {
             (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                           "wolf3dgeneric", message,
+                                           "wolf3d", message,
                                            wg_window);
         }
     }
@@ -535,7 +535,7 @@ static int WG_SDLPCMInit(uint32_t sample_rate, uint16_t channels)
                                          &specification, NULL, NULL);
     if (wg_audio == NULL || !SDL_ResumeAudioStreamDevice(wg_audio))
     {
-        fprintf(stderr, "wolf3dgeneric: SDL audio unavailable: %s\n",
+        fprintf(stderr, "wolf3d: SDL audio unavailable: %s\n",
                 SDL_GetError());
         if (wg_audio != NULL)
         {
@@ -615,7 +615,7 @@ int WG_InstallPlatform(void)
 static void WG_SDLPrintHelp(const char *program)
 {
     printf("Usage: %s [game options]\n\n", program != NULL ? program
-           : "wolf3dgeneric-sdl3");
+           : "wolf3d-sdl3");
     printf("SDL3 host options:\n");
     printf("  --fullscreen  Start in borderless fullscreen mode\n");
     printf("  --sdl3-help   Show this help and exit\n\n");

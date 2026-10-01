@@ -9,7 +9,7 @@
 static void WG_PrintHelp(const char *program)
 {
     printf("Usage: %s [Linux console options] [game options]\n\n",
-           program != NULL ? program : "wolf3dgeneric-linux-console");
+           program != NULL ? program : "wolf3d-linux-console");
     printf("Linux console options:\n");
     printf("  --drm-device PATH    DRM card to use (default: first usable card)\n");
     printf("  --input-device PATH  evdev device to use (repeatable; default: auto)\n");
@@ -31,7 +31,7 @@ int main(int argc, char **argv)
     game_argv = (char **)calloc((size_t)argc + 1U, sizeof(*game_argv));
     if (game_argv == NULL)
     {
-        fprintf(stderr, "wolf3dgeneric: unable to allocate arguments.\n");
+        fprintf(stderr, "wolf3d: unable to allocate arguments.\n");
         return 1;
     }
     game_argv[game_argc++] = argv[0];
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 
             if (++index >= argc)
             {
-                fprintf(stderr, "wolf3dgeneric: %s requires a value.\n",
+                fprintf(stderr, "wolf3d: %s requires a value.\n",
                         option);
                 success = 0;
                 break;
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
             }
             if (!success)
             {
-                fprintf(stderr, "wolf3dgeneric: invalid value for %s.\n",
+                fprintf(stderr, "wolf3d: invalid value for %s.\n",
                         option);
                 break;
             }
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
     {
         if (success)
         {
-            fprintf(stderr, "wolf3dgeneric: unable to install platform API.\n");
+            fprintf(stderr, "wolf3d: unable to install platform API.\n");
         }
         free(game_argv);
         return 1;

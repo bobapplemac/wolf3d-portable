@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static const wchar_t wg_window_class[] = L"wolf3dgeneric-window";
+static const wchar_t wg_window_class[] = L"wolf3d-window";
 static HWND wg_window;
 static uint32_t wg_pixels[WOLF3D_SCREEN_WIDTH * WOLF3D_SCREEN_HEIGHT];
 static LARGE_INTEGER wg_counter_frequency;
@@ -462,7 +462,7 @@ static int WG_Win32Init(void)
                         / WG_DISPLAY_ASPECT_WIDTH) * WG_INITIAL_SCALE;
     AdjustWindowRect(&rectangle, WS_OVERLAPPEDWINDOW, FALSE);
 
-    wg_window = CreateWindowExW(0, wg_window_class, L"wolf3dgeneric",
+    wg_window = CreateWindowExW(0, wg_window_class, L"wolf3d",
                                 WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
                                 rectangle.right - rectangle.left,
                                 rectangle.bottom - rectangle.top, NULL, NULL,
@@ -675,7 +675,7 @@ static void WG_Win32ReportError(const char *message)
     if (output != NULL)
     {
         DWORD written;
-        static const char prefix[] = "wolf3dgeneric: ";
+        static const char prefix[] = "wolf3d: ";
         static const char newline[] = "\r\n";
 
         (void)WriteFile(output, prefix, (DWORD)(sizeof(prefix) - 1U),
@@ -685,7 +685,7 @@ static void WG_Win32ReportError(const char *message)
         (void)WriteFile(output, newline, (DWORD)(sizeof(newline) - 1U),
                         &written, NULL);
     }
-    MessageBoxA(wg_window, message, "wolf3dgeneric", MB_OK | MB_ICONERROR);
+    MessageBoxA(wg_window, message, "wolf3d", MB_OK | MB_ICONERROR);
 }
 
 static void WG_Win32PrintMessage(const char *message)

@@ -1,4 +1,4 @@
-wolf3dgeneric @PROJECT_VERSION@ - SDL3 GUI host
+wolf3d-portable @PROJECT_VERSION@ - SDL3 GUI host
 ================================================
 
 This folder is a minimal cross-platform GUI build. Keep the executable,
@@ -15,7 +15,7 @@ runtime libraries; the default pinned-SDL build minimizes those direct
 dependencies and is recommended for redistribution.
 
 Copy the files from one supported original game installation beside the
-executable, then run wolf3dgeneric-sdl3. Alternatively, leave the data
+executable, then run wolf3d-sdl3. Alternatively, leave the data
 elsewhere and pass --data PATH. Use --game WL1, WL6, SDM, SOD, SD1, SD2,
 or SD3 when automatic selection is ambiguous.
 

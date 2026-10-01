@@ -1,4 +1,4 @@
-wolf3dgeneric @PROJECT_VERSION@ - Linux direct-console host
+wolf3d-portable @PROJECT_VERSION@ - Linux direct-console host
 =========================================================
 
 This package runs directly on a Linux virtual console. It does not require
@@ -7,7 +7,7 @@ input uses evdev, and audio uses ALSA.
 
 Copy the original game data files beside the executable, or point to them:
 
-  ./wolf3dgeneric --data /path/to/WL1
+  ./wolf3d --data /path/to/WL1
 
 Run it from an active virtual console. The user needs permission to access the
 DRM card, evdev input devices, and ALSA playback device; root normally has all

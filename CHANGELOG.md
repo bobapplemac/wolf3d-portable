@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-01 - Windows XP targeting candidate
+
+- Added v140_xp x86/x64 Win32 package profiles with static and dynamic CRT
+  variants and advanced the engine to wolf3d-lib 1.4.29.
+- Verified PE subsystem minimums of 5.01 for x86 and 5.02 for x64 and audited
+  direct imports; runtime execution on actual XP systems remains pending.
+
 ## 2026-10-01 - Legacy MSVC Win32 wrapper checkpoints
 
 - Added first-class v140 and v141 CMake presets and Windows dispatcher choices

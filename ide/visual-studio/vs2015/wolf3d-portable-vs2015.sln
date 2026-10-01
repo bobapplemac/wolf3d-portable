@@ -12,6 +12,8 @@ Global
 		Debug Dynamic CRT|x64 = Debug Dynamic CRT|x64
 		Publish Win32|Win32 = Publish Win32|Win32
 		Publish Win32|x64 = Publish Win32|x64
+		Publish Win32 XP|Win32 = Publish Win32 XP|Win32
+		Publish Win32 XP|x64 = Publish Win32 XP|x64
 		Release|Win32 = Release|Win32
 		Release|x64 = Release|x64
 		Release Dynamic CRT|Win32 = Release Dynamic CRT|Win32
@@ -30,6 +32,10 @@ Global
 		{69576B19-D918-4F6E-9829-2EBBC88A6700}.Publish Win32|Win32.Build.0 = Publish Win32|Win32
 		{69576B19-D918-4F6E-9829-2EBBC88A6700}.Publish Win32|x64.ActiveCfg = Publish Win32|x64
 		{69576B19-D918-4F6E-9829-2EBBC88A6700}.Publish Win32|x64.Build.0 = Publish Win32|x64
+		{69576B19-D918-4F6E-9829-2EBBC88A6700}.Publish Win32 XP|Win32.ActiveCfg = Publish Win32 XP|Win32
+		{69576B19-D918-4F6E-9829-2EBBC88A6700}.Publish Win32 XP|Win32.Build.0 = Publish Win32 XP|Win32
+		{69576B19-D918-4F6E-9829-2EBBC88A6700}.Publish Win32 XP|x64.ActiveCfg = Publish Win32 XP|x64
+		{69576B19-D918-4F6E-9829-2EBBC88A6700}.Publish Win32 XP|x64.Build.0 = Publish Win32 XP|x64
 		{69576B19-D918-4F6E-9829-2EBBC88A6700}.Release|Win32.ActiveCfg = Release|Win32
 		{69576B19-D918-4F6E-9829-2EBBC88A6700}.Release|Win32.Build.0 = Release|Win32
 		{69576B19-D918-4F6E-9829-2EBBC88A6700}.Release|x64.ActiveCfg = Release|x64

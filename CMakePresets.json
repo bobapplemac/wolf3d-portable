@@ -3,6 +3,20 @@
   "cmakeMinimumRequired": { "major": 3, "minor": 20, "patch": 0 },
   "configurePresets": [
     {
+      "name": "windows-vs2015-xp-base",
+      "hidden": true,
+      "generator": "Visual Studio 14 2015",
+      "toolset": "v140_xp",
+      "cacheVariables": {
+        "W3P_BUILD_WIN32": "ON",
+        "W3P_BUILD_SDL3": "OFF",
+        "W3P_WARNINGS_AS_ERRORS": "ON",
+        "WG_STATIC_MSVC_RUNTIME": "ON",
+        "W3P_COMPILER_LABEL": "msvc-v140-xp",
+        "WG_COMPILER_LABEL": "msvc-v140-xp"
+      }
+    },
+    {
       "name": "windows-vs2015-base",
       "hidden": true,
       "generator": "Visual Studio 14 2015",
@@ -57,6 +71,34 @@
         "W3P_COMPILER_LABEL": "msvc-v143",
         "WG_COMPILER_LABEL": "msvc-v143"
       }
+    },
+    {
+      "name": "windows-vs2015-xp-dev-x64",
+      "displayName": "Visual Studio 2015 XP-targeting Win32 development (x64)",
+      "inherits": "windows-vs2015-xp-base",
+      "binaryDir": "${sourceDir}/build/windows-vs2015-xp-dev-x64",
+      "architecture": "x64"
+    },
+    {
+      "name": "windows-vs2015-xp-dev-x86",
+      "displayName": "Visual Studio 2015 XP-targeting Win32 development (x86)",
+      "inherits": "windows-vs2015-xp-base",
+      "binaryDir": "${sourceDir}/build/windows-vs2015-xp-dev-x86",
+      "architecture": "Win32"
+    },
+    {
+      "name": "windows-vs2015-xp-release-x64",
+      "displayName": "Visual Studio 2015 XP-targeting Win32 release (x64)",
+      "inherits": "windows-vs2015-xp-dev-x64",
+      "binaryDir": "${sourceDir}/build/windows-vs2015-xp-release-x64",
+      "cacheVariables": { "BUILD_TESTING": "OFF" }
+    },
+    {
+      "name": "windows-vs2015-xp-release-x86",
+      "displayName": "Visual Studio 2015 XP-targeting Win32 release (x86)",
+      "inherits": "windows-vs2015-xp-dev-x86",
+      "binaryDir": "${sourceDir}/build/windows-vs2015-xp-release-x86",
+      "cacheVariables": { "BUILD_TESTING": "OFF" }
     },
     {
       "name": "windows-vs2015-dev-x64",
@@ -226,6 +268,10 @@
     }
   ],
   "buildPresets": [
+    { "name": "windows-vs2015-xp-dev-x64", "configurePreset": "windows-vs2015-xp-dev-x64", "configuration": "Release" },
+    { "name": "windows-vs2015-xp-dev-x86", "configurePreset": "windows-vs2015-xp-dev-x86", "configuration": "Release" },
+    { "name": "windows-vs2015-xp-release-x64", "configurePreset": "windows-vs2015-xp-release-x64", "configuration": "Release", "targets": ["win32-release"] },
+    { "name": "windows-vs2015-xp-release-x86", "configurePreset": "windows-vs2015-xp-release-x86", "configuration": "Release", "targets": ["win32-release"] },
     { "name": "windows-vs2015-dev-x64", "configurePreset": "windows-vs2015-dev-x64", "configuration": "Release" },
     { "name": "windows-vs2015-dev-x86", "configurePreset": "windows-vs2015-dev-x86", "configuration": "Release" },
     { "name": "windows-vs2015-release-x64", "configurePreset": "windows-vs2015-release-x64", "configuration": "Release", "targets": ["win32-release"] },

@@ -26,7 +26,7 @@ Shows the supported compiler installations detected on this computer.
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('auto', 'vs2022', 'vs2019', 'vs2017', 'vs2015')]
+    [ValidateSet('auto', 'vs2022', 'vs2019', 'vs2017', 'vs2015', 'vs2015-xp')]
     [string]$Compiler = 'auto',
 
     [ValidateSet('x64', 'x86')]
@@ -67,7 +67,8 @@ function Find-VisualStudio {
         [string]$PresetPrefix,
         [bool]$SupportsSDL3 = $true,
         [string]$RequiredComponent = 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
-        [string]$CMakeFallbackDirectory = ''
+        [string]$CMakeFallbackDirectory = '',
+        [string]$RequiredFile = ''
     )
 
     $installation = $null
@@ -81,6 +82,10 @@ function Find-VisualStudio {
     }
     if (-not $installation -and (Test-Path -LiteralPath $FallbackPath)) {
         $installation = $FallbackPath
+    }
+    if ($installation -and $RequiredFile -and
+        -not (Test-Path -LiteralPath $RequiredFile)) {
+        $installation = $null
     }
 
     $cmake = $null
@@ -142,6 +147,11 @@ $toolchains = @(
         -FallbackPath 'C:\Program Files (x86)\Microsoft Visual Studio 14.0' `
         -Toolset 'v140' -PresetPrefix 'windows-vs2015' `
         -SupportsSDL3 $false -CMakeFallbackDirectory $legacyCMakeDirectory
+    Find-VisualStudio -Name 'vs2015-xp' -VersionRange '[14.0,15.0)' `
+        -FallbackPath 'C:\Program Files (x86)\Microsoft Visual Studio 14.0' `
+        -Toolset 'v140_xp' -PresetPrefix 'windows-vs2015-xp' `
+        -SupportsSDL3 $false -CMakeFallbackDirectory $legacyCMakeDirectory `
+        -RequiredFile 'C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Platforms\Win32\PlatformToolsets\v140_xp\Toolset.props'
 )
 
 function Read-BuildChoice {

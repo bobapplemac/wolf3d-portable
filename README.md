@@ -75,6 +75,10 @@ The native Win32 wrapper also supports VS2017/v141 and VS2015/v140 through
 open `ide/visual-studio/vs2015/wolf3d-portable-vs2015.sln`. SDL3 is
 intentionally excluded from these legacy compiler profiles.
 
+An additional `windows-vs2015-xp-*` profile produces XP-targeting candidate
+packages using `v140_xp`. These builds pass host-side compilation and PE import
+audits, but remain candidates until exercised on actual XP systems.
+
 For a guided command line, `build.ps1` detects installed supported Visual
 Studio versions and defaults to publishing both x64 wrappers with the newest
 one found. With no arguments it interactively walks through the choices:
@@ -84,6 +88,7 @@ one found. With no arguments it interactively walks through the choices:
 .\build.ps1
 .\build.ps1 -Compiler vs2019 -Architecture x86 -Wrapper win32
 .\build.ps1 -Compiler vs2015 -Architecture x86 -Wrapper win32
+.\build.ps1 -Compiler vs2015-xp -Architecture x86 -Wrapper win32
 .\build.ps1 -Action build -Configuration Debug -Wrapper sdl3
 ```
 

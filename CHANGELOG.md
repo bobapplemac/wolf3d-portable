@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-01 - wolf3d-lib 1.4.21 integration and musl application bundle
+
+- Advanced the pinned engine to 1.4.21, including selectable Nuked-OPL3,
+  DBOPL, and timing-preserving silent audio implementations in wolf3d-lib.
+- Added a digest-pinned Alpine/musl SDL3 build and a relocatable application
+  directory containing its own loader, libc, SDL3, wolf3d-lib, and Nuked-OPL3.
+- Added a closed-dependency ELF audit, GLIBC-symbol rejection, and launcher
+  smoke test for the musl package.
+- Kept the Debian 10/glibc 2.28 builds as the conventional Linux alternative.
+
 ## 2026-10-01 - wolf3d-lib 1.4.20 integration
 
 - Advanced the pinned engine to the completed library-only `wolf3d-lib`

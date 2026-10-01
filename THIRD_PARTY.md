@@ -14,7 +14,10 @@ Binary distributors must satisfy the LGPL's applicable notice, source,
 modification, and relinking requirements; consult the included license when
 preparing a release.
 
-No MAME or DOSBox OPL implementation is included.
+wolf3d-lib also contains an optional C DBOPL implementation derived through
+PrBoom+ from DOSBox. The portable wrappers continue to select Nuked-OPL3 by
+default; see `lib/wolf3d/third_party/DBOPL/README.wolf3d-lib.md` for its exact
+provenance and GPL-2.0-or-later terms. No MAME OPL implementation is included.
 
 ## SDL3
 
@@ -30,6 +33,13 @@ with `W3P_USE_SYSTEM_SDL3=ON` to use an installed
 SDL 3.2-or-newer package instead of the pinned submodule. SDL release packages
 include the zlib notice; system-SDL packaging uses the vendored copy at
 `packaging/COPYING.SDL3.txt` so the source submodule need not be initialized.
+
+## musl libc
+
+The optional relocatable Linux SDL3 package redistributes the musl 1.2.5
+runtime loader/libc from Alpine Linux 3.20.10. musl is distributed under the
+MIT license with additional permissive notices; its notice is included as
+`packaging/COPYING.musl.txt` and copied into that distribution.
 
 ## Wayland 1.18 build toolchain
 

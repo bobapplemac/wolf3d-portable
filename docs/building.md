@@ -44,6 +44,7 @@ make releases
 make portable-sdl3
 make portable-console
 make portable
+make musl-sdl3
 make clean
 ```
 
@@ -78,3 +79,29 @@ audit staged ELFs against glibc 2.28. The SDL package includes its pinned SDL3
 shared object and uses `$ORIGIN`; normal kernel, graphics, input, and audio
 facilities remain system supplied. `make clean` removes project build trees
 and the project-named Docker image without pruning unrelated Docker data.
+
+For a distribution-independent userspace bundle, run:
+
+```text
+make musl-sdl3
+```
+
+`make universal-sdl3` is an equivalent descriptive alias. This target builds
+the executable, wolf3d-lib, Nuked-OPL3, and the pinned SDL3 inside a
+digest-pinned Alpine 3.20 container. It stages an AppDir-style directory named
+`wolf3d-portable-1.4.REVISION-sdl3-linux-musl-x64` containing a top-level
+`wolf3d` launcher, the application under `bin/`, and a closed set of shared
+objects plus the musl loader under `lib/`.
+
+GCC is the default musl compiler. `make musl-sdl3 CC=clang` selects the Clang
+toolchain in the same container and keeps its build tree separate.
+
+The audit rejects GLIBC symbol versions, rejects unresolved direct ELF
+dependencies, and executes `wolf3d --sdl3-help` through the bundled loader.
+The resulting directory can be copied intact to another x86-64 Linux system;
+SDL discovers the destination's X11 or Wayland display and ALSA, PulseAudio,
+or PipeWire service dynamically. OpenGL, OpenGL ES, Vulkan, SDL GPU, and KMSDRM
+are deliberately disabled in this package: wolf3d-portable already renders
+its framebuffer in software, and excluding those paths avoids graphics-stack
+ABI dependencies. The separate direct-console host remains available for a
+DRM/KMS-only system.

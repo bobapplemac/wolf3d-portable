@@ -6,6 +6,8 @@ CMakeLists.txt text eol=lf
 Makefile text eol=lf
 Dockerfile text eol=lf
 *.sh text eol=lf
+packaging/*.txt text eol=lf
+packaging/linux-musl/wolf3d text eol=lf
 *.sln text eol=crlf
 *.vcxproj text eol=crlf
 

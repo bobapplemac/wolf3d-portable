@@ -22,6 +22,14 @@ PORTABLE_CONSOLE_DIST_DIR ?= dist/wolf3d-portable-$(WOLF3D_VERSION)-console-x64
 PORTABLE_SDL3_DIST_DIR ?= dist/wolf3d-portable-$(WOLF3D_VERSION)-sdl3-linux-x64
 PORTABLE_BUILD_IMAGE ?= wolf3d-portable-build-debian10
 PORTABLE_GLIBC_MAX ?= 2.28
+MUSL_SDL3_BUILD_DIR ?= build/linux-sdl3-musl-$(COMPILER_NAME)
+MUSL_STAGE_ROOT ?= build/linux-sdl3-musl-stage
+MUSL_STAGE_DIR ?= $(MUSL_STAGE_ROOT)/wolf3d-portable-$(WOLF3D_VERSION)-sdl3-linux-x64
+MUSL_SDL3_DIST_DIR ?= dist/wolf3d-portable-$(WOLF3D_VERSION)-sdl3-linux-musl-x64
+MUSL_BUILD_IMAGE ?= wolf3d-portable-build-alpine-musl
+MUSL_SDL3_CMAKE_ARGS ?= -DW3P_DIST_ROOT=/src/$(MUSL_STAGE_ROOT) \
+	-DWG_LINUX_LIBC=musl -DSDL_KMSDRM=OFF -DSDL_OPENGL=OFF \
+	-DSDL_OPENGLES=OFF -DSDL_RENDER_GPU=OFF -DSDL_VULKAN=OFF
 DOCKER_RUN_ARGS ?=
 CMAKE_COMPILER_ARG := -DCMAKE_C_COMPILER="$(CC)"
 PARALLEL_ARG := --parallel $(JOBS)
@@ -32,7 +40,8 @@ PARALLEL_ARG := --parallel $(JOBS)
 	configure-console console console-release linux-console-release releases \
 	portable portable-sdl3 portable-sdl3-release portable-console \
 	portable-console-release portable-image portable-glibc-audit print-config \
-	clean clean-sdl3 clean-console clean-portable
+	musl-sdl3 musl-sdl3-release musl-image musl-audit universal-sdl3 \
+	clean clean-sdl3 clean-console clean-portable clean-musl
 
 all: sdl3-release
 
@@ -53,6 +62,11 @@ help:
 		'  make portable-sdl3           Build the portable SDL3 distribution.' \
 		'  make portable-console        Build the portable console distribution.' \
 		'' \
+		'Relocatable musl target:' \
+		'  make musl-sdl3               Build an AppDir-style SDL3 bundle with its musl loader.' \
+		'  make universal-sdl3          Alias for make musl-sdl3.' \
+		'  make musl-audit              Re-audit an existing musl SDL3 bundle.' \
+		'' \
 		'Useful variables:' \
 		'  CC=gcc|clang                 Compiler (default: gcc).' \
 		'  JOBS=N                       Parallel job limit.' \
@@ -62,15 +76,17 @@ help:
 		'  DOCKER_RUN_ARGS="..."        Additional Docker run arguments.' \
 		'' \
 		'Cleanup:' \
-		'  make clean                   Remove build trees and the portable image.' \
+		'  make clean                   Remove build trees and project builder images.' \
 		'  make clean-sdl3              Remove the SDL3 build tree.' \
 		'  make clean-console           Remove the console build tree.' \
-		'  make clean-portable          Remove portable trees and builder image.'
+		'  make clean-portable          Remove Debian portable trees and builder image.' \
+		'  make clean-musl              Remove musl trees and builder image.'
 
 print-config:
 	@printf '%s\n' \
 		'CC=$(CC)' 'WOLF3D_VERSION=$(WOLF3D_VERSION)' \
 		'SDL3_BUILD_DIR=$(SDL3_BUILD_DIR)' 'CONSOLE_BUILD_DIR=$(CONSOLE_BUILD_DIR)' \
+		'MUSL_SDL3_BUILD_DIR=$(MUSL_SDL3_BUILD_DIR)' \
 		'USE_SYSTEM_SDL3=$(USE_SYSTEM_SDL3)' 'JOBS=$(JOBS)' 'CMAKE_ARGS=$(CMAKE_ARGS)'
 
 dependencies:
@@ -141,6 +157,33 @@ portable-glibc-audit:
 	sh tools/WG_GLIBC_AUDIT.sh "$(PORTABLE_SDL3_DIST_DIR)" "$(PORTABLE_GLIBC_MAX)"
 	sh tools/WG_GLIBC_AUDIT.sh "$(PORTABLE_CONSOLE_DIST_DIR)" "$(PORTABLE_GLIBC_MAX)"
 
+musl-image:
+	$(DOCKER) build --tag "$(MUSL_BUILD_IMAGE)" packaging/linux-musl
+
+musl-sdl3-release: musl-image
+	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
+		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
+		"$(MUSL_BUILD_IMAGE)" make sdl3-release CC="$(CC)" \
+		SDL3_BUILD_DIR="$(MUSL_SDL3_BUILD_DIR)" JOBS="$(JOBS)" \
+		USE_SYSTEM_SDL3=OFF CMAKE_ARGS="$(MUSL_SDL3_CMAKE_ARGS)"
+	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
+		$(DOCKER_RUN_ARGS) "$(MUSL_BUILD_IMAGE)" sh tools/W3P_SDL_CONFIG_AUDIT.sh \
+		"$(MUSL_SDL3_BUILD_DIR)"
+	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
+		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
+		"$(MUSL_BUILD_IMAGE)" sh tools/W3P_MUSL_BUNDLE.sh \
+		"$(MUSL_STAGE_DIR)" "$(MUSL_SDL3_DIST_DIR)"
+	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
+		$(DOCKER_RUN_ARGS) "$(MUSL_BUILD_IMAGE)" sh tools/W3P_MUSL_AUDIT.sh \
+		"$(MUSL_SDL3_DIST_DIR)"
+
+musl-sdl3: musl-sdl3-release
+universal-sdl3: musl-sdl3-release
+musl-audit: musl-image
+	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
+		$(DOCKER_RUN_ARGS) "$(MUSL_BUILD_IMAGE)" sh tools/W3P_MUSL_AUDIT.sh \
+		"$(MUSL_SDL3_DIST_DIR)"
+
 clean-sdl3:
 	$(CMAKE) -E remove_directory "$(SDL3_BUILD_DIR)"
 clean-console:
@@ -150,4 +193,9 @@ clean-portable:
 	$(CMAKE) -E remove_directory "$(PORTABLE_CONSOLE_BUILD_DIR)"
 	@if command -v "$(DOCKER)" >/dev/null 2>&1; then \
 		$(DOCKER) image rm "$(PORTABLE_BUILD_IMAGE)" >/dev/null 2>&1 || true; fi
-clean: clean-sdl3 clean-console clean-portable
+clean-musl:
+	$(CMAKE) -E remove_directory "$(MUSL_SDL3_BUILD_DIR)"
+	$(CMAKE) -E remove_directory "$(MUSL_STAGE_ROOT)"
+	@if command -v "$(DOCKER)" >/dev/null 2>&1; then \
+		$(DOCKER) image rm "$(MUSL_BUILD_IMAGE)" >/dev/null 2>&1 || true; fi
+clean: clean-sdl3 clean-console clean-portable clean-musl

@@ -64,13 +64,16 @@ make                         # pinned-SDL3 distribution
 make console-release         # DRM/evdev/ALSA distribution
 make releases                # both distributions
 make portable                # both in the Debian 10 compatibility container
+make musl-sdl3               # relocatable bundle with its own musl userspace
 make sdl3-release CC=clang   # use Clang
 make sdl3-release USE_SYSTEM_SDL3=ON
 ```
 
 Pinned SDL3 is the redistribution default. An installed SDL 3.2 or newer can
 be selected for distribution-integrated builds. The Debian 10 targets retain
-the established glibc 2.28 build baseline and audit every staged ELF.
+the established glibc 2.28 build baseline and audit every staged ELF. The
+musl target instead packages a private loader and closed shared-library set,
+so it has no dependency on the destination's glibc version.
 
 ## Running
 

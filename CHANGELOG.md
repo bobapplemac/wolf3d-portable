@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-10-01 - License layout and current library identity
+
+- Standardized staged packages on `LICENSE.txt`, `THIRD_PARTY_NOTICES.txt`,
+  and a component-specific `LICENSES/` directory.
+- Included wolf3d-lib's GPL-2.0 license explicitly even though its text is
+  currently identical to wolf3d-portable's own license.
+- Advanced wolf3d-lib to 1.4.22 so wrapper titles use `wolf3d` instead of the
+  obsolete pre-split `wolf3dgeneric` name.
+
 ## 2026-10-01 - Visual Studio publish configurations
 
 - Added first-class `Publish Win32`, `Publish SDL3`, and `Publish All`

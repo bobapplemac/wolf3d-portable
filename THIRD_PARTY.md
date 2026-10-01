@@ -33,13 +33,15 @@ with `W3P_USE_SYSTEM_SDL3=ON` to use an installed
 SDL 3.2-or-newer package instead of the pinned submodule. SDL release packages
 include the zlib notice; system-SDL packaging uses the vendored copy at
 `packaging/COPYING.SDL3.txt` so the source submodule need not be initialized.
+Staged packages name the notice `LICENSES/SDL3-Zlib.txt`.
 
 ## musl libc
 
 The optional relocatable Linux SDL3 package redistributes the musl 1.2.5
 runtime loader/libc from Alpine Linux 3.20.10. musl is distributed under the
 MIT license with additional permissive notices; its notice is included as
-`packaging/COPYING.musl.txt` and copied into that distribution.
+`packaging/COPYING.musl.txt` and copied into that distribution as
+`LICENSES/musl-MIT.txt`.
 
 ## Wayland 1.18 build toolchain
 

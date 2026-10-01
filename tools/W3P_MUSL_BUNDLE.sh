@@ -26,7 +26,7 @@ if [ "$(uname -m)" != "x86_64" ]; then
 fi
 
 rm -rf -- "$bundle"
-mkdir -p "$bundle/bin" "$bundle/lib"
+mkdir -p "$bundle/bin" "$bundle/lib" "$bundle/LICENSES"
 
 cp "$stage/wolf3d-sdl3" "$bundle/bin/wolf3d-sdl3"
 for item in "$stage"/*.so*; do
@@ -34,18 +34,21 @@ for item in "$stage"/*.so*; do
     cp -a "$item" "$bundle/lib/"
 done
 
-for item in README.txt COPYING.txt COPYING.Nuked-OPL3.txt \
-        COPYING.SDL3.txt THIRD_PARTY.md WOLF3D-LIB.txt; do
+for item in README.txt LICENSE.txt THIRD_PARTY_NOTICES.txt WOLF3D-LIB.txt; do
     if [ -f "$stage/$item" ]; then
         cp "$stage/$item" "$bundle/$item"
     fi
+done
+for item in "$stage"/LICENSES/*; do
+    [ -f "$item" ] || continue
+    cp "$item" "$bundle/LICENSES/"
 done
 
 # The loader and libc are the same musl ELF under two runtime names. Follow
 # Alpine's symlink so the bundle remains intact when copied or archived.
 cp -L /lib/ld-musl-x86_64.so.1 "$bundle/lib/ld-musl-x86_64.so.1"
 cp -L /lib/ld-musl-x86_64.so.1 "$bundle/lib/libc.musl-x86_64.so.1"
-cp packaging/COPYING.musl.txt "$bundle/COPYING.musl.txt"
+cp packaging/COPYING.musl.txt "$bundle/LICENSES/musl-MIT.txt"
 cat packaging/SDL3-MUSL-NOTES.txt >> "$bundle/README.txt"
 cp packaging/linux-musl/wolf3d "$bundle/wolf3d"
 chmod 0755 "$bundle/wolf3d" "$bundle/bin/wolf3d-sdl3" \

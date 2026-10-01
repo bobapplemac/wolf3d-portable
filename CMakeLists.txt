@@ -148,6 +148,7 @@ if(W3P_BUILD_WIN32)
     add_custom_target(win32-release
         COMMAND ${CMAKE_COMMAND} -E remove_directory "${W3P_WIN32_RELEASE_DIR}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_WIN32_RELEASE_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_WIN32_RELEASE_DIR}/LICENSES"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:wolf3d-win32>" "${W3P_WIN32_RELEASE_DIR}/wolf3d.exe"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -155,12 +156,16 @@ if(W3P_BUILD_WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:nuked-opl3>" "${W3P_WIN32_RELEASE_DIR}/$<TARGET_FILE_NAME:nuked-opl3>"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/LICENSE" "${W3P_WIN32_RELEASE_DIR}/COPYING.txt"
+            "${CMAKE_SOURCE_DIR}/LICENSE" "${W3P_WIN32_RELEASE_DIR}/LICENSE.txt"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${W3P_WOLF3D_SOURCE_DIR}/LICENSE"
+            "${W3P_WIN32_RELEASE_DIR}/LICENSES/wolf3d-lib-GPL-2.0.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${W3P_WOLF3D_SOURCE_DIR}/third_party/Nuked-OPL3/LICENSE"
-            "${W3P_WIN32_RELEASE_DIR}/COPYING.Nuked-OPL3.txt"
+            "${W3P_WIN32_RELEASE_DIR}/LICENSES/Nuked-OPL3-LGPL-2.1.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/THIRD_PARTY.md" "${W3P_WIN32_RELEASE_DIR}/THIRD_PARTY.md"
+            "${CMAKE_SOURCE_DIR}/THIRD_PARTY.md"
+            "${W3P_WIN32_RELEASE_DIR}/THIRD_PARTY_NOTICES.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_CURRENT_BINARY_DIR}/WIN32-README.txt" "${W3P_WIN32_RELEASE_DIR}/README.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -197,6 +202,7 @@ if(W3P_BUILD_SDL3)
     set(W3P_SDL3_RELEASE_COMMANDS
         COMMAND ${CMAKE_COMMAND} -E remove_directory "${W3P_SDL3_RELEASE_DIR}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_SDL3_RELEASE_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_SDL3_RELEASE_DIR}/LICENSES"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:wolf3d-sdl3>" "${W3P_SDL3_RELEASE_DIR}/$<TARGET_FILE_NAME:wolf3d-sdl3>"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -206,14 +212,19 @@ if(W3P_BUILD_SDL3)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:SDL3::SDL3-shared>" "${W3P_SDL3_RELEASE_DIR}/$<TARGET_FILE_NAME:SDL3::SDL3-shared>"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/LICENSE" "${W3P_SDL3_RELEASE_DIR}/COPYING.txt"
+            "${CMAKE_SOURCE_DIR}/LICENSE" "${W3P_SDL3_RELEASE_DIR}/LICENSE.txt"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${W3P_WOLF3D_SOURCE_DIR}/LICENSE"
+            "${W3P_SDL3_RELEASE_DIR}/LICENSES/wolf3d-lib-GPL-2.0.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${W3P_WOLF3D_SOURCE_DIR}/third_party/Nuked-OPL3/LICENSE"
-            "${W3P_SDL3_RELEASE_DIR}/COPYING.Nuked-OPL3.txt"
+            "${W3P_SDL3_RELEASE_DIR}/LICENSES/Nuked-OPL3-LGPL-2.1.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${W3P_SDL3_LICENSE_FILE}" "${W3P_SDL3_RELEASE_DIR}/COPYING.SDL3.txt"
+            "${W3P_SDL3_LICENSE_FILE}"
+            "${W3P_SDL3_RELEASE_DIR}/LICENSES/SDL3-Zlib.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/THIRD_PARTY.md" "${W3P_SDL3_RELEASE_DIR}/THIRD_PARTY.md"
+            "${CMAKE_SOURCE_DIR}/THIRD_PARTY.md"
+            "${W3P_SDL3_RELEASE_DIR}/THIRD_PARTY_NOTICES.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_CURRENT_BINARY_DIR}/SDL3-README.txt" "${W3P_SDL3_RELEASE_DIR}/README.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -252,6 +263,7 @@ if(W3P_BUILD_LINUX_CONSOLE)
     add_custom_target(console-release
         COMMAND ${CMAKE_COMMAND} -E remove_directory "${W3P_CONSOLE_RELEASE_DIR}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_CONSOLE_RELEASE_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_CONSOLE_RELEASE_DIR}/LICENSES"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:wolf3d-console>" "${W3P_CONSOLE_RELEASE_DIR}/wolf3d"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -263,12 +275,16 @@ if(W3P_BUILD_LINUX_CONSOLE)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:nuked-opl3>" "${W3P_CONSOLE_RELEASE_DIR}/$<TARGET_FILE_NAME:nuked-opl3>"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/LICENSE" "${W3P_CONSOLE_RELEASE_DIR}/COPYING.txt"
+            "${CMAKE_SOURCE_DIR}/LICENSE" "${W3P_CONSOLE_RELEASE_DIR}/LICENSE.txt"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${W3P_WOLF3D_SOURCE_DIR}/LICENSE"
+            "${W3P_CONSOLE_RELEASE_DIR}/LICENSES/wolf3d-lib-GPL-2.0.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${W3P_WOLF3D_SOURCE_DIR}/third_party/Nuked-OPL3/LICENSE"
-            "${W3P_CONSOLE_RELEASE_DIR}/COPYING.Nuked-OPL3.txt"
+            "${W3P_CONSOLE_RELEASE_DIR}/LICENSES/Nuked-OPL3-LGPL-2.1.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/THIRD_PARTY.md" "${W3P_CONSOLE_RELEASE_DIR}/THIRD_PARTY.md"
+            "${CMAKE_SOURCE_DIR}/THIRD_PARTY.md"
+            "${W3P_CONSOLE_RELEASE_DIR}/THIRD_PARTY_NOTICES.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_CURRENT_BINARY_DIR}/LINUX-CONSOLE-README.txt" "${W3P_CONSOLE_RELEASE_DIR}/README.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different

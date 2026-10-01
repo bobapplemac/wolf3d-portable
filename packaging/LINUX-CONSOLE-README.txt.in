@@ -32,3 +32,7 @@ at the original monitor-intended 4:3 aspect ratio with letterboxing as needed.
 libwolf3d.so is the generic engine library. libNuked-OPL3.so is kept
 separate and replaceable under the LGPL-2.1 license. System libdrm, ALSA, libc,
 and their dependencies must be supplied by the target Linux installation.
+
+See LICENSE.txt for wolf3d-portable's license, LICENSES/ for the explicit
+wolf3d-lib and Nuked-OPL3 license texts, and THIRD_PARTY_NOTICES.txt for
+component provenance.

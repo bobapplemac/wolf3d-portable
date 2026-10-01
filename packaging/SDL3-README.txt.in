@@ -35,4 +35,5 @@ Run with --sdl3-help for host-specific help or --help for game options.
 
 SDL3 is distributed under the zlib license. Nuked-OPL3 is independently
 replaceable and distributed under LGPL-2.1-or-later. See the included
-COPYING and THIRD_PARTY files.
+LICENSE.txt, LICENSES directory, and THIRD_PARTY_NOTICES.txt. The LICENSES
+directory also identifies wolf3d-lib's GPL-2.0 license explicitly.

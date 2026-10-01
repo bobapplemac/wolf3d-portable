@@ -47,6 +47,28 @@ the same `dist/` directories as the matching CMake release presets. The
 ordinary Debug and Release configurations are intended for development and
 leave their outputs under `build/`.
 
+### Windows build dispatcher
+
+The root `build.ps1` is the human-facing entry point for selecting one build
+without memorizing preset names. It detects supported Visual Studio
+installations and exposes compiler, x86/x64 architecture, Win32/SDL3/both
+wrappers, Debug/Release, static/dynamic CRT, build/publish/clean actions,
+parallelism, and a dry-run mode:
+
+```powershell
+.\build.ps1 -List
+.\build.ps1
+.\build.ps1 -Compiler vs2022 -Architecture x64 -Wrapper sdl3
+.\build.ps1 -Compiler vs2019 -Architecture x86 -Wrapper win32
+.\build.ps1 -Action build -Configuration Debug -Runtime dynamic -Wrapper all
+.\build.ps1 -Compiler vs2022 -Wrapper win32 -DryRun
+```
+
+`auto` prefers VS2022/v143 and falls back to VS2019/v142. Publishing is a
+Release-only operation; Debug remains a development build. The dispatcher
+prints every CMake command before running it and does not duplicate build
+logic.
+
 ## Linux
 
 `make` defaults to the pinned-SDL3 distribution. Useful targets include:

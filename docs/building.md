@@ -21,6 +21,12 @@ cmake --preset windows-dev-x64
 cmake --build --preset windows-dev-x64
 ```
 
+The established `windows-*` preset names explicitly select Visual Studio 2019
+and v142. Add `vs2022` after `windows` for the parallel v143 presets, for
+example `windows-vs2022-dev-x64`, `windows-vs2022-release-x64`, or
+`windows-vs2022-sdl3-x64`. Their build trees and staged package names identify
+the compiler generation so both sets can coexist.
+
 The development preset builds both GUI hosts. Dedicated distribution presets
 are `windows-release-{x64,x86}` for Win32 and `windows-sdl3-{x64,x86}` for
 SDL3. The MSVC runtime is statically linked by default; set
@@ -28,7 +34,8 @@ SDL3. The MSVC runtime is statically linked by default; set
 Visual C++ Redistributable.
 
 The checked-in `wolf3d-portable.sln` invokes these same configurations from
-Visual Studio. Select one of the following solution configurations and build:
+Visual Studio 2019 or 2022 and automatically selects v142 or v143. Select one
+of the following solution configurations and build:
 
 - `Publish Win32` stages only the dependency-free Win32/GDI host.
 - `Publish SDL3` stages only the SDL3 host.

@@ -29,6 +29,8 @@ option(WG_STATIC_MSVC_RUNTIME
     "Link the MSVC runtime statically for self-contained Windows releases" ON)
 set(W3P_DIST_ROOT "${CMAKE_SOURCE_DIR}/dist" CACHE PATH
     "Directory used by release staging targets")
+set(W3P_COMPILER_LABEL "" CACHE STRING
+    "Optional compiler/toolset label appended to staged package names")
 
 if(NOT WIN32)
     set(W3P_BUILD_WIN32 OFF CACHE BOOL "Win32 is Windows-only" FORCE)
@@ -102,6 +104,10 @@ set(W3P_RELEASE_RUNTIME_SUFFIX "")
 if(MSVC AND NOT WG_STATIC_MSVC_RUNTIME)
     set(W3P_RELEASE_RUNTIME_SUFFIX "-dynamic-crt")
 endif()
+set(W3P_RELEASE_COMPILER_SUFFIX "")
+if(W3P_COMPILER_LABEL)
+    set(W3P_RELEASE_COMPILER_SUFFIX "-${W3P_COMPILER_LABEL}")
+endif()
 
 function(w3p_configure_host target)
     target_link_libraries(${target} PRIVATE wolf3d::wolf3d)
@@ -144,7 +150,7 @@ if(W3P_BUILD_WIN32)
     w3p_copy_engine_runtime(wolf3d-win32)
 
     set(W3P_WIN32_RELEASE_DIR
-        "${W3P_DIST_ROOT}/wolf3d-portable-${PROJECT_VERSION}-win32-${W3P_RELEASE_ARCH}${W3P_RELEASE_RUNTIME_SUFFIX}")
+        "${W3P_DIST_ROOT}/wolf3d-portable-${PROJECT_VERSION}-win32-${W3P_RELEASE_ARCH}${W3P_RELEASE_COMPILER_SUFFIX}${W3P_RELEASE_RUNTIME_SUFFIX}")
     add_custom_target(win32-release
         COMMAND ${CMAKE_COMMAND} -E remove_directory "${W3P_WIN32_RELEASE_DIR}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_WIN32_RELEASE_DIR}"
@@ -198,7 +204,7 @@ if(W3P_BUILD_SDL3)
     endif()
 
     set(W3P_SDL3_RELEASE_DIR
-        "${W3P_DIST_ROOT}/wolf3d-portable-${PROJECT_VERSION}-sdl3-${W3P_RELEASE_SYSTEM}-${W3P_RELEASE_ARCH}${W3P_RELEASE_RUNTIME_SUFFIX}")
+        "${W3P_DIST_ROOT}/wolf3d-portable-${PROJECT_VERSION}-sdl3-${W3P_RELEASE_SYSTEM}-${W3P_RELEASE_ARCH}${W3P_RELEASE_COMPILER_SUFFIX}${W3P_RELEASE_RUNTIME_SUFFIX}")
     set(W3P_SDL3_RELEASE_COMMANDS
         COMMAND ${CMAKE_COMMAND} -E remove_directory "${W3P_SDL3_RELEASE_DIR}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_SDL3_RELEASE_DIR}"

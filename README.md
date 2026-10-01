@@ -38,7 +38,8 @@ gitlink before treating that result as an official release.
 
 ## Windows
 
-Open `wolf3d-portable.sln` in Visual Studio 2019 or newer, or use CMake:
+Open `wolf3d-portable.sln` in Visual Studio 2019 or 2022, or use CMake. The
+established names below select VS2019/v142:
 
 ```text
 cmake --preset windows-dev-x64
@@ -48,6 +49,10 @@ cmake --build --preset windows-release-x64
 cmake --preset windows-sdl3-x64
 cmake --build --preset windows-sdl3-x64
 ```
+
+For VS2022/v143, add `vs2022` after `windows`, for example
+`windows-vs2022-dev-x64`, `windows-vs2022-release-x64`, or
+`windows-vs2022-sdl3-x64`.
 
 In Visual Studio, select `Publish Win32`, `Publish SDL3`, or `Publish All`
 with the `x64` or `Win32` platform and build the solution. These publish

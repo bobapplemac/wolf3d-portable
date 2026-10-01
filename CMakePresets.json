@@ -6,53 +6,112 @@
       "name": "windows-base",
       "hidden": true,
       "generator": "Visual Studio 16 2019",
+      "toolset": "v142",
       "cacheVariables": {
         "W3P_BUILD_WIN32": "ON",
         "W3P_BUILD_SDL3": "ON",
         "W3P_WARNINGS_AS_ERRORS": "ON",
-        "WG_STATIC_MSVC_RUNTIME": "ON"
+        "WG_STATIC_MSVC_RUNTIME": "ON",
+        "W3P_COMPILER_LABEL": "msvc-v142",
+        "WG_COMPILER_LABEL": "msvc-v142"
+      }
+    },
+    {
+      "name": "windows-vs2022-base",
+      "hidden": true,
+      "generator": "Visual Studio 17 2022",
+      "toolset": "v143",
+      "cacheVariables": {
+        "W3P_BUILD_WIN32": "ON",
+        "W3P_BUILD_SDL3": "ON",
+        "W3P_WARNINGS_AS_ERRORS": "ON",
+        "WG_STATIC_MSVC_RUNTIME": "ON",
+        "W3P_COMPILER_LABEL": "msvc-v143",
+        "WG_COMPILER_LABEL": "msvc-v143"
       }
     },
     {
       "name": "windows-dev-x64",
       "displayName": "Windows hosts (x64)",
       "inherits": "windows-base",
-      "binaryDir": "${sourceDir}/build/windows-dev-x64",
+      "binaryDir": "${sourceDir}/build/windows-vs2019-dev-x64",
       "architecture": "x64"
     },
     {
       "name": "windows-dev-x86",
       "displayName": "Windows hosts (x86)",
       "inherits": "windows-base",
-      "binaryDir": "${sourceDir}/build/windows-dev-x86",
+      "binaryDir": "${sourceDir}/build/windows-vs2019-dev-x86",
       "architecture": "Win32"
     },
     {
       "name": "windows-release-x64",
       "displayName": "Windows Win32 release (x64)",
       "inherits": "windows-dev-x64",
-      "binaryDir": "${sourceDir}/build/windows-release-x64",
+      "binaryDir": "${sourceDir}/build/windows-vs2019-release-x64",
       "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF" }
     },
     {
       "name": "windows-release-x86",
       "displayName": "Windows Win32 release (x86)",
       "inherits": "windows-dev-x86",
-      "binaryDir": "${sourceDir}/build/windows-release-x86",
+      "binaryDir": "${sourceDir}/build/windows-vs2019-release-x86",
       "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF" }
     },
     {
       "name": "windows-sdl3-x64",
       "displayName": "Windows SDL3 release (x64)",
       "inherits": "windows-dev-x64",
-      "binaryDir": "${sourceDir}/build/windows-sdl3-x64",
+      "binaryDir": "${sourceDir}/build/windows-vs2019-sdl3-x64",
       "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF" }
     },
     {
       "name": "windows-sdl3-x86",
       "displayName": "Windows SDL3 release (x86)",
       "inherits": "windows-dev-x86",
-      "binaryDir": "${sourceDir}/build/windows-sdl3-x86",
+      "binaryDir": "${sourceDir}/build/windows-vs2019-sdl3-x86",
+      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF" }
+    },
+    {
+      "name": "windows-vs2022-dev-x64",
+      "displayName": "Visual Studio 2022 hosts (x64)",
+      "inherits": "windows-vs2022-base",
+      "binaryDir": "${sourceDir}/build/windows-vs2022-dev-x64",
+      "architecture": "x64"
+    },
+    {
+      "name": "windows-vs2022-dev-x86",
+      "displayName": "Visual Studio 2022 hosts (x86)",
+      "inherits": "windows-vs2022-base",
+      "binaryDir": "${sourceDir}/build/windows-vs2022-dev-x86",
+      "architecture": "Win32"
+    },
+    {
+      "name": "windows-vs2022-release-x64",
+      "displayName": "Visual Studio 2022 Win32 release (x64)",
+      "inherits": "windows-vs2022-dev-x64",
+      "binaryDir": "${sourceDir}/build/windows-vs2022-release-x64",
+      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF" }
+    },
+    {
+      "name": "windows-vs2022-release-x86",
+      "displayName": "Visual Studio 2022 Win32 release (x86)",
+      "inherits": "windows-vs2022-dev-x86",
+      "binaryDir": "${sourceDir}/build/windows-vs2022-release-x86",
+      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF" }
+    },
+    {
+      "name": "windows-vs2022-sdl3-x64",
+      "displayName": "Visual Studio 2022 SDL3 release (x64)",
+      "inherits": "windows-vs2022-dev-x64",
+      "binaryDir": "${sourceDir}/build/windows-vs2022-sdl3-x64",
+      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF" }
+    },
+    {
+      "name": "windows-vs2022-sdl3-x86",
+      "displayName": "Visual Studio 2022 SDL3 release (x86)",
+      "inherits": "windows-vs2022-dev-x86",
+      "binaryDir": "${sourceDir}/build/windows-vs2022-sdl3-x86",
       "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF" }
     },
     {
@@ -89,6 +148,12 @@
     { "name": "windows-release-x86", "configurePreset": "windows-release-x86", "configuration": "Release", "targets": ["win32-release"] },
     { "name": "windows-sdl3-x64", "configurePreset": "windows-sdl3-x64", "configuration": "Release", "targets": ["sdl3-release"] },
     { "name": "windows-sdl3-x86", "configurePreset": "windows-sdl3-x86", "configuration": "Release", "targets": ["sdl3-release"] },
+    { "name": "windows-vs2022-dev-x64", "configurePreset": "windows-vs2022-dev-x64", "configuration": "Release" },
+    { "name": "windows-vs2022-dev-x86", "configurePreset": "windows-vs2022-dev-x86", "configuration": "Release" },
+    { "name": "windows-vs2022-release-x64", "configurePreset": "windows-vs2022-release-x64", "configuration": "Release", "targets": ["win32-release"] },
+    { "name": "windows-vs2022-release-x86", "configurePreset": "windows-vs2022-release-x86", "configuration": "Release", "targets": ["win32-release"] },
+    { "name": "windows-vs2022-sdl3-x64", "configurePreset": "windows-vs2022-sdl3-x64", "configuration": "Release", "targets": ["sdl3-release"] },
+    { "name": "windows-vs2022-sdl3-x86", "configurePreset": "windows-vs2022-sdl3-x86", "configuration": "Release", "targets": ["sdl3-release"] },
     { "name": "linux-sdl3", "configurePreset": "linux-sdl3", "targets": ["sdl3-release"] },
     { "name": "linux-console", "configurePreset": "linux-console", "targets": ["console-release"] }
   ]

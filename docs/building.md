@@ -64,10 +64,13 @@ parallelism, and a dry-run mode:
 .\build.ps1 -Compiler vs2022 -Wrapper win32 -DryRun
 ```
 
-`auto` prefers VS2022/v143 and falls back to VS2019/v142. Publishing is a
-Release-only operation; Debug remains a development build. The dispatcher
-prints every CMake command before running it and does not duplicate build
-logic.
+With no arguments it interactively prompts for the relevant choices and a
+final confirmation. Explicit arguments remain suitable for automation;
+`-NonInteractive` applies the defaults without prompting. `auto` prefers
+VS2022/v143 and falls back to VS2019/v142. Publishing is a Release-only
+operation; Debug remains a development build. The root launcher delegates to
+`scripts/windows/build.ps1`, which prints every CMake command before running
+it and does not duplicate build logic.
 
 ## Linux
 

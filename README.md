@@ -56,7 +56,7 @@ For VS2022/v143, add `vs2022` after `windows`, for example
 
 For a guided command line, `build.ps1` detects installed supported Visual
 Studio versions and defaults to publishing both x64 wrappers with the newest
-one found:
+one found. With no arguments it interactively walks through the choices:
 
 ```powershell
 .\build.ps1 -List
@@ -65,8 +65,8 @@ one found:
 .\build.ps1 -Action build -Configuration Debug -Wrapper sdl3
 ```
 
-Run `Get-Help .\build.ps1 -Detailed` for every option. The script only
-dispatches to the same checked-in CMake presets and targets.
+Run `Get-Help .\scripts\windows\build.ps1 -Detailed` for every option. The
+root launcher only dispatches to the same checked-in CMake presets and targets.
 
 In Visual Studio, select `Publish Win32`, `Publish SDL3`, or `Publish All`
 with the `x64` or `Win32` platform and build the solution. These publish

@@ -15,6 +15,22 @@ No commercial game data is included. Supply files from a supported original
 Wolfenstein 3D or Spear of Destiny installation: WL1, WL6, SDM, SOD, SD1,
 SD2, or SD3.
 
+## Shareware data
+
+The freely distributed data-only archives below provide complete playable
+shareware/demo data sets without an installer:
+
+- [Wolfenstein 3D v1.4 shareware data (`WL1`)](https://download.sourceforge.net/wolfgl/wolfdata.zip)
+  - SHA-256: `A32EE97C515B6E182597A06F2326D15CC4C343DDC70558CE5FE76C870B7A0027`
+- [Spear of Destiny demo data (`SDM`)](https://download.sourceforge.net/wolfgl/sdmdata.zip)
+  - SHA-256: `054590923CD35CE7C0BFAE98C23BE81AB70C28E11FD0E562B5253523FCD7B91F`
+
+Extract one ZIP beside the executable, or place its eight files in another
+directory and pass `--data <directory>`. These mirrors are linked from the
+archived [WolfGL download page](https://wolfgl.sourceforge.net/files.htm); the
+files are not redistributed by this project. Registered `WL6`, `SOD`, `SD1`,
+`SD2`, and `SD3` data must come from a legitimately obtained game copy.
+
 ## Clone and initialize
 
 Clone recursively so both `wolf3d-lib` and the pinned SDL3 checkout are

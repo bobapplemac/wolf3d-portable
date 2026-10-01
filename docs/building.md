@@ -28,7 +28,17 @@ SDL3. The MSVC runtime is statically linked by default; set
 Visual C++ Redistributable.
 
 The checked-in `wolf3d-portable.sln` invokes these same configurations from
-Visual Studio.
+Visual Studio. Select one of the following solution configurations and build:
+
+- `Publish Win32` stages only the dependency-free Win32/GDI host.
+- `Publish SDL3` stages only the SDL3 host.
+- `Publish All` stages both hosts.
+
+Choose `x64` or `Win32` independently in the platform selector. Publish
+configurations are Release builds with the static MSVC runtime and produce
+the same `dist/` directories as the matching CMake release presets. The
+ordinary Debug and Release configurations are intended for development and
+leave their outputs under `build/`.
 
 ## Linux
 

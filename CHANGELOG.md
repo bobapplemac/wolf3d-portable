@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-01 - Visual Studio publish configurations
+
+- Added first-class `Publish Win32`, `Publish SDL3`, and `Publish All`
+  solution configurations for x86 and x64.
+- Made Visual Studio publishing invoke the same CMake release staging targets
+  and produce the same ready-to-copy `dist/` folders as command-line builds.
+
 ## 2026-10-01 - wolf3d-lib 1.4.21 integration and musl application bundle
 
 - Advanced the pinned engine to 1.4.21, including selectable Nuked-OPL3,

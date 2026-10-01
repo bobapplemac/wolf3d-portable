@@ -17,6 +17,30 @@
       <Configuration>Debug Dynamic CRT</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Publish All|Win32">
+      <Configuration>Publish All</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Publish All|x64">
+      <Configuration>Publish All</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Publish SDL3|Win32">
+      <Configuration>Publish SDL3</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Publish SDL3|x64">
+      <Configuration>Publish SDL3</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Publish Win32|Win32">
+      <Configuration>Publish Win32</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Publish Win32|x64">
+      <Configuration>Publish Win32</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
@@ -54,6 +78,10 @@
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug Dynamic CRT|x64'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Publish All' Or '$(Configuration)'=='Publish SDL3' Or '$(Configuration)'=='Publish Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
@@ -105,17 +133,54 @@
     <WGCMakeConfig>Release</WGCMakeConfig>
     <WGBuildDir>$(WGBuildDir)-dynamic-crt</WGBuildDir>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Publish All'">
+    <WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime>
+    <WGCMakeConfig>Release</WGCMakeConfig>
+    <WGBuildTargets>win32-release sdl3-release</WGBuildTargets>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Publish Win32' And '$(Platform)'=='Win32'">
+    <WGPreset>windows-release-x86</WGPreset>
+    <WGBuildDir>$(SolutionDir)build\windows-release-x86</WGBuildDir>
+    <WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime>
+    <WGCMakeConfig>Release</WGCMakeConfig>
+    <WGBuildTargets>win32-release</WGBuildTargets>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Publish Win32' And '$(Platform)'=='x64'">
+    <WGPreset>windows-release-x64</WGPreset>
+    <WGBuildDir>$(SolutionDir)build\windows-release-x64</WGBuildDir>
+    <WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime>
+    <WGCMakeConfig>Release</WGCMakeConfig>
+    <WGBuildTargets>win32-release</WGBuildTargets>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Publish SDL3' And '$(Platform)'=='Win32'">
+    <WGPreset>windows-sdl3-x86</WGPreset>
+    <WGBuildDir>$(SolutionDir)build\windows-sdl3-x86</WGBuildDir>
+    <WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime>
+    <WGCMakeConfig>Release</WGCMakeConfig>
+    <WGBuildTargets>sdl3-release</WGBuildTargets>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Publish SDL3' And '$(Platform)'=='x64'">
+    <WGPreset>windows-sdl3-x64</WGPreset>
+    <WGBuildDir>$(SolutionDir)build\windows-sdl3-x64</WGBuildDir>
+    <WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime>
+    <WGCMakeConfig>Release</WGCMakeConfig>
+    <WGBuildTargets>sdl3-release</WGBuildTargets>
+  </PropertyGroup>
   <PropertyGroup>
+    <WGBuildTargetArg Condition="'$(WGBuildTargets)'!=''">--target $(WGBuildTargets)</WGBuildTargetArg>
     <IntDir>$(WGBuildDir)\msbuild\$(WGCMakeConfig)\</IntDir>
     <OutDir>$(WGBuildDir)\msbuild\$(WGCMakeConfig)\</OutDir>
-    <NMakeBuildCommandLine>cd /d "$(SolutionDir)" &amp;&amp; "$(WGCMake)" --preset $(WGPreset) -B "$(WGBuildDir)" -DWG_STATIC_MSVC_RUNTIME=$(WGStaticMsvcRuntime) &amp;&amp; "$(WGCMake)" --build "$(WGBuildDir)" --config "$(WGCMakeConfig)"</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd /d "$(SolutionDir)" &amp;&amp; "$(WGCMake)" --preset $(WGPreset) -B "$(WGBuildDir)" -DWG_STATIC_MSVC_RUNTIME=$(WGStaticMsvcRuntime) &amp;&amp; "$(WGCMake)" --build "$(WGBuildDir)" --config "$(WGCMakeConfig)" --clean-first</NMakeReBuildCommandLine>
+    <NMakeBuildCommandLine>cd /d "$(SolutionDir)" &amp;&amp; "$(WGCMake)" --preset $(WGPreset) -B "$(WGBuildDir)" -DWG_STATIC_MSVC_RUNTIME=$(WGStaticMsvcRuntime) &amp;&amp; "$(WGCMake)" --build "$(WGBuildDir)" --config "$(WGCMakeConfig)" $(WGBuildTargetArg)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd /d "$(SolutionDir)" &amp;&amp; "$(WGCMake)" --preset $(WGPreset) -B "$(WGBuildDir)" -DWG_STATIC_MSVC_RUNTIME=$(WGStaticMsvcRuntime) &amp;&amp; "$(WGCMake)" --build "$(WGBuildDir)" --config "$(WGCMakeConfig)" $(WGBuildTargetArg) --clean-first</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>cd /d "$(SolutionDir)" &amp;&amp; "$(WGCMake)" --preset $(WGPreset) -B "$(WGBuildDir)" -DWG_STATIC_MSVC_RUNTIME=$(WGStaticMsvcRuntime) &amp;&amp; "$(WGCMake)" --build "$(WGBuildDir)" --config "$(WGCMakeConfig)" --target clean</NMakeCleanCommandLine>
     <NMakeOutput>$(WGBuildDir)\$(WGCMakeConfig)\wolf3d.exe</NMakeOutput>
     <NMakeIncludeSearchPath>$(SolutionDir)lib\wolf3d\include;$(SolutionDir)platforms;$(SolutionDir)third_party\SDL3\include</NMakeIncludeSearchPath>
     <NMakePreprocessorDefinitions>WIN32_LEAN_AND_MEAN;UNICODE;_UNICODE;%(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
     <LocalDebuggerCommand>$(NMakeOutput)</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Publish SDL3'">
+    <NMakeOutput>$(WGBuildDir)\$(WGCMakeConfig)\wolf3d-sdl3.exe</NMakeOutput>
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="$(SolutionDir)platforms\*.c" />

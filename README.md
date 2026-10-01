@@ -49,6 +49,12 @@ cmake --preset windows-sdl3-x64
 cmake --build --preset windows-sdl3-x64
 ```
 
+In Visual Studio, select `Publish Win32`, `Publish SDL3`, or `Publish All`
+with the `x64` or `Win32` platform and build the solution. These publish
+configurations invoke the same CMake release targets and stage the same
+ready-to-copy folders under `dist/` as the command-line presets. Ordinary
+Debug and Release configurations remain development builds under `build/`.
+
 Use the corresponding `x86` presets for 32-bit builds. Release folders appear
 under `dist/` and include `wolf3d.exe` or `wolf3d-sdl3.exe`, `wolf3d.dll`,
 the replaceable `Nuked-OPL3.dll`, all required host DLLs, notices, and a

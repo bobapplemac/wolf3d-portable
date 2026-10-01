@@ -27,6 +27,11 @@ example `windows-vs2022-dev-x64`, `windows-vs2022-release-x64`, or
 `windows-vs2022-sdl3-x64`. Their build trees and staged package names identify
 the compiler generation so both sets can coexist.
 
+The Win32/GDI host additionally provides `windows-vs2017-*` presets for the
+v141 compiler hosted by VS2019 and `windows-vs2015-*` presets for native
+VS2015/v140. Both cover x86/x64 and static/dynamic CRT builds. SDL3 remains a
+modern-compiler target and is deliberately excluded from these profiles.
+
 The development preset builds both GUI hosts. Dedicated distribution presets
 are `windows-release-{x64,x86}` for Win32 and `windows-sdl3-{x64,x86}` for
 SDL3. The MSVC runtime is statically linked by default; set
@@ -47,6 +52,14 @@ the same `dist/` directories as the matching CMake release presets. The
 ordinary Debug and Release configurations are intended for development and
 leave their outputs under `build/`.
 
+For the native Visual Studio 2015 IDE, open
+`ide/visual-studio/vs2015/wolf3d-portable-vs2015.sln`. This focused
+compatibility-band solution exposes Debug, Release, dynamic-CRT variants, and
+`Publish Win32` without presenting unsupported SDL3 configurations. VS2015
+does not bundle CMake, so the solution uses CMake 3.20 or newer from `PATH` or
+from a newer installed Visual Studio while still compiling through MSBuild 14
+and MSVC 19.0.
+
 ### Windows build dispatcher
 
 The root `build.ps1` is the human-facing entry point for selecting one build
@@ -60,6 +73,8 @@ parallelism, and a dry-run mode:
 .\build.ps1
 .\build.ps1 -Compiler vs2022 -Architecture x64 -Wrapper sdl3
 .\build.ps1 -Compiler vs2019 -Architecture x86 -Wrapper win32
+.\build.ps1 -Compiler vs2017 -Architecture x64 -Wrapper win32
+.\build.ps1 -Compiler vs2015 -Architecture x86 -Wrapper win32
 .\build.ps1 -Action build -Configuration Debug -Runtime dynamic -Wrapper all
 .\build.ps1 -Compiler vs2022 -Wrapper win32 -DryRun
 ```
@@ -67,7 +82,8 @@ parallelism, and a dry-run mode:
 With no arguments it interactively prompts for the relevant choices and a
 final confirmation. Explicit arguments remain suitable for automation;
 `-NonInteractive` applies the defaults without prompting. `auto` prefers
-VS2022/v143 and falls back to VS2019/v142. Publishing is a Release-only
+VS2022/v143 and falls back through VS2019/v142, v141, and v140. The v141 and
+v140 choices accept only `-Wrapper win32`. Publishing is a Release-only
 operation; Debug remains a development build. The root launcher delegates to
 `scripts/windows/build.ps1`, which prints every CMake command before running
 it and does not duplicate build logic.

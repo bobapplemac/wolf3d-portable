@@ -70,6 +70,11 @@ For VS2022/v143, add `vs2022` after `windows`, for example
 `windows-vs2022-dev-x64`, `windows-vs2022-release-x64`, or
 `windows-vs2022-sdl3-x64`.
 
+The native Win32 wrapper also supports VS2017/v141 and VS2015/v140 through
+`windows-vs2017-*` and `windows-vs2015-*` presets. Visual Studio 2015 users can
+open `ide/visual-studio/vs2015/wolf3d-portable-vs2015.sln`. SDL3 is
+intentionally excluded from these legacy compiler profiles.
+
 For a guided command line, `build.ps1` detects installed supported Visual
 Studio versions and defaults to publishing both x64 wrappers with the newest
 one found. With no arguments it interactively walks through the choices:
@@ -78,6 +83,7 @@ one found. With no arguments it interactively walks through the choices:
 .\build.ps1 -List
 .\build.ps1
 .\build.ps1 -Compiler vs2019 -Architecture x86 -Wrapper win32
+.\build.ps1 -Compiler vs2015 -Architecture x86 -Wrapper win32
 .\build.ps1 -Action build -Configuration Debug -Wrapper sdl3
 ```
 

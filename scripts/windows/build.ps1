@@ -13,8 +13,8 @@ CMake commands.
 Publishes both x64 wrappers with the newest supported installed compiler.
 
 .EXAMPLE
-.\build.ps1 -Compiler vs2019 -Architecture x86 -Wrapper win32
-Publishes the 32-bit Win32 host with Visual Studio 2019/v142.
+.\build.ps1 -Compiler vs2015 -Architecture x86 -Wrapper win32
+Publishes the 32-bit Win32 host with Visual Studio 2015/v140.
 
 .EXAMPLE
 .\build.ps1 -Action build -Configuration Debug -Wrapper sdl3
@@ -26,7 +26,7 @@ Shows the supported compiler installations detected on this computer.
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('auto', 'vs2022', 'vs2019')]
+    [ValidateSet('auto', 'vs2022', 'vs2019', 'vs2017', 'vs2015')]
     [string]$Compiler = 'auto',
 
     [ValidateSet('x64', 'x86')]
@@ -64,13 +64,16 @@ function Find-VisualStudio {
         [string]$VersionRange,
         [string]$FallbackPath,
         [string]$Toolset,
-        [string]$PresetPrefix
+        [string]$PresetPrefix,
+        [bool]$SupportsSDL3 = $true,
+        [string]$RequiredComponent = 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
+        [string]$CMakeFallbackDirectory = ''
     )
 
     $installation = $null
     if (Test-Path -LiteralPath $vswhere) {
         $result = & $vswhere -latest -products '*' -version $VersionRange `
-            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+            -requires $RequiredComponent `
             -property installationPath
         if ($LASTEXITCODE -eq 0 -and $result) {
             $installation = ($result | Select-Object -Last 1).Trim()
@@ -88,14 +91,39 @@ function Find-VisualStudio {
             $cmake = $candidate
         }
     }
+    if (-not $cmake -and $CMakeFallbackDirectory) {
+        $candidate = Join-Path $CMakeFallbackDirectory 'cmake.exe'
+        if (Test-Path -LiteralPath $candidate) { $cmake = $candidate }
+    }
+    if (-not $cmake) {
+        $pathCMake = Get-Command cmake.exe -ErrorAction SilentlyContinue
+        if ($pathCMake) { $cmake = $pathCMake.Source }
+    }
 
     [pscustomobject]@{
         Name = $Name
         Toolset = $Toolset
         PresetPrefix = $PresetPrefix
+        SupportsSDL3 = $SupportsSDL3
         Installation = $installation
         CMake = $cmake
         Available = [bool]($installation -and $cmake)
+    }
+}
+
+$legacyCMakeDirectory = ''
+if (Test-Path -LiteralPath $vswhere) {
+    foreach ($versionRange in @('[16.0,17.0)', '[17.0,18.0)', '[18.0,19.0)')) {
+        $modernInstallation = & $vswhere -latest -products '*' `
+            -version $versionRange -property installationPath
+        if ($modernInstallation) {
+            $candidate = Join-Path $modernInstallation.Trim() `
+                'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin'
+            if (Test-Path -LiteralPath (Join-Path $candidate 'cmake.exe')) {
+                $legacyCMakeDirectory = $candidate
+                break
+            }
+        }
     }
 }
 
@@ -106,6 +134,14 @@ $toolchains = @(
     Find-VisualStudio -Name 'vs2019' -VersionRange '[16.0,17.0)' `
         -FallbackPath 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise' `
         -Toolset 'v142' -PresetPrefix 'windows'
+    Find-VisualStudio -Name 'vs2017' -VersionRange '[16.0,17.0)' `
+        -FallbackPath '' -Toolset 'v141' -PresetPrefix 'windows-vs2017' `
+        -SupportsSDL3 $false `
+        -RequiredComponent 'Microsoft.VisualStudio.Component.VC.v141.x86.x64'
+    Find-VisualStudio -Name 'vs2015' -VersionRange '[14.0,15.0)' `
+        -FallbackPath 'C:\Program Files (x86)\Microsoft Visual Studio 14.0' `
+        -Toolset 'v140' -PresetPrefix 'windows-vs2015' `
+        -SupportsSDL3 $false -CMakeFallbackDirectory $legacyCMakeDirectory
 )
 
 function Read-BuildChoice {
@@ -149,7 +185,14 @@ if ($PSBoundParameters.Count -eq 0 -and -not $NonInteractive -and $canPrompt) {
     }
     $Compiler = Read-BuildChoice 'Compiler' $availableCompilers
     $Architecture = Read-BuildChoice 'Architecture' @('x64', 'x86')
-    $Wrapper = Read-BuildChoice 'Wrapper' @('all', 'win32', 'sdl3')
+    $promptToolchain = $toolchains | Where-Object { $_.Name -eq $Compiler } |
+        Select-Object -First 1
+    $wrapperChoices = if ($promptToolchain.SupportsSDL3) {
+        @('all', 'win32', 'sdl3')
+    } else {
+        @('win32')
+    }
+    $Wrapper = Read-BuildChoice 'Wrapper' $wrapperChoices
     $Action = Read-BuildChoice 'Action' @('publish', 'build', 'clean')
     if ($Action -ne 'publish') {
         $Configuration = Read-BuildChoice 'Configuration' @('Release', 'Debug')
@@ -177,6 +220,9 @@ if ($Compiler -eq 'auto') {
 if (-not $selected -or -not $selected.Available) {
     $requested = if ($Compiler -eq 'auto') { 'a supported Visual Studio installation' } else { $Compiler }
     throw "Could not find $requested with C++ tools and bundled CMake. Run .\build.ps1 -List."
+}
+if (-not $selected.SupportsSDL3 -and $Wrapper -ne 'win32') {
+    throw "$($selected.Name)/$($selected.Toolset) supports only the Win32 wrapper; select -Wrapper win32."
 }
 
 $archPreset = if ($Architecture -eq 'x86') { 'x86' } else { 'x64' }

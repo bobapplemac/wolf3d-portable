@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-01 - Legacy MSVC Win32 wrapper checkpoints
+
+- Added first-class v140 and v141 CMake presets and Windows dispatcher choices
+  for x86/x64 Win32 builds with static or dynamic MSVC runtimes.
+- Added a focused Visual Studio 2015 solution under the compatibility-banded
+  IDE directory; SDL3 remains intentionally limited to modern compilers.
+- Advanced the pinned engine to wolf3d-lib 1.4.28.
+
 ## 2026-10-01 - License layout and current library identity
 
 - Standardized staged packages on `LICENSE.txt`, `THIRD_PARTY_NOTICES.txt`,

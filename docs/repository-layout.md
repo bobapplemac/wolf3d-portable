@@ -9,7 +9,7 @@
 | `platforms/WG_*` | Host-shared text-output and command-line support. |
 | `third_party/SDL3/` | Pinned SDL3 submodule. |
 | `packaging/` | Runtime instructions and portable Linux builder. |
-| `ide/visual-studio/` | Source-owned Visual Studio entry project. |
+| `ide/visual-studio/` | Source-owned Visual Studio entry project and compatibility-banded legacy solutions. |
 | `build/` | Ignored compiler output. |
 | `dist/` | Ignored minimal redistributable folders. |
 

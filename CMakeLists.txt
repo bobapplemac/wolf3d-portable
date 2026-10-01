@@ -43,11 +43,8 @@ if(MSVC AND WG_STATIC_MSVC_RUNTIME)
 endif()
 
 # The submodule supplies the engine and its replaceable Nuked-OPL3 dependency.
-# Disable its legacy in-tree hosts; these targets consume only wolf3d::wolf3d.
+# Its internal deterministic oracle is not part of production host builds.
 set(WG_BUILD_HEADLESS OFF CACHE BOOL "" FORCE)
-set(WG_BUILD_WIN32 OFF CACHE BOOL "" FORCE)
-set(WG_BUILD_LINUX_CONSOLE OFF CACHE BOOL "" FORCE)
-set(WG_BUILD_SDL3 OFF CACHE BOOL "" FORCE)
 set(WG_WARNINGS_AS_ERRORS ${W3P_WARNINGS_AS_ERRORS} CACHE BOOL "" FORCE)
 set(WG_DIST_ROOT "${CMAKE_BINARY_DIR}/wolf3d-lib-dist" CACHE PATH "" FORCE)
 add_subdirectory(lib/wolf3d wolf3d-lib)

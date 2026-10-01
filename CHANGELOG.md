@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-01 - wolf3d-lib 1.4.20 integration
+
+- Advanced the pinned engine to the completed library-only `wolf3d-lib`
+  revision 1.4.20 and removed obsolete cache switches for hosts that now live
+  exclusively in this repository.
+- Added explicit line-ending policy for Linux build and audit scripts.
+
 ## Unreleased - Repository split
 
 - Created `wolf3d-portable` from a path-filtered copy of the original

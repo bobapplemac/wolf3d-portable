@@ -70,10 +70,13 @@ For VS2022/v143, add `vs2022` after `windows`, for example
 `windows-vs2022-dev-x64`, `windows-vs2022-release-x64`, or
 `windows-vs2022-sdl3-x64`.
 
-The native Win32 wrapper also supports VS2017/v141 and VS2015/v140 through
-`windows-vs2017-*` and `windows-vs2015-*` presets. Visual Studio 2015 users can
-open `ide/visual-studio/vs2015/wolf3d-portable-vs2015.sln`. SDL3 is
-intentionally excluded from these legacy compiler profiles.
+The native Win32 wrapper also supports VS2017/v141, VS2015/v140, VS2013/v120,
+VS2012/v110, VS2010/v100, and VS2008/v90 through matching `windows-vs20xx-*`
+presets. Visual Studio 2015 users can open
+`ide/visual-studio/vs2015/wolf3d-portable-vs2015.sln`; older checked-in IDE
+solution bands remain follow-up work, while their command-line and generated
+CMake solutions are validated now. SDL3 is intentionally excluded from every
+legacy compiler profile.
 
 An additional `windows-vs2015-xp-*` profile produces XP-targeting candidate
 packages using `v140_xp`. These builds pass host-side compilation and PE import
@@ -89,6 +92,7 @@ one found. With no arguments it interactively walks through the choices:
 .\build.ps1 -Compiler vs2019 -Architecture x86 -Wrapper win32
 .\build.ps1 -Compiler vs2015 -Architecture x86 -Wrapper win32
 .\build.ps1 -Compiler vs2015-xp -Architecture x86 -Wrapper win32
+.\build.ps1 -Compiler vs2008 -Architecture x86 -Wrapper win32
 .\build.ps1 -Action build -Configuration Debug -Wrapper sdl3
 ```
 

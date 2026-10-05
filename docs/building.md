@@ -27,10 +27,11 @@ example `windows-vs2022-dev-x64`, `windows-vs2022-release-x64`, or
 `windows-vs2022-sdl3-x64`. Their build trees and staged package names identify
 the compiler generation so both sets can coexist.
 
-The Win32/GDI host additionally provides `windows-vs2017-*` presets for the
-v141 compiler hosted by VS2019 and `windows-vs2015-*` presets for native
-VS2015/v140. Both cover x86/x64 and static/dynamic CRT builds. SDL3 remains a
-modern-compiler target and is deliberately excluded from these profiles.
+The Win32/GDI host additionally provides compiler-qualified presets for
+VS2017/v141, VS2015/v140, VS2013/v120, VS2012/v110, VS2010/v100, and
+VS2008/v90. All cover x86/x64 and static/dynamic CRT builds. SDL3 remains a
+modern-compiler target and is deliberately excluded from these profiles; no
+SDL backport is part of the legacy Windows support policy.
 The parallel `windows-vs2015-xp-*` presets select `v140_xp`; their PE minimums
 are Windows 5.01 for x86 and 5.02 for x64. They remain runtime candidates until
 tested on matching operating systems.
@@ -80,6 +81,10 @@ parallelism, and a dry-run mode:
 .\build.ps1 -Compiler vs2017 -Architecture x64 -Wrapper win32
 .\build.ps1 -Compiler vs2015 -Architecture x86 -Wrapper win32
 .\build.ps1 -Compiler vs2015-xp -Architecture x86 -Wrapper win32
+.\build.ps1 -Compiler vs2013 -Architecture x86 -Wrapper win32
+.\build.ps1 -Compiler vs2012 -Architecture x86 -Wrapper win32
+.\build.ps1 -Compiler vs2010 -Architecture x86 -Wrapper win32
+.\build.ps1 -Compiler vs2008 -Architecture x86 -Wrapper win32
 .\build.ps1 -Action build -Configuration Debug -Runtime dynamic -Wrapper all
 .\build.ps1 -Compiler vs2022 -Wrapper win32 -DryRun
 ```
@@ -87,11 +92,11 @@ parallelism, and a dry-run mode:
 With no arguments it interactively prompts for the relevant choices and a
 final confirmation. Explicit arguments remain suitable for automation;
 `-NonInteractive` applies the defaults without prompting. `auto` prefers
-VS2022/v143 and falls back through VS2019/v142, v141, and v140. The v141 and
-v140 and v140_xp choices accept only `-Wrapper win32`. Publishing is a Release-only
-operation; Debug remains a development build. The root launcher delegates to
-`scripts/windows/build.ps1`, which prints every CMake command before running
-it and does not duplicate build logic.
+VS2022/v143 and falls back through each installed compiler to VS2008/v90. All
+v141-and-older and v140_xp choices accept only `-Wrapper win32`. Publishing is
+a Release-only operation; Debug remains a development build. The root launcher
+delegates to `scripts/windows/build.ps1`, which prints every CMake command
+before running it and does not duplicate build logic.
 
 ## Linux
 

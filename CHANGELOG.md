@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-10-05 - Win32 legacy compiler span
+
+- Advanced the pinned engine to wolf3d-lib 1.4.30.
+- Added first-class Win32/GDI presets and PowerShell-dispatcher choices for
+  Visual Studio 2013/v120, 2012/v110, 2010/v100, and 2008/v90.
+- Built and staged clean x86 and x64 release packages with every added
+  compiler, keeping project warnings as errors throughout.
+- Added only the compatibility shims required by pre-C99 MSVC and suppressed
+  the anonymous-union warning emitted by VS2008's own `mmsystem.h`.
+- Kept SDL3 deliberately restricted to modern supported compiler profiles;
+  none of the new legacy configurations downloads, configures, or builds it.
+- Made root PowerShell launchers independent of the caller's working directory
+  and corrected legacy-install detection under Windows PowerShell 5.1.
+
 ## 2026-10-01 - Windows XP targeting candidate
 
 - Added v140_xp x86/x64 Win32 package profiles with static and dynamic CRT

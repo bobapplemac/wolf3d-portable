@@ -3,6 +3,49 @@
   "cmakeMinimumRequired": { "major": 3, "minor": 20, "patch": 0 },
   "configurePresets": [
     {
+      "name": "windows-vs2008-base",
+      "hidden": true,
+      "generator": "Visual Studio 9 2008",
+      "cacheVariables": {
+        "W3P_BUILD_WIN32": "ON", "W3P_BUILD_SDL3": "OFF",
+        "W3P_WARNINGS_AS_ERRORS": "ON", "WG_STATIC_MSVC_RUNTIME": "ON",
+        "W3P_COMPILER_LABEL": "msvc-v90", "WG_COMPILER_LABEL": "msvc-v90"
+      }
+    },
+    {
+      "name": "windows-vs2010-base",
+      "hidden": true,
+      "generator": "Visual Studio 10 2010",
+      "toolset": "v100",
+      "cacheVariables": {
+        "W3P_BUILD_WIN32": "ON", "W3P_BUILD_SDL3": "OFF",
+        "W3P_WARNINGS_AS_ERRORS": "ON", "WG_STATIC_MSVC_RUNTIME": "ON",
+        "W3P_COMPILER_LABEL": "msvc-v100", "WG_COMPILER_LABEL": "msvc-v100"
+      }
+    },
+    {
+      "name": "windows-vs2012-base",
+      "hidden": true,
+      "generator": "Visual Studio 11 2012",
+      "toolset": "v110",
+      "cacheVariables": {
+        "W3P_BUILD_WIN32": "ON", "W3P_BUILD_SDL3": "OFF",
+        "W3P_WARNINGS_AS_ERRORS": "ON", "WG_STATIC_MSVC_RUNTIME": "ON",
+        "W3P_COMPILER_LABEL": "msvc-v110", "WG_COMPILER_LABEL": "msvc-v110"
+      }
+    },
+    {
+      "name": "windows-vs2013-base",
+      "hidden": true,
+      "generator": "Visual Studio 12 2013",
+      "toolset": "v120",
+      "cacheVariables": {
+        "W3P_BUILD_WIN32": "ON", "W3P_BUILD_SDL3": "OFF",
+        "W3P_WARNINGS_AS_ERRORS": "ON", "WG_STATIC_MSVC_RUNTIME": "ON",
+        "W3P_COMPILER_LABEL": "msvc-v120", "WG_COMPILER_LABEL": "msvc-v120"
+      }
+    },
+    {
       "name": "windows-vs2015-xp-base",
       "hidden": true,
       "generator": "Visual Studio 14 2015",
@@ -71,6 +114,78 @@
         "W3P_COMPILER_LABEL": "msvc-v143",
         "WG_COMPILER_LABEL": "msvc-v143"
       }
+    },
+    {
+      "name": "windows-vs2008-dev-x64", "inherits": "windows-vs2008-base",
+      "binaryDir": "${sourceDir}/build/windows-vs2008-dev-x64", "architecture": "x64"
+    },
+    {
+      "name": "windows-vs2008-dev-x86", "inherits": "windows-vs2008-base",
+      "binaryDir": "${sourceDir}/build/windows-vs2008-dev-x86", "architecture": "Win32"
+    },
+    {
+      "name": "windows-vs2008-release-x64", "inherits": "windows-vs2008-dev-x64",
+      "binaryDir": "${sourceDir}/build/windows-vs2008-release-x64",
+      "cacheVariables": { "BUILD_TESTING": "OFF" }
+    },
+    {
+      "name": "windows-vs2008-release-x86", "inherits": "windows-vs2008-dev-x86",
+      "binaryDir": "${sourceDir}/build/windows-vs2008-release-x86",
+      "cacheVariables": { "BUILD_TESTING": "OFF" }
+    },
+    {
+      "name": "windows-vs2010-dev-x64", "inherits": "windows-vs2010-base",
+      "binaryDir": "${sourceDir}/build/windows-vs2010-dev-x64", "architecture": "x64"
+    },
+    {
+      "name": "windows-vs2010-dev-x86", "inherits": "windows-vs2010-base",
+      "binaryDir": "${sourceDir}/build/windows-vs2010-dev-x86", "architecture": "Win32"
+    },
+    {
+      "name": "windows-vs2010-release-x64", "inherits": "windows-vs2010-dev-x64",
+      "binaryDir": "${sourceDir}/build/windows-vs2010-release-x64",
+      "cacheVariables": { "BUILD_TESTING": "OFF" }
+    },
+    {
+      "name": "windows-vs2010-release-x86", "inherits": "windows-vs2010-dev-x86",
+      "binaryDir": "${sourceDir}/build/windows-vs2010-release-x86",
+      "cacheVariables": { "BUILD_TESTING": "OFF" }
+    },
+    {
+      "name": "windows-vs2012-dev-x64", "inherits": "windows-vs2012-base",
+      "binaryDir": "${sourceDir}/build/windows-vs2012-dev-x64", "architecture": "x64"
+    },
+    {
+      "name": "windows-vs2012-dev-x86", "inherits": "windows-vs2012-base",
+      "binaryDir": "${sourceDir}/build/windows-vs2012-dev-x86", "architecture": "Win32"
+    },
+    {
+      "name": "windows-vs2012-release-x64", "inherits": "windows-vs2012-dev-x64",
+      "binaryDir": "${sourceDir}/build/windows-vs2012-release-x64",
+      "cacheVariables": { "BUILD_TESTING": "OFF" }
+    },
+    {
+      "name": "windows-vs2012-release-x86", "inherits": "windows-vs2012-dev-x86",
+      "binaryDir": "${sourceDir}/build/windows-vs2012-release-x86",
+      "cacheVariables": { "BUILD_TESTING": "OFF" }
+    },
+    {
+      "name": "windows-vs2013-dev-x64", "inherits": "windows-vs2013-base",
+      "binaryDir": "${sourceDir}/build/windows-vs2013-dev-x64", "architecture": "x64"
+    },
+    {
+      "name": "windows-vs2013-dev-x86", "inherits": "windows-vs2013-base",
+      "binaryDir": "${sourceDir}/build/windows-vs2013-dev-x86", "architecture": "Win32"
+    },
+    {
+      "name": "windows-vs2013-release-x64", "inherits": "windows-vs2013-dev-x64",
+      "binaryDir": "${sourceDir}/build/windows-vs2013-release-x64",
+      "cacheVariables": { "BUILD_TESTING": "OFF" }
+    },
+    {
+      "name": "windows-vs2013-release-x86", "inherits": "windows-vs2013-dev-x86",
+      "binaryDir": "${sourceDir}/build/windows-vs2013-release-x86",
+      "cacheVariables": { "BUILD_TESTING": "OFF" }
     },
     {
       "name": "windows-vs2015-xp-dev-x64",
@@ -268,6 +383,22 @@
     }
   ],
   "buildPresets": [
+    { "name": "windows-vs2008-dev-x64", "configurePreset": "windows-vs2008-dev-x64", "configuration": "Release" },
+    { "name": "windows-vs2008-dev-x86", "configurePreset": "windows-vs2008-dev-x86", "configuration": "Release" },
+    { "name": "windows-vs2008-release-x64", "configurePreset": "windows-vs2008-release-x64", "configuration": "Release", "targets": ["win32-release"] },
+    { "name": "windows-vs2008-release-x86", "configurePreset": "windows-vs2008-release-x86", "configuration": "Release", "targets": ["win32-release"] },
+    { "name": "windows-vs2010-dev-x64", "configurePreset": "windows-vs2010-dev-x64", "configuration": "Release" },
+    { "name": "windows-vs2010-dev-x86", "configurePreset": "windows-vs2010-dev-x86", "configuration": "Release" },
+    { "name": "windows-vs2010-release-x64", "configurePreset": "windows-vs2010-release-x64", "configuration": "Release", "targets": ["win32-release"] },
+    { "name": "windows-vs2010-release-x86", "configurePreset": "windows-vs2010-release-x86", "configuration": "Release", "targets": ["win32-release"] },
+    { "name": "windows-vs2012-dev-x64", "configurePreset": "windows-vs2012-dev-x64", "configuration": "Release" },
+    { "name": "windows-vs2012-dev-x86", "configurePreset": "windows-vs2012-dev-x86", "configuration": "Release" },
+    { "name": "windows-vs2012-release-x64", "configurePreset": "windows-vs2012-release-x64", "configuration": "Release", "targets": ["win32-release"] },
+    { "name": "windows-vs2012-release-x86", "configurePreset": "windows-vs2012-release-x86", "configuration": "Release", "targets": ["win32-release"] },
+    { "name": "windows-vs2013-dev-x64", "configurePreset": "windows-vs2013-dev-x64", "configuration": "Release" },
+    { "name": "windows-vs2013-dev-x86", "configurePreset": "windows-vs2013-dev-x86", "configuration": "Release" },
+    { "name": "windows-vs2013-release-x64", "configurePreset": "windows-vs2013-release-x64", "configuration": "Release", "targets": ["win32-release"] },
+    { "name": "windows-vs2013-release-x86", "configurePreset": "windows-vs2013-release-x86", "configuration": "Release", "targets": ["win32-release"] },
     { "name": "windows-vs2015-xp-dev-x64", "configurePreset": "windows-vs2015-xp-dev-x64", "configuration": "Release" },
     { "name": "windows-vs2015-xp-dev-x86", "configurePreset": "windows-vs2015-xp-dev-x86", "configuration": "Release" },
     { "name": "windows-vs2015-xp-release-x64", "configurePreset": "windows-vs2015-xp-release-x64", "configuration": "Release", "targets": ["win32-release"] },

@@ -3,6 +3,7 @@ set -eu
 
 app_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 loader="$app_dir/lib/ld-musl-x86_64.so.1"
+launcher_name=${0##*/}
 
 if [ ! -x "$loader" ]; then
     printf '%s\n' "wolf3d: bundled musl loader is missing: $loader" >&2
@@ -10,4 +11,5 @@ if [ ! -x "$loader" ]; then
 fi
 
 exec "$loader" --library-path "$app_dir/lib" \
+    --argv0 "$app_dir/$launcher_name" \
     "$app_dir/bin/wolf3d-sdl3" "$@"

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-06 - Musl launcher data discovery
+
+- Preserved the top-level launcher's path as the hosted SDL executable's
+  `argv[0]`, restoring automatic discovery of game data beside `wolf3d` and
+  retaining renamed `wolf*`/`spear*` family selection.
+- Extended the musl audit to reject a launcher that exposes the internal
+  `bin/wolf3d-sdl3` path to the engine.
+
 ## 2026-10-06 - Functional musl desktop backends
 
 - Bundled musl-built X11, Wayland, ALSA, and PulseAudio client libraries plus

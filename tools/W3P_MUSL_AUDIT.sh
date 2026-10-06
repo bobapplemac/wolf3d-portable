@@ -39,7 +39,13 @@ if [ "$found_elf" -ne 1 ]; then
     exit 1
 fi
 
-"$bundle/wolf3d" --sdl3-help >/dev/null
+bundle_absolute=$(CDPATH= cd -- "$bundle" && pwd)
+help_output=$("$bundle/wolf3d" --sdl3-help)
+if ! printf '%s\n' "$help_output" \
+        | grep -F "Usage: $bundle_absolute/wolf3d [game options]" >/dev/null; then
+    echo "musl launcher did not preserve its top-level argv[0]" >&2
+    exit 1
+fi
 
 Xvfb :99 -screen 0 640x480x24 >/tmp/wolf3d-xvfb.log 2>&1 &
 xvfb_pid=$!
@@ -48,4 +54,4 @@ sleep 1
 DISPLAY=:99 SDL_VIDEODRIVER=x11 SDL_AUDIODRIVER=dummy \
     "$bundle/wolf3d" --sdl3-video-smoke
 
-echo "musl bundle audit: closed dependency set, launcher, and X11 video smoke tests passed"
+echo "musl bundle audit: dependency closure, top-level argv[0], and X11 video smoke tests passed"

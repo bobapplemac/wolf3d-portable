@@ -244,6 +244,12 @@ digest-pinned Alpine 3.20 container. It stages an AppDir-style directory named
 `wolf3d` launcher, the application under `bin/`, and a closed set of shared
 objects plus the musl loader under `lib/`.
 
+Original game data belongs beside the top-level `wolf3d` launcher. The
+launcher preserves that top-level path as the hosted process's executable
+identity, so automatic data discovery and the `wolf*`/`spear*` executable-name
+hint behave like the flat native packages. An explicit `--data PATH` still
+overrides automatic discovery.
+
 GCC is the default musl compiler. `make musl-sdl3 CC=clang` selects the Clang
 toolchain in the same container and keeps its build tree separate.
 

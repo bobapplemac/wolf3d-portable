@@ -19,7 +19,7 @@ supported.
 
 ## Windows
 
-Visual Studio and CLI builds share the CMake trees under `build/`:
+Visual Studio, MinGW, and CLI builds share the CMake trees under `build/`:
 
 ```text
 cmake --preset windows-dev-x64
@@ -107,8 +107,8 @@ and MSVC 19.0.
 ### Windows build dispatcher
 
 The root `build.ps1` is the human-facing entry point for selecting one build
-without memorizing preset names. It detects supported Visual Studio
-installations and exposes compiler, x86/x64 architecture, Win32/SDL3/both
+without memorizing preset names. It detects supported Visual Studio and MSYS2
+UCRT64 installations and exposes compiler, x86/x64 architecture, Win32/SDL3/both
 wrappers, Debug/Release, static/dynamic CRT, build/publish/clean actions,
 parallelism, and a dry-run mode:
 
@@ -124,6 +124,9 @@ parallelism, and a dry-run mode:
 .\build.ps1 -Compiler vs2012 -Architecture x86 -Wrapper win32
 .\build.ps1 -Compiler vs2010 -Architecture x86 -Wrapper win32
 .\build.ps1 -Compiler vs2008 -Architecture x86 -Wrapper win32
+.\build.ps1 -Compiler mingw-ucrt64 -Wrapper win32
+.\build.ps1 -Compiler mingw-ucrt64 -Wrapper sdl3
+.\build.ps1 -Compiler mingw-ucrt64 -Wrapper all
 .\build.ps1 -Action build -Configuration Debug -Runtime dynamic -Wrapper all
 .\build.ps1 -Compiler vs2022 -Wrapper win32 -DryRun
 ```
@@ -136,6 +139,27 @@ v141-and-older and v140_xp choices accept only `-Wrapper win32`. Publishing is
 a Release-only operation; Debug remains a development build. The root launcher
 delegates to `scripts/windows/build.ps1`, which prints every CMake command
 before running it and does not duplicate build logic.
+
+The MinGW profile targets x64 through MSYS2 UCRT64. Install the UCRT64 GCC
+toolchain together with its native CMake and Ninja packages. The dispatcher
+uses `C:\msys64` by default; pass `-Msys2Root C:\path\to\msys64` for a
+portable or non-default installation. It prepends that installation only to
+the current process environment. Release packages statically link GCC support
+code while retaining Windows' UCRT, and the publish action rejects imports of
+`msys-2.0.dll`, `cygwin1.dll`, libgcc, libstdc++, or winpthread DLLs.
+
+The equivalent direct presets, run from an MSYS2 UCRT64 shell, are:
+
+```text
+cmake --preset windows-mingw-ucrt64-dev-x64
+cmake --build --preset windows-mingw-ucrt64-dev-x64
+
+cmake --preset windows-mingw-ucrt64-release-x64
+cmake --build --preset windows-mingw-ucrt64-release-x64
+
+cmake --preset windows-mingw-ucrt64-sdl3-x64
+cmake --build --preset windows-mingw-ucrt64-sdl3-x64
+```
 
 ## Linux
 

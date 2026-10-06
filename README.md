@@ -71,6 +71,17 @@ For VS2022/v143, add `vs2022` after `windows`, for example
 `windows-vs2022-dev-x64`, `windows-vs2022-release-x64`, or
 `windows-vs2022-sdl3-x64`.
 
+From an MSYS2 UCRT64 shell, use the native-GCC x64 presets:
+
+```text
+cmake --preset windows-mingw-ucrt64-dev-x64
+cmake --build --preset windows-mingw-ucrt64-dev-x64
+cmake --preset windows-mingw-ucrt64-release-x64
+cmake --build --preset windows-mingw-ucrt64-release-x64
+cmake --preset windows-mingw-ucrt64-sdl3-x64
+cmake --build --preset windows-mingw-ucrt64-sdl3-x64
+```
+
 The native Win32 wrapper also supports VS2017/v141, VS2015/v140, VS2013/v120,
 VS2012/v110, VS2010/v100, and VS2008/v90 through matching `windows-vs20xx-*`
 presets. Each supported IDE has its own native project under
@@ -97,8 +108,9 @@ The parallel `windows-vs2015-xp-*` profiles provide a newer XP-targeting
 alternative using the v140_xp toolset.
 
 For a guided command line, `build.ps1` detects installed supported Visual
-Studio versions and defaults to publishing both x64 wrappers with the newest
-one found. With no arguments it interactively walks through the choices:
+Studio versions and MSYS2 UCRT64 MinGW. It defaults to publishing both x64
+wrappers with the newest Visual Studio found. With no arguments it
+interactively walks through the choices:
 
 ```powershell
 .\build.ps1 -List
@@ -107,11 +119,17 @@ one found. With no arguments it interactively walks through the choices:
 .\build.ps1 -Compiler vs2015 -Architecture x86 -Wrapper win32
 .\build.ps1 -Compiler vs2015-xp -Architecture x86 -Wrapper win32
 .\build.ps1 -Compiler vs2008 -Architecture x86 -Wrapper win32
+.\build.ps1 -Compiler mingw-ucrt64 -Wrapper win32
+.\build.ps1 -Compiler mingw-ucrt64 -Wrapper sdl3
 .\build.ps1 -Action build -Configuration Debug -Wrapper sdl3
 ```
 
 Run `Get-Help .\scripts\windows\build.ps1 -Detailed` for every option. The
 root launcher only dispatches to the same checked-in CMake presets and targets.
+Pass `-Msys2Root C:\path\to\msys64` for a portable or non-default MSYS2
+installation. MinGW release packages target x64 UCRT and statically link GCC
+support code; publishing audits every EXE/DLL to prevent accidental MSYS,
+Cygwin, libgcc, libstdc++, or winpthread runtime dependencies.
 
 In Visual Studio, select `Publish Win32`, `Publish SDL3`, or `Publish All`
 with the `x64` or `Win32` platform and build the solution. These publish

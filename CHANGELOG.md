@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-10-06 - MinGW UCRT64 Windows builds
+
+- Advanced the pinned engine to wolf3d-lib 1.4.36.
+- Added first-class MSYS2 UCRT64/GCC 16.2 x64 presets and interactive
+  `build.ps1` support for both the Win32/GDI and pinned-SDL3 wrappers.
+- Fixed portable Win32 procedure loading, structure initialization, and
+  Unicode GUI entry-point linking without weakening warnings.
+- Statically linked GCC support code and added a publish-time import audit
+  that rejects dependencies on MSYS, Cygwin, libgcc, libstdc++, or winpthread
+  runtime DLLs.
+
 ## 2026-10-06 - VC6 Windows 11 runtime validation
 
 - Advanced the pinned engine to wolf3d-lib 1.4.35.

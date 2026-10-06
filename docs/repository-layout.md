@@ -11,7 +11,7 @@
 | `packaging/` | Runtime instructions and portable Linux builder. |
 | `cmake/legacy/` | Isolated VC6-through-VS2005 Win32/GDI build definition. |
 | `ide/visual-studio/vsYYYY/` | One native, toolset-pinned solution/project pair per supported Visual Studio IDE generation. |
-| `scripts/windows/` | Human-facing modern and XP-era Windows build dispatchers. |
+| `scripts/windows/` | Human-facing Visual Studio/MinGW and XP-era Windows build dispatchers. |
 | `scripts/linux/` | Linux-hosted helpers, including future Docker cross-build scripts. |
 | `build/` | Ignored compiler output. |
 | `dist/` | Ignored minimal redistributable folders. |

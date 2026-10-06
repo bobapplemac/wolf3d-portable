@@ -356,6 +356,40 @@
       "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF" }
     },
     {
+      "name": "windows-mingw-ucrt64-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "W3P_BUILD_WIN32": "ON",
+        "W3P_BUILD_SDL3": "ON",
+        "W3P_WARNINGS_AS_ERRORS": "ON",
+        "WG_STATIC_GNU_RUNTIME": "ON",
+        "W3P_COMPILER_LABEL": "mingw-ucrt-gcc",
+        "WG_COMPILER_LABEL": "mingw-ucrt-gcc"
+      }
+    },
+    {
+      "name": "windows-mingw-ucrt64-dev-x64",
+      "displayName": "MinGW UCRT64 Windows hosts (x64)",
+      "inherits": "windows-mingw-ucrt64-base",
+      "binaryDir": "${sourceDir}/build/windows-mingw-ucrt64-dev-x64"
+    },
+    {
+      "name": "windows-mingw-ucrt64-release-x64",
+      "displayName": "MinGW UCRT64 Win32 release (x64)",
+      "inherits": "windows-mingw-ucrt64-base",
+      "binaryDir": "${sourceDir}/build/windows-mingw-ucrt64-release-x64",
+      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF" }
+    },
+    {
+      "name": "windows-mingw-ucrt64-sdl3-x64",
+      "displayName": "MinGW UCRT64 SDL3 release (x64)",
+      "inherits": "windows-mingw-ucrt64-base",
+      "binaryDir": "${sourceDir}/build/windows-mingw-ucrt64-sdl3-x64",
+      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF" }
+    },
+    {
       "name": "linux-sdl3",
       "displayName": "Linux SDL3 release",
       "generator": "Ninja",
@@ -423,6 +457,9 @@
     { "name": "windows-vs2022-release-x86", "configurePreset": "windows-vs2022-release-x86", "configuration": "Release", "targets": ["win32-release"] },
     { "name": "windows-vs2022-sdl3-x64", "configurePreset": "windows-vs2022-sdl3-x64", "configuration": "Release", "targets": ["sdl3-release"] },
     { "name": "windows-vs2022-sdl3-x86", "configurePreset": "windows-vs2022-sdl3-x86", "configuration": "Release", "targets": ["sdl3-release"] },
+    { "name": "windows-mingw-ucrt64-dev-x64", "configurePreset": "windows-mingw-ucrt64-dev-x64" },
+    { "name": "windows-mingw-ucrt64-release-x64", "configurePreset": "windows-mingw-ucrt64-release-x64", "targets": ["win32-release"] },
+    { "name": "windows-mingw-ucrt64-sdl3-x64", "configurePreset": "windows-mingw-ucrt64-sdl3-x64", "targets": ["sdl3-release"] },
     { "name": "linux-sdl3", "configurePreset": "linux-sdl3", "targets": ["sdl3-release"] },
     { "name": "linux-console", "configurePreset": "linux-console", "targets": ["console-release"] }
   ]

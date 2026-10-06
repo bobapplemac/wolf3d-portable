@@ -1,10 +1,10 @@
 <#
 .SYNOPSIS
-Build one wolf3d-portable Windows configuration with an installed Visual Studio toolchain.
+Build one wolf3d-portable Windows configuration with Visual Studio or MinGW.
 
 .DESCRIPTION
 This is a human-friendly dispatcher for the authoritative CMake presets. It
-detects supported Visual Studio installations, selects the requested wrapper,
+detects supported Visual Studio and MSYS2 UCRT64 installations, selects the requested wrapper,
 architecture, configuration, and CRT mode, then prints and runs the resulting
 CMake commands.
 
@@ -26,8 +26,8 @@ Shows the supported compiler installations detected on this computer.
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('auto', 'vs2022', 'vs2019', 'vs2017', 'vs2015', 'vs2015-xp',
-        'vs2013', 'vs2012', 'vs2010', 'vs2008')]
+    [ValidateSet('auto', 'mingw-ucrt64', 'vs2022', 'vs2019', 'vs2017',
+        'vs2015', 'vs2015-xp', 'vs2013', 'vs2012', 'vs2010', 'vs2008')]
     [string]$Compiler = 'auto',
 
     [ValidateSet('x64', 'x86')]
@@ -48,6 +48,8 @@ param(
     [ValidateRange(0, 256)]
     [int]$Jobs = 0,
 
+    [string]$Msys2Root = 'C:\msys64',
+
     [switch]$List,
     [switch]$DryRun,
     [switch]$NonInteractive
@@ -58,6 +60,30 @@ $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+
+function Find-MinGW {
+    param([string]$Root)
+
+    $bin = Join-Path $Root 'ucrt64\bin'
+    $gcc = Join-Path $bin 'gcc.exe'
+    $cmake = Join-Path $bin 'cmake.exe'
+    $ninja = Join-Path $bin 'ninja.exe'
+    $objdump = Join-Path $bin 'objdump.exe'
+    [pscustomobject]@{
+        Name = 'mingw-ucrt64'
+        Toolset = 'GCC/UCRT64'
+        PresetPrefix = 'windows-mingw-ucrt64'
+        SupportsSDL3 = $true
+        Installation = $Root
+        CMake = $cmake
+        Bin = $bin
+        ObjDump = $objdump
+        Available = [bool]((Test-Path -LiteralPath $gcc) -and
+            (Test-Path -LiteralPath $cmake) -and
+            (Test-Path -LiteralPath $ninja) -and
+            (Test-Path -LiteralPath $objdump))
+    }
+}
 
 function Find-VisualStudio {
     param(
@@ -174,6 +200,7 @@ $toolchains = @(
         -Toolset 'v90' -PresetPrefix 'windows-vs2008' `
         -SupportsSDL3 $false -CMakeFallbackDirectory $legacyCMakeDirectory `
         -RequiredFile 'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\cl.exe'
+    Find-MinGW -Root $Msys2Root
 )
 
 function Read-BuildChoice {
@@ -216,7 +243,8 @@ if ($PSBoundParameters.Count -eq 0 -and -not $NonInteractive -and $canPrompt) {
         throw 'No supported Visual Studio installation was detected.'
     }
     $Compiler = Read-BuildChoice 'Compiler' $availableCompilers
-    $Architecture = Read-BuildChoice 'Architecture' @('x64', 'x86')
+    if ($Compiler -eq 'mingw-ucrt64') { $Architecture = 'x64' }
+    else { $Architecture = Read-BuildChoice 'Architecture' @('x64', 'x86') }
     $promptToolchain = $toolchains | Where-Object { $_.Name -eq $Compiler } |
         Select-Object -First 1
     $wrapperChoices = if ($promptToolchain.SupportsSDL3) {
@@ -229,7 +257,8 @@ if ($PSBoundParameters.Count -eq 0 -and -not $NonInteractive -and $canPrompt) {
     if ($Action -ne 'publish') {
         $Configuration = Read-BuildChoice 'Configuration' @('Release', 'Debug')
     }
-    $Runtime = Read-BuildChoice 'MSVC runtime' @('static', 'dynamic')
+    if ($Compiler -eq 'mingw-ucrt64') { $Runtime = 'static' }
+    else { $Runtime = Read-BuildChoice 'MSVC runtime' @('static', 'dynamic') }
     Write-Host ''
     $confirmation = Read-Host 'Continue with this build? [Y/n]'
     if ($confirmation -and $confirmation -notmatch '^[Yy]') { exit 0 }
@@ -250,8 +279,18 @@ if ($Compiler -eq 'auto') {
     $selected = $toolchains | Where-Object { $_.Name -eq $Compiler } | Select-Object -First 1
 }
 if (-not $selected -or -not $selected.Available) {
-    $requested = if ($Compiler -eq 'auto') { 'a supported Visual Studio installation' } else { $Compiler }
-    throw "Could not find $requested with C++ tools and bundled CMake. Run .\build.ps1 -List."
+    $requested = if ($Compiler -eq 'auto') { 'a supported Windows compiler' } else { $Compiler }
+    throw "Could not find $requested. Run .\build.ps1 -List; for MinGW, pass -Msys2Root if MSYS2 is not under C:\msys64."
+}
+if ($selected.Name -eq 'mingw-ucrt64' -and $Architecture -ne 'x64') {
+    throw 'The MSYS2 UCRT64 profile supports x64 only.'
+}
+if ($selected.Name -eq 'mingw-ucrt64' -and $Runtime -ne 'static') {
+    throw 'MinGW packages require the statically linked GCC support runtime.'
+}
+if ($selected.Name -eq 'mingw-ucrt64') {
+    $env:PATH = $selected.Bin + ';' +
+        (Join-Path $selected.Installation 'usr\bin') + ';' + $env:PATH
 }
 if (-not $selected.SupportsSDL3 -and $Wrapper -ne 'win32') {
     throw "$($selected.Name)/$($selected.Toolset) supports only the Win32 wrapper; select -Wrapper win32."
@@ -318,12 +357,39 @@ function Invoke-DisplayedCommand {
     }
 }
 
+function Assert-MinGWRuntimeImports {
+    param([string]$ObjDump)
+
+    $version = (Get-Content -LiteralPath (Join-Path $root 'lib\wolf3d\VERSION') `
+        -TotalCount 1).Trim()
+    $packages = @(Get-ChildItem -LiteralPath (Join-Path $root 'dist') `
+        -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -like "wolf3d-portable-$version-*-mingw-ucrt-gcc*" })
+    if ($packages.Count -eq 0) {
+        throw 'No MinGW package was found for runtime-import validation.'
+    }
+    foreach ($package in $packages) {
+        $binaries = Get-ChildItem -LiteralPath $package.FullName -File |
+            Where-Object { $_.Extension -in @('.exe', '.dll') }
+        foreach ($binary in $binaries) {
+            $imports = & $ObjDump -p $binary.FullName
+            if ($LASTEXITCODE -ne 0) {
+                throw "Could not inspect imports for $($binary.FullName)."
+            }
+            if ($imports -match 'cygwin1\.dll|msys-2\.0\.dll|libgcc_s_.*\.dll|libstdc\+\+-6\.dll|libwinpthread-1\.dll') {
+                throw "Unexpected MinGW/MSYS runtime dependency in $($binary.FullName)."
+            }
+        }
+    }
+    Write-Host 'Verified: packaged binaries require no MSYS, Cygwin, libgcc, libstdc++, or winpthread DLL.'
+}
+
 Write-Host 'wolf3d-portable Windows build'
 Write-Host "  Compiler:      $($selected.Name) / $($selected.Toolset)"
 Write-Host "  Architecture:  $Architecture"
 Write-Host "  Wrapper:       $Wrapper"
 Write-Host "  Configuration: $Configuration"
-Write-Host "  CRT:           $Runtime"
+Write-Host "  Compiler CRT:  $Runtime"
 Write-Host "  Action:        $Action"
 
 if ($Action -eq 'clean' -and $buildDir -and
@@ -339,7 +405,8 @@ if ($Action -ne 'clean') {
             '-B', $buildDir,
             "-DW3P_BUILD_WIN32=$(if ($Wrapper -eq 'all' -or $Wrapper -eq 'win32') { 'ON' } else { 'OFF' })",
             "-DW3P_BUILD_SDL3=$(if ($Wrapper -eq 'all' -or $Wrapper -eq 'sdl3') { 'ON' } else { 'OFF' })",
-            "-DWG_STATIC_MSVC_RUNTIME=$(if ($Runtime -eq 'static') { 'ON' } else { 'OFF' })"
+            "-DWG_STATIC_MSVC_RUNTIME=$(if ($Runtime -eq 'static') { 'ON' } else { 'OFF' })",
+            "-DWG_STATIC_GNU_RUNTIME=$(if ($Runtime -eq 'static') { 'ON' } else { 'OFF' })"
         )
     }
     Invoke-DisplayedCommand -Executable $selected.CMake -Arguments $configureArguments
@@ -362,5 +429,8 @@ if ($Jobs -gt 0) {
 Invoke-DisplayedCommand -Executable $selected.CMake -Arguments $buildArguments
 
 if ($Action -eq 'publish') {
+    if ($selected.Name -eq 'mingw-ucrt64' -and -not $DryRun) {
+        Assert-MinGWRuntimeImports -ObjDump $selected.ObjDump
+    }
     Write-Host "Published package(s) are under $root\dist."
 }

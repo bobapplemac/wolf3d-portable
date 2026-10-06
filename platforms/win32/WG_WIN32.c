@@ -27,7 +27,7 @@ static LONG wg_windowed_style;
 #else
 static LONG_PTR wg_windowed_style;
 #endif
-static WINDOWPLACEMENT wg_windowed_placement = { sizeof(WINDOWPLACEMENT) };
+static WINDOWPLACEMENT wg_windowed_placement = { 0 };
 static uint8_t wg_text_screen[WOLF3D_TEXT_COLUMNS * WOLF3D_TEXT_ROWS
                               * WOLF3D_TEXT_CELL_BYTES];
 static uint16_t wg_text_columns;
@@ -94,13 +94,14 @@ static int wg_attach_parent_console(void)
     typedef BOOL (WINAPI *wg_attach_console_t)(DWORD);
     HMODULE kernel = GetModuleHandleA("kernel32.dll");
     wg_attach_console_t attach_console;
+    FARPROC procedure;
 
     if (kernel == NULL)
     {
         return 0;
     }
-    attach_console = (wg_attach_console_t)GetProcAddress(kernel,
-                                                         "AttachConsole");
+    procedure = GetProcAddress(kernel, "AttachConsole");
+    memcpy(&attach_console, &procedure, sizeof(attach_console));
     return attach_console != NULL && attach_console((DWORD)-1);
 }
 
@@ -227,8 +228,11 @@ static void wg_load_xinput(void)
         wg_xinput_module = LoadLibraryW(libraries[index]);
         if (wg_xinput_module != NULL)
         {
-            wg_xinput_get_state = (wg_xinput_get_state_t)GetProcAddress(
-                wg_xinput_module, "XInputGetState");
+            FARPROC procedure = GetProcAddress(wg_xinput_module,
+                                               "XInputGetState");
+
+            memcpy(&wg_xinput_get_state, &procedure,
+                   sizeof(wg_xinput_get_state));
             if (wg_xinput_get_state != NULL)
             {
                 return;
@@ -333,10 +337,11 @@ static int WG_Win32SetFullscreen(int fullscreen)
             return 0;
         }
 #else
-        MONITORINFO monitor = { sizeof(MONITORINFO) };
+        MONITORINFO monitor = { 0 };
 
         wg_windowed_style = GetWindowLongPtrW(wg_window, GWL_STYLE);
         wg_windowed_placement.length = sizeof(wg_windowed_placement);
+        monitor.cbSize = sizeof(monitor);
         if (!GetWindowPlacement(wg_window, &wg_windowed_placement)
             || !GetMonitorInfoW(MonitorFromWindow(
                                     wg_window, MONITOR_DEFAULTTONEAREST),

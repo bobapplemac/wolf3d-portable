@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef _WIN32
 #include <io.h>
@@ -12,13 +13,14 @@ static int WG_AttachParentConsole(void)
     typedef BOOL (WINAPI *wg_attach_console_t)(DWORD);
     HMODULE kernel = GetModuleHandleA("kernel32.dll");
     wg_attach_console_t attach_console;
+    FARPROC procedure;
 
     if (kernel == NULL)
     {
         return 0;
     }
-    attach_console = (wg_attach_console_t)GetProcAddress(kernel,
-                                                         "AttachConsole");
+    procedure = GetProcAddress(kernel, "AttachConsole");
+    memcpy(&attach_console, &procedure, sizeof(attach_console));
     return attach_console != NULL && attach_console((DWORD)-1);
 }
 #else

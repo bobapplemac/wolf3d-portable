@@ -48,7 +48,7 @@ presets, package contents, and dependency setup.
 | Visual Studio 2005 SP1 | MSVC 14.00 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Compile/package validated on XP SP3 x86 |
 | Visual Studio .NET 2003 SP1 | MSVC 13.10 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Compile/package validated on XP SP3 x86 |
 | Visual Studio .NET 2002 SP1 | MSVC 13.00 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Compile/package validated on XP SP3 x86 |
-| Visual C++ 6.0 SP6 | MSVC 12.00 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Game runtime validated on XP SP3 x86 with WL1 |
+| Visual C++ 6.0 SP6 | MSVC 12.00 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Game runtime validated on XP SP3 x86 with WL1 and on Windows 11 x64 under WOW64 |
 
 SDL3 is deliberately a modern wrapper. Historical Windows reach belongs to
 the dependency-free Win32/GDI host; the project will not backport SDL3 or add

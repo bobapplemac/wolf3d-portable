@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-06 - VC6 Windows 11 runtime validation
+
+- Advanced the pinned engine to wolf3d-lib 1.4.35.
+- Recorded a successful manual run of the VC6-built x86 Win32/GDI package on
+  Windows 11 x64 under WOW64, alongside its existing Windows XP SP3 result.
+
 ## 2026-10-06 - Native Visual Studio generation matrix
 
 - Advanced the pinned engine to wolf3d-lib 1.4.34.

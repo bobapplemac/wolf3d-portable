@@ -75,7 +75,8 @@ target era.
 
 The current compatibility baseline has been compile-and-package validated with
 VC6 SP6, VS2002 SP1, VS2003 SP1, and VS2005 SP1. The VC6 package has also been
-launched on Windows XP SP3 x86 with real WL1 shareware data.
+launched on Windows XP SP3 x86 with real WL1 shareware data and manually
+validated on Windows 11 x64 under WOW64.
 
 The development preset builds both GUI hosts. Dedicated distribution presets
 are `windows-release-{x64,x86}` for Win32 and `windows-sdl3-{x64,x86}` for

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioProject ProjectType="Visual C++" Version="9.00" Name="wolf3d-portable" ProjectGUID="{F4D995A4-B0D6-4F01-B014-48197BB71D80}" RootNamespace="wolf3d_portable" Keyword="MakeFileProj">
+	<Platforms>
+		<Platform Name="Win32" />
+		<Platform Name="x64" />
+	</Platforms>
+	<ToolFiles />
+	<Configurations>
+		<Configuration Name="Debug|Win32" OutputDirectory="$(ProjectDir)obj\Win32\Debug" IntermediateDirectory="$(ProjectDir)obj\Win32\Debug" ConfigurationType="0" CharacterSet="1">
+			<Tool Name="VCNMakeTool" BuildCommandLine="&quot;$(ProjectDir)build.cmd&quot; Debug Win32 build" ReBuildCommandLine="&quot;$(ProjectDir)build.cmd&quot; Debug Win32 rebuild" CleanCommandLine="&quot;$(ProjectDir)build.cmd&quot; Debug Win32 clean" Output="$(ProjectDir)..\..\..\build\windows-vs2008-ide-x86\Debug\wolf3d.exe" />
+		</Configuration>		<Configuration Name="Debug|x64" OutputDirectory="$(ProjectDir)obj\x64\Debug" IntermediateDirectory="$(ProjectDir)obj\x64\Debug" ConfigurationType="0" CharacterSet="1">
+			<Tool Name="VCNMakeTool" BuildCommandLine="&quot;$(ProjectDir)build.cmd&quot; Debug x64 build" ReBuildCommandLine="&quot;$(ProjectDir)build.cmd&quot; Debug x64 rebuild" CleanCommandLine="&quot;$(ProjectDir)build.cmd&quot; Debug x64 clean" Output="$(ProjectDir)..\..\..\build\windows-vs2008-ide-x64\Debug\wolf3d.exe" />
+		</Configuration>		<Configuration Name="Release|Win32" OutputDirectory="$(ProjectDir)obj\Win32\Release" IntermediateDirectory="$(ProjectDir)obj\Win32\Release" ConfigurationType="0" CharacterSet="1">
+			<Tool Name="VCNMakeTool" BuildCommandLine="&quot;$(ProjectDir)build.cmd&quot; Release Win32 build" ReBuildCommandLine="&quot;$(ProjectDir)build.cmd&quot; Release Win32 rebuild" CleanCommandLine="&quot;$(ProjectDir)build.cmd&quot; Release Win32 clean" Output="$(ProjectDir)..\..\..\build\windows-vs2008-ide-x86\Release\wolf3d.exe" />
+		</Configuration>		<Configuration Name="Release|x64" OutputDirectory="$(ProjectDir)obj\x64\Release" IntermediateDirectory="$(ProjectDir)obj\x64\Release" ConfigurationType="0" CharacterSet="1">
+			<Tool Name="VCNMakeTool" BuildCommandLine="&quot;$(ProjectDir)build.cmd&quot; Release x64 build" ReBuildCommandLine="&quot;$(ProjectDir)build.cmd&quot; Release x64 rebuild" CleanCommandLine="&quot;$(ProjectDir)build.cmd&quot; Release x64 clean" Output="$(ProjectDir)..\..\..\build\windows-vs2008-ide-x64\Release\wolf3d.exe" />
+		</Configuration>		<Configuration Name="Publish|Win32" OutputDirectory="$(ProjectDir)obj\Win32\Publish" IntermediateDirectory="$(ProjectDir)obj\Win32\Publish" ConfigurationType="0" CharacterSet="1">
+			<Tool Name="VCNMakeTool" BuildCommandLine="&quot;$(ProjectDir)build.cmd&quot; Release Win32 publish" ReBuildCommandLine="&quot;$(ProjectDir)build.cmd&quot; Release Win32 rebuild" CleanCommandLine="&quot;$(ProjectDir)build.cmd&quot; Release Win32 clean" Output="$(ProjectDir)..\..\..\build\windows-vs2008-ide-x86\Release\wolf3d.exe" />
+		</Configuration>		<Configuration Name="Publish|x64" OutputDirectory="$(ProjectDir)obj\x64\Publish" IntermediateDirectory="$(ProjectDir)obj\x64\Publish" ConfigurationType="0" CharacterSet="1">
+			<Tool Name="VCNMakeTool" BuildCommandLine="&quot;$(ProjectDir)build.cmd&quot; Release x64 publish" ReBuildCommandLine="&quot;$(ProjectDir)build.cmd&quot; Release x64 rebuild" CleanCommandLine="&quot;$(ProjectDir)build.cmd&quot; Release x64 clean" Output="$(ProjectDir)..\..\..\build\windows-vs2008-ide-x64\Release\wolf3d.exe" />
+		</Configuration>	</Configurations>
+	<References />
+	<Files>
+		<File RelativePath=".\build.cmd" />
+		<File RelativePath="..\..\..\CMakeLists.txt" />
+		<File RelativePath="..\..\..\README.md" />
+		<Filter Name="Canonical source" Filter="c;h">
+			<File RelativePath="..\..\..\platforms\linux-console\MAIN.c" />
+			<File RelativePath="..\..\..\platforms\linux-console\WG_LINUX_CONSOLE.c" />
+			<File RelativePath="..\..\..\platforms\linux-console\WG_LINUX_CONSOLE.h" />
+			<File RelativePath="..\..\..\platforms\sdl3\WG_SDL3.c" />
+			<File RelativePath="..\..\..\platforms\WG_HOST.h" />
+			<File RelativePath="..\..\..\platforms\WG_TEXT_OUTPUT.c" />
+			<File RelativePath="..\..\..\platforms\WG_TEXT_OUTPUT.h" />
+			<File RelativePath="..\..\..\platforms\win32\WG_WIN32.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\ID_CA.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\ID_CA.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\ID_IN.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\ID_IN.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\ID_PM.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\ID_PM.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\ID_SD.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\ID_SD.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\ID_US_1.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\ID_US_1.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\ID_VH.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\ID_VH.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\ID_VL.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\ID_VL.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_ASSETS.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_ASSETS.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_AUDIO.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_AUDIO.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_COMPAT.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_CONFIG.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_CONFIG.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_DATA.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_DATA.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_ENDIAN.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_FILE.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_FILE.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_FIXED.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_FIXED.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_GRAPHICS.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_GRAPHICS.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_MAPS.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_MAPS.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_OPL_DBOPL.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_OPL_NUKED.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_OPL_SILENT.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_OPL.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_PALETTE.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_PALETTE.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_PLATFORM.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_PLATFORM.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_RENDERER.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_RENDERER.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_SAVE.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_SAVE.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_SIGNON.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WG_SIGNON.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_ACT1.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_ACT1.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_ACT2.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_ACT2.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_AGENT.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_AGENT.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_DRAW.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_DRAW.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_GAME.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_GAME.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_INTER.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_INTER.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_MAIN.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_MAIN.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_MENU.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_MENU.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_PLAY.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_PLAY.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_SCALE.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_SCALE.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_STATE.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_STATE.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_TEXT.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WL_TEXT.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\src\WOLF3D.c" />
+			<File RelativePath="..\..\..\lib\wolf3d\include\WOLF3D_STDINT.h" />
+			<File RelativePath="..\..\..\lib\wolf3d\include\WOLF3D.h" />
+		</Filter>
+	</Files>
+	<Globals />
+</VisualStudioProject>

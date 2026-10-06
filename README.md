@@ -54,8 +54,9 @@ gitlink before treating that result as an official release.
 
 ## Windows
 
-Open `ide/visual-studio/vs2019-vs2022/wolf3d-portable.sln` in Visual Studio
-2019 or 2022, or use CMake. The established names below select VS2019/v142:
+Open `ide/visual-studio/vs2019/wolf3d-portable.sln` in Visual Studio 2019 or
+`ide/visual-studio/vs2022/wolf3d-portable.sln` in Visual Studio 2022, or use
+CMake. The established names below select VS2019/v142:
 
 ```text
 cmake --preset windows-dev-x64
@@ -72,11 +73,9 @@ For VS2022/v143, add `vs2022` after `windows`, for example
 
 The native Win32 wrapper also supports VS2017/v141, VS2015/v140, VS2013/v120,
 VS2012/v110, VS2010/v100, and VS2008/v90 through matching `windows-vs20xx-*`
-presets. Visual Studio 2015 users can open
-`ide/visual-studio/vs2015/wolf3d-portable-vs2015.sln`; older checked-in IDE
-solution bands remain follow-up work, while their command-line and generated
-CMake solutions are validated now. SDL3 is intentionally excluded from every
-legacy compiler profile.
+presets. Each supported IDE has its own native project under
+`ide/visual-studio/`; VC6 uses `vc6/wolf3d-portable.dsw`. SDL3 is intentionally
+excluded from every legacy compiler profile.
 
 Windows XP-era x86 builds use the separate CMake definition and native CMD
 dispatcher validated with VC6 SP6 and Visual Studio 2002 SP1, 2003 SP1, and

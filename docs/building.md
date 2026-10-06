@@ -83,10 +83,10 @@ SDL3. The MSVC runtime is statically linked by default; set
 `WG_STATIC_MSVC_RUNTIME=OFF` in a separate build tree to use the matching
 Visual C++ Redistributable.
 
-The checked-in
-`ide/visual-studio/vs2019-vs2022/wolf3d-portable.sln` invokes these same
-configurations from Visual Studio 2019 or 2022 and automatically selects v142
-or v143. Select one of the following solution configurations and build:
+The checked-in `ide/visual-studio/vs2019/wolf3d-portable.sln` and
+`ide/visual-studio/vs2022/wolf3d-portable.sln` invoke these same configurations
+through v142 and v143 respectively. Select one of the following solution
+configurations and build:
 
 - `Publish Win32` stages only the dependency-free Win32/GDI host.
 - `Publish SDL3` stages only the SDL3 host.
@@ -94,12 +94,8 @@ or v143. Select one of the following solution configurations and build:
 
 Choose `x64` or `Win32` independently in the platform selector. Publish
 configurations are Release builds with the static MSVC runtime and produce
-the same `dist/` directories as the matching CMake release presets. The
-ordinary Debug and Release configurations are intended for development and
-leave their outputs under `build/`.
-
 For the native Visual Studio 2015 IDE, open
-`ide/visual-studio/vs2015/wolf3d-portable-vs2015.sln`. This focused
+`ide/visual-studio/vs2015/wolf3d-portable.sln`. This focused
 compatibility-band solution exposes Debug, Release, dynamic-CRT variants, and
 `Publish Win32` without presenting unsupported SDL3 configurations. Its
 `Publish Win32 XP` configuration selects the candidate v140_xp profile. VS2015

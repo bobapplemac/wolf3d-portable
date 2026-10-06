@@ -63,10 +63,8 @@
     <Keyword>MakeFileProj</Keyword>
     <RootNamespace>wolf3d_portable</RootNamespace>
     <ProjectName>wolf3d-portable</ProjectName>
-    <WGVisualStudioGeneration>2019</WGVisualStudioGeneration>
-    <WGPlatformToolset>v142</WGPlatformToolset>
-    <WGVisualStudioGeneration Condition="'$(VisualStudioVersion)'=='17.0'">2022</WGVisualStudioGeneration>
-    <WGPlatformToolset Condition="'$(VisualStudioVersion)'=='17.0'">v143</WGPlatformToolset>
+    <WGVisualStudioGeneration>2022</WGVisualStudioGeneration>
+    <WGPlatformToolset>v143</WGPlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -117,16 +115,12 @@
     <WGCMake Condition="Exists('$(WGBundledCMake)')">$(WGBundledCMake)</WGCMake>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='Win32'">
-    <WGPreset>windows-dev-x86</WGPreset>
-    <WGBuildDir>$(WGRoot)build\windows-vs2019-dev-x86</WGBuildDir>
-    <WGPreset Condition="'$(WGVisualStudioGeneration)'=='2022'">windows-vs2022-dev-x86</WGPreset>
-    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(WGRoot)build\windows-vs2022-dev-x86</WGBuildDir>
+    <WGPreset>windows-vs2022-dev-x86</WGPreset>
+    <WGBuildDir>$(WGRoot)build\windows-vs2022-dev-x86</WGBuildDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
-    <WGPreset>windows-dev-x64</WGPreset>
-    <WGBuildDir>$(WGRoot)build\windows-vs2019-dev-x64</WGBuildDir>
-    <WGPreset Condition="'$(WGVisualStudioGeneration)'=='2022'">windows-vs2022-dev-x64</WGPreset>
-    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(WGRoot)build\windows-vs2022-dev-x64</WGBuildDir>
+    <WGPreset>windows-vs2022-dev-x64</WGPreset>
+    <WGBuildDir>$(WGRoot)build\windows-vs2022-dev-x64</WGBuildDir>
   </PropertyGroup>
   <PropertyGroup>
     <WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime>
@@ -148,37 +142,29 @@
     <WGBuildTargets>win32-release sdl3-release</WGBuildTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Publish Win32' And '$(Platform)'=='Win32'">
-    <WGPreset>windows-release-x86</WGPreset>
-    <WGBuildDir>$(WGRoot)build\windows-vs2019-release-x86</WGBuildDir>
-    <WGPreset Condition="'$(WGVisualStudioGeneration)'=='2022'">windows-vs2022-release-x86</WGPreset>
-    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(WGRoot)build\windows-vs2022-release-x86</WGBuildDir>
+    <WGPreset>windows-vs2022-release-x86</WGPreset>
+    <WGBuildDir>$(WGRoot)build\windows-vs2022-release-x86</WGBuildDir>
     <WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime>
     <WGCMakeConfig>Release</WGCMakeConfig>
     <WGBuildTargets>win32-release</WGBuildTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Publish Win32' And '$(Platform)'=='x64'">
-    <WGPreset>windows-release-x64</WGPreset>
-    <WGBuildDir>$(WGRoot)build\windows-vs2019-release-x64</WGBuildDir>
-    <WGPreset Condition="'$(WGVisualStudioGeneration)'=='2022'">windows-vs2022-release-x64</WGPreset>
-    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(WGRoot)build\windows-vs2022-release-x64</WGBuildDir>
+    <WGPreset>windows-vs2022-release-x64</WGPreset>
+    <WGBuildDir>$(WGRoot)build\windows-vs2022-release-x64</WGBuildDir>
     <WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime>
     <WGCMakeConfig>Release</WGCMakeConfig>
     <WGBuildTargets>win32-release</WGBuildTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Publish SDL3' And '$(Platform)'=='Win32'">
-    <WGPreset>windows-sdl3-x86</WGPreset>
-    <WGBuildDir>$(WGRoot)build\windows-vs2019-sdl3-x86</WGBuildDir>
-    <WGPreset Condition="'$(WGVisualStudioGeneration)'=='2022'">windows-vs2022-sdl3-x86</WGPreset>
-    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(WGRoot)build\windows-vs2022-sdl3-x86</WGBuildDir>
+    <WGPreset>windows-vs2022-sdl3-x86</WGPreset>
+    <WGBuildDir>$(WGRoot)build\windows-vs2022-sdl3-x86</WGBuildDir>
     <WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime>
     <WGCMakeConfig>Release</WGCMakeConfig>
     <WGBuildTargets>sdl3-release</WGBuildTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Publish SDL3' And '$(Platform)'=='x64'">
-    <WGPreset>windows-sdl3-x64</WGPreset>
-    <WGBuildDir>$(WGRoot)build\windows-vs2019-sdl3-x64</WGBuildDir>
-    <WGPreset Condition="'$(WGVisualStudioGeneration)'=='2022'">windows-vs2022-sdl3-x64</WGPreset>
-    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(WGRoot)build\windows-vs2022-sdl3-x64</WGBuildDir>
+    <WGPreset>windows-vs2022-sdl3-x64</WGPreset>
+    <WGBuildDir>$(WGRoot)build\windows-vs2022-sdl3-x64</WGBuildDir>
     <WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime>
     <WGCMakeConfig>Release</WGCMakeConfig>
     <WGBuildTargets>sdl3-release</WGBuildTargets>

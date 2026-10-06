@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32"><Configuration>Debug</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64"><Configuration>Debug</Configuration><Platform>x64</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Debug Dynamic CRT|Win32"><Configuration>Debug Dynamic CRT</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Debug Dynamic CRT|x64"><Configuration>Debug Dynamic CRT</Configuration><Platform>x64</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Publish Win32|Win32"><Configuration>Publish Win32</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Publish Win32|x64"><Configuration>Publish Win32</Configuration><Platform>x64</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release Dynamic CRT|Win32"><Configuration>Release Dynamic CRT</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release Dynamic CRT|x64"><Configuration>Release Dynamic CRT</Configuration><Platform>x64</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{69576B19-D918-4F6E-9829-2EBBC88A6700}</ProjectGuid>
+    <Keyword>MakeFileProj</Keyword>
+    <RootNamespace>wolf3d_portable</RootNamespace>
+    <ProjectName>wolf3d-portable</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <WGRoot>$(MSBuildThisFileDirectory)..\..\..\</WGRoot>
+    <WGCMake>$(WGRoot)scripts\windows\cmake-driver.cmd</WGCMake>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Platform)'=='Win32'">
+    <WGPreset>windows-vs2017-dev-x86</WGPreset>
+    <WGBuildDir>$(WGRoot)build\windows-vs2017-dev-x86</WGBuildDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Platform)'=='x64'">
+    <WGPreset>windows-vs2017-dev-x64</WGPreset>
+    <WGBuildDir>$(WGRoot)build\windows-vs2017-dev-x64</WGBuildDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime>
+    <WGCMakeConfig>$(Configuration)</WGCMakeConfig>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug Dynamic CRT'">
+    <WGStaticMsvcRuntime>OFF</WGStaticMsvcRuntime><WGCMakeConfig>Debug</WGCMakeConfig><WGBuildDir>$(WGBuildDir)-dynamic-crt</WGBuildDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release Dynamic CRT'">
+    <WGStaticMsvcRuntime>OFF</WGStaticMsvcRuntime><WGCMakeConfig>Release</WGCMakeConfig><WGBuildDir>$(WGBuildDir)-dynamic-crt</WGBuildDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Publish Win32' And '$(Platform)'=='Win32'">
+    <WGPreset>windows-vs2017-release-x86</WGPreset><WGBuildDir>$(WGRoot)build\windows-vs2017-release-x86</WGBuildDir><WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime><WGCMakeConfig>Release</WGCMakeConfig><WGBuildTargetArg>--target win32-release</WGBuildTargetArg>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Publish Win32' And '$(Platform)'=='x64'">
+    <WGPreset>windows-vs2017-release-x64</WGPreset><WGBuildDir>$(WGRoot)build\windows-vs2017-release-x64</WGBuildDir><WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime><WGCMakeConfig>Release</WGCMakeConfig><WGBuildTargetArg>--target win32-release</WGBuildTargetArg>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IntDir>$(WGBuildDir)\msbuild\$(WGCMakeConfig)\</IntDir>
+    <OutDir>$(WGBuildDir)\msbuild\$(WGCMakeConfig)\</OutDir>
+    <NMakeBuildCommandLine>cd /d "$(WGRoot)" &amp;&amp; "$(WGCMake)" --preset $(WGPreset) -B "$(WGBuildDir)" -DWG_STATIC_MSVC_RUNTIME=$(WGStaticMsvcRuntime) &amp;&amp; "$(WGCMake)" --build "$(WGBuildDir)" --config "$(WGCMakeConfig)" $(WGBuildTargetArg)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd /d "$(WGRoot)" &amp;&amp; "$(WGCMake)" --preset $(WGPreset) -B "$(WGBuildDir)" -DWG_STATIC_MSVC_RUNTIME=$(WGStaticMsvcRuntime) &amp;&amp; "$(WGCMake)" --build "$(WGBuildDir)" --config "$(WGCMakeConfig)" $(WGBuildTargetArg) --clean-first</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd /d "$(WGRoot)" &amp;&amp; "$(WGCMake)" --preset $(WGPreset) -B "$(WGBuildDir)" -DWG_STATIC_MSVC_RUNTIME=$(WGStaticMsvcRuntime) &amp;&amp; "$(WGCMake)" --build "$(WGBuildDir)" --config "$(WGCMakeConfig)" --target clean</NMakeCleanCommandLine>
+    <NMakeOutput>$(WGBuildDir)\$(WGCMakeConfig)\wolf3d.exe</NMakeOutput>
+    <NMakeIncludeSearchPath>$(WGRoot)lib\wolf3d\include;$(WGRoot)platforms;%(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>WIN32_LEAN_AND_MEAN;UNICODE;_UNICODE;%(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <LocalDebuggerCommand>$(NMakeOutput)</LocalDebuggerCommand>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <ItemGroup>
+    <ClCompile Include="$(WGRoot)platforms\*.c" />
+    <ClCompile Include="$(WGRoot)platforms\win32\*.c" />
+    <ClInclude Include="$(WGRoot)lib\wolf3d\include\*.h" />
+    <ClInclude Include="$(WGRoot)platforms\*.h" />
+    <None Include="$(WGRoot)CMakeLists.txt" />
+    <None Include="$(WGRoot)CMakePresets.json" />
+    <None Include="$(WGRoot)README.md" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

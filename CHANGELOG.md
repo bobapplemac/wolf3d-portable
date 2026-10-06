@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-10-06 - Native Visual Studio generation matrix
+
+- Advanced the pinned engine to wolf3d-lib 1.4.34.
+- Added one native, toolset-pinned solution/project pair per Visual Studio IDE
+  from VS2002 through VS2022, plus a period-correct VC6 workspace; every build
+  continues to compile the pinned engine submodule.
+- Kept SDL3 confined to VS2019 and VS2022 while all historical IDE projects
+  expose only the dependency-free Win32/GDI wrapper.
+- Validated VS2008--VS2013 on Windows 7 and VC6--VS2005 on Windows XP through
+  their exact IDE command-line hosts; native VS2017 IDE testing remains
+  pending a matching installation.
+- Corrected the XP-native dispatcher so inherited nonzero `ERRORLEVEL` state
+  cannot falsely fail an already-created build directory.
+
 ## 2026-10-06 - Compatibility-banded build layout
 
 - Advanced the pinned engine to wolf3d-lib 1.4.33.

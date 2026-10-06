@@ -10,8 +10,7 @@
 | `third_party/SDL3/` | Pinned SDL3 submodule. |
 | `packaging/` | Runtime instructions and portable Linux builder. |
 | `cmake/legacy/` | Isolated VC6-through-VS2005 Win32/GDI build definition. |
-| `ide/visual-studio/vs2019-vs2022/` | Shared modern Visual Studio solution/project for the empirically compatible VS2019 and VS2022 band. |
-| `ide/visual-studio/vs2015/` | Focused VS2015/v140 and v140_xp Win32-only solution/project. |
+| `ide/visual-studio/vsYYYY/` | One native, toolset-pinned solution/project pair per supported Visual Studio IDE generation. |
 | `scripts/windows/` | Human-facing modern and XP-era Windows build dispatchers. |
 | `scripts/linux/` | Linux-hosted helpers, including future Docker cross-build scripts. |
 | `build/` | Ignored compiler output. |

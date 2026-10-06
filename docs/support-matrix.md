@@ -36,14 +36,14 @@ presets, package contents, and dependency setup.
 
 | Compiler environment | Toolset | Architectures | Win32/GDI | SDL3 | Build entry point | Destination validation |
 | --- | --- | --- | --- | --- | --- | --- |
-| Visual Studio 2022 | v143 | x86, x64 | Validated | Validated | `build.ps1`, root solution, CMake presets | Current Windows development host |
-| Visual Studio 2019 | v142 | x86, x64 | Validated | Validated | `build.ps1`, root solution, CMake presets | Current Windows development host |
-| VS2017 toolset hosted by VS2019 | v141 | x86, x64 | Validated | Not supported | `build.ps1`, CMake presets | No legacy-OS minimum claimed |
-| Visual Studio 2015 | v140 | x86, x64 | Validated | Not supported | `build.ps1`, VS2015 solution, CMake presets | No legacy-OS minimum claimed |
+| Visual Studio 2022 | v143 | x86, x64 | Validated | Validated | `build.ps1`, native VS2022 solution, CMake presets | Current Windows development host |
+| Visual Studio 2019 | v142 | x86, x64 | Validated | Validated | `build.ps1`, native VS2019 solution, CMake presets | Current Windows development host |
+| VS2017 v141 (compiler hosted by VS2019; native IDE files pending lab validation) | v141 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2017 solution, CMake presets | No legacy-OS minimum claimed |
+| Visual Studio 2015 | v140 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2015 solution, CMake presets | No legacy-OS minimum claimed |
 | Visual Studio 2015 XP SDK | v140_xp | x86, x64 | Validated | Not supported | `build.ps1`, VS2015 solution, CMake presets | Pending on actual XP; PE minimum 5.01 x86 / 5.02 x64 |
-| Visual Studio 2013 Update 5 | v120 | x86, x64 | Validated | Not supported | `build.ps1`, CMake presets | No legacy-OS minimum claimed |
-| Visual Studio 2012 Update 5 | v110 | x86, x64 | Validated | Not supported | `build.ps1`, CMake presets | No legacy-OS minimum claimed |
-| Visual Studio 2010 SP1 | v100 | x86, x64 | Validated | Not supported | `build.ps1`, CMake presets | No legacy-OS minimum claimed |
+| Visual Studio 2013 Update 5 | v120 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2013 solution, CMake presets | No legacy-OS minimum claimed |
+| Visual Studio 2012 Update 5 | v110 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2012 solution, CMake presets | No legacy-OS minimum claimed |
+| Visual Studio 2010 SP1 | v100 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2010 solution, CMake presets | No legacy-OS minimum claimed |
 | Visual Studio 2008 SP1 | v90 | x86, x64 | Validated | Not supported | `build.ps1`, CMake presets | No legacy-OS minimum claimed |
 | Visual Studio 2005 SP1 | MSVC 14.00 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Compile/package validated on XP SP3 x86 |
 | Visual Studio .NET 2003 SP1 | MSVC 13.10 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Compile/package validated on XP SP3 x86 |
@@ -63,8 +63,14 @@ default; dynamic CRT packages require the matching Microsoft redistributable.
 
 | Interface | Supported scope |
 | --- | --- |
-| `ide/visual-studio/vs2019-vs2022/wolf3d-portable.sln` | VS2019/v142 and VS2022/v143; Win32 and SDL3; x86/x64; publish configurations stage `dist/` |
-| `ide/visual-studio/vs2015/wolf3d-portable-vs2015.sln` | VS2015/v140 and v140_xp; Win32 only; x86/x64 |
+| `ide/visual-studio/vs2022/wolf3d-portable.sln` | VS2022/v143; Win32 and SDL3; x86/x64; publish configurations stage `dist/` |
+| `ide/visual-studio/vs2019/wolf3d-portable.sln` | VS2019/v142; Win32 and SDL3; x86/x64; publish configurations stage `dist/` |
+| `ide/visual-studio/vs2017/wolf3d-portable.sln` | VS2017/v141; Win32 only; x86/x64 |
+| `ide/visual-studio/vs2015/wolf3d-portable.sln` | VS2015/v140 and v140_xp; Win32 only; x86/x64 |
+| `ide/visual-studio/vs2010/`, `vs2012/`, `vs2013/` | Matching native IDE/toolset; Win32 only; x86/x64 |
+| `ide/visual-studio/vs2008/wolf3d-portable.sln` | Native VS2008/v90; Win32 only; x86/x64 |
+| `ide/visual-studio/vs2002/`, `vs2003/`, `vs2005/` | Matching period IDE/compiler; Win32 x86 only |
+| `ide/visual-studio/vc6/wolf3d-portable.dsw` | Native VC6 workspace/project; Win32 x86 only |
 | Root `build.ps1` | Interactive or scripted selection from VS2008 through VS2022; SDL3 only for VS2019/2022 |
 | Direct CMake presets | Same modern compiler profiles as the dispatcher; useful for automation |
 | `scripts\windows\legacy\build.cmd` | VC6, VS2002, VS2003, VS2005; Win32 x86 only; build or package |

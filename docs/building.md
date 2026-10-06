@@ -47,7 +47,7 @@ modern project does not inherit obsolete generator constraints. From an x86
 Windows build host with the selected compiler installed:
 
 ```text
-scripts\build-legacy.cmd COMPILER [CONFIG] [AUDIO] [OPL] [RUNTIME] [ACTION]
+scripts\windows\legacy\build.cmd COMPILER [CONFIG] [AUDIO] [OPL] [RUNTIME] [ACTION]
 ```
 
 The accepted values are:
@@ -62,7 +62,7 @@ The accepted values are:
 For example, this creates a ready-to-copy VC6 package:
 
 ```text
-scripts\build-legacy.cmd vc6 Release standard nuked static package
+scripts\windows\legacy\build.cmd vc6 Release standard nuked static package
 ```
 
 The legacy definition always compiles the pinned library submodule as part of
@@ -83,9 +83,10 @@ SDL3. The MSVC runtime is statically linked by default; set
 `WG_STATIC_MSVC_RUNTIME=OFF` in a separate build tree to use the matching
 Visual C++ Redistributable.
 
-The checked-in `wolf3d-portable.sln` invokes these same configurations from
-Visual Studio 2019 or 2022 and automatically selects v142 or v143. Select one
-of the following solution configurations and build:
+The checked-in
+`ide/visual-studio/vs2019-vs2022/wolf3d-portable.sln` invokes these same
+configurations from Visual Studio 2019 or 2022 and automatically selects v142
+or v143. Select one of the following solution configurations and build:
 
 - `Publish Win32` stages only the dependency-free Win32/GDI host.
 - `Publish SDL3` stages only the SDL3 host.

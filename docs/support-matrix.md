@@ -45,10 +45,10 @@ presets, package contents, and dependency setup.
 | Visual Studio 2012 Update 5 | v110 | x86, x64 | Validated | Not supported | `build.ps1`, CMake presets | No legacy-OS minimum claimed |
 | Visual Studio 2010 SP1 | v100 | x86, x64 | Validated | Not supported | `build.ps1`, CMake presets | No legacy-OS minimum claimed |
 | Visual Studio 2008 SP1 | v90 | x86, x64 | Validated | Not supported | `build.ps1`, CMake presets | No legacy-OS minimum claimed |
-| Visual Studio 2005 SP1 | MSVC 14.00 | x86 | Validated | Not supported | `scripts\build-legacy.cmd` | Compile/package validated on XP SP3 x86 |
-| Visual Studio .NET 2003 SP1 | MSVC 13.10 | x86 | Validated | Not supported | `scripts\build-legacy.cmd` | Compile/package validated on XP SP3 x86 |
-| Visual Studio .NET 2002 SP1 | MSVC 13.00 | x86 | Validated | Not supported | `scripts\build-legacy.cmd` | Compile/package validated on XP SP3 x86 |
-| Visual C++ 6.0 SP6 | MSVC 12.00 | x86 | Validated | Not supported | `scripts\build-legacy.cmd` | Game runtime validated on XP SP3 x86 with WL1 |
+| Visual Studio 2005 SP1 | MSVC 14.00 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Compile/package validated on XP SP3 x86 |
+| Visual Studio .NET 2003 SP1 | MSVC 13.10 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Compile/package validated on XP SP3 x86 |
+| Visual Studio .NET 2002 SP1 | MSVC 13.00 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Compile/package validated on XP SP3 x86 |
+| Visual C++ 6.0 SP6 | MSVC 12.00 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Game runtime validated on XP SP3 x86 with WL1 |
 
 SDL3 is deliberately a modern wrapper. Historical Windows reach belongs to
 the dependency-free Win32/GDI host; the project will not backport SDL3 or add
@@ -63,11 +63,11 @@ default; dynamic CRT packages require the matching Microsoft redistributable.
 
 | Interface | Supported scope |
 | --- | --- |
-| Root `wolf3d-portable.sln` | VS2019/v142 and VS2022/v143; Win32 and SDL3; x86/x64; publish configurations stage `dist/` |
+| `ide/visual-studio/vs2019-vs2022/wolf3d-portable.sln` | VS2019/v142 and VS2022/v143; Win32 and SDL3; x86/x64; publish configurations stage `dist/` |
 | `ide/visual-studio/vs2015/wolf3d-portable-vs2015.sln` | VS2015/v140 and v140_xp; Win32 only; x86/x64 |
 | Root `build.ps1` | Interactive or scripted selection from VS2008 through VS2022; SDL3 only for VS2019/2022 |
 | Direct CMake presets | Same modern compiler profiles as the dispatcher; useful for automation |
-| `scripts\build-legacy.cmd` | VC6, VS2002, VS2003, VS2005; Win32 x86 only; build or package |
+| `scripts\windows\legacy\build.cmd` | VC6, VS2002, VS2003, VS2005; Win32 x86 only; build or package |
 
 ## Linux wrapper/compiler matrix
 

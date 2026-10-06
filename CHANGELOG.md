@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-06 - Compatibility-banded build layout
+
+- Advanced the pinned engine to wolf3d-lib 1.4.33.
+- Moved the shared VS2019/VS2022 solution and project into the explicit
+  `ide/visual-studio/vs2019-vs2022` band without changing its CMake-backed
+  development or publish behavior.
+- Moved the XP-native VC6--VS2005 dispatcher to
+  `scripts/windows/legacy/build.cmd` and established `scripts/linux/` for
+  Linux-hosted helpers, including the planned Open Watcom/DOS cross-build.
+- Updated every documented build path while retaining `build.ps1` and the
+  root Makefile as the stable human-facing dispatchers.
+
 ## 2026-10-06 - Build and compatibility matrices
 
 - Advanced the pinned engine to wolf3d-lib 1.4.32.

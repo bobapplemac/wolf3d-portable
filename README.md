@@ -54,8 +54,8 @@ gitlink before treating that result as an official release.
 
 ## Windows
 
-Open `wolf3d-portable.sln` in Visual Studio 2019 or 2022, or use CMake. The
-established names below select VS2019/v142:
+Open `ide/visual-studio/vs2019-vs2022/wolf3d-portable.sln` in Visual Studio
+2019 or 2022, or use CMake. The established names below select VS2019/v142:
 
 ```text
 cmake --preset windows-dev-x64
@@ -83,10 +83,10 @@ dispatcher validated with VC6 SP6 and Visual Studio 2002 SP1, 2003 SP1, and
 2005 SP1:
 
 ```text
-scripts\build-legacy.cmd vc6
-scripts\build-legacy.cmd vs2002
-scripts\build-legacy.cmd vs2003
-scripts\build-legacy.cmd vs2005
+scripts\windows\legacy\build.cmd vc6
+scripts\windows\legacy\build.cmd vs2002
+scripts\windows\legacy\build.cmd vs2003
+scripts\windows\legacy\build.cmd vs2005
 ```
 
 These commands default to a Release package with Nuked-OPL3 and a static CRT.

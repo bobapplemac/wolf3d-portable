@@ -111,21 +111,22 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
+    <WGRoot>$(MSBuildThisFileDirectory)..\..\..\</WGRoot>
     <WGCMake>cmake</WGCMake>
     <WGBundledCMake>$(VsInstallRoot)\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe</WGBundledCMake>
     <WGCMake Condition="Exists('$(WGBundledCMake)')">$(WGBundledCMake)</WGCMake>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='Win32'">
     <WGPreset>windows-dev-x86</WGPreset>
-    <WGBuildDir>$(SolutionDir)build\windows-vs2019-dev-x86</WGBuildDir>
+    <WGBuildDir>$(WGRoot)build\windows-vs2019-dev-x86</WGBuildDir>
     <WGPreset Condition="'$(WGVisualStudioGeneration)'=='2022'">windows-vs2022-dev-x86</WGPreset>
-    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(SolutionDir)build\windows-vs2022-dev-x86</WGBuildDir>
+    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(WGRoot)build\windows-vs2022-dev-x86</WGBuildDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
     <WGPreset>windows-dev-x64</WGPreset>
-    <WGBuildDir>$(SolutionDir)build\windows-vs2019-dev-x64</WGBuildDir>
+    <WGBuildDir>$(WGRoot)build\windows-vs2019-dev-x64</WGBuildDir>
     <WGPreset Condition="'$(WGVisualStudioGeneration)'=='2022'">windows-vs2022-dev-x64</WGPreset>
-    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(SolutionDir)build\windows-vs2022-dev-x64</WGBuildDir>
+    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(WGRoot)build\windows-vs2022-dev-x64</WGBuildDir>
   </PropertyGroup>
   <PropertyGroup>
     <WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime>
@@ -148,36 +149,36 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Publish Win32' And '$(Platform)'=='Win32'">
     <WGPreset>windows-release-x86</WGPreset>
-    <WGBuildDir>$(SolutionDir)build\windows-vs2019-release-x86</WGBuildDir>
+    <WGBuildDir>$(WGRoot)build\windows-vs2019-release-x86</WGBuildDir>
     <WGPreset Condition="'$(WGVisualStudioGeneration)'=='2022'">windows-vs2022-release-x86</WGPreset>
-    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(SolutionDir)build\windows-vs2022-release-x86</WGBuildDir>
+    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(WGRoot)build\windows-vs2022-release-x86</WGBuildDir>
     <WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime>
     <WGCMakeConfig>Release</WGCMakeConfig>
     <WGBuildTargets>win32-release</WGBuildTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Publish Win32' And '$(Platform)'=='x64'">
     <WGPreset>windows-release-x64</WGPreset>
-    <WGBuildDir>$(SolutionDir)build\windows-vs2019-release-x64</WGBuildDir>
+    <WGBuildDir>$(WGRoot)build\windows-vs2019-release-x64</WGBuildDir>
     <WGPreset Condition="'$(WGVisualStudioGeneration)'=='2022'">windows-vs2022-release-x64</WGPreset>
-    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(SolutionDir)build\windows-vs2022-release-x64</WGBuildDir>
+    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(WGRoot)build\windows-vs2022-release-x64</WGBuildDir>
     <WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime>
     <WGCMakeConfig>Release</WGCMakeConfig>
     <WGBuildTargets>win32-release</WGBuildTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Publish SDL3' And '$(Platform)'=='Win32'">
     <WGPreset>windows-sdl3-x86</WGPreset>
-    <WGBuildDir>$(SolutionDir)build\windows-vs2019-sdl3-x86</WGBuildDir>
+    <WGBuildDir>$(WGRoot)build\windows-vs2019-sdl3-x86</WGBuildDir>
     <WGPreset Condition="'$(WGVisualStudioGeneration)'=='2022'">windows-vs2022-sdl3-x86</WGPreset>
-    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(SolutionDir)build\windows-vs2022-sdl3-x86</WGBuildDir>
+    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(WGRoot)build\windows-vs2022-sdl3-x86</WGBuildDir>
     <WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime>
     <WGCMakeConfig>Release</WGCMakeConfig>
     <WGBuildTargets>sdl3-release</WGBuildTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Publish SDL3' And '$(Platform)'=='x64'">
     <WGPreset>windows-sdl3-x64</WGPreset>
-    <WGBuildDir>$(SolutionDir)build\windows-vs2019-sdl3-x64</WGBuildDir>
+    <WGBuildDir>$(WGRoot)build\windows-vs2019-sdl3-x64</WGBuildDir>
     <WGPreset Condition="'$(WGVisualStudioGeneration)'=='2022'">windows-vs2022-sdl3-x64</WGPreset>
-    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(SolutionDir)build\windows-vs2022-sdl3-x64</WGBuildDir>
+    <WGBuildDir Condition="'$(WGVisualStudioGeneration)'=='2022'">$(WGRoot)build\windows-vs2022-sdl3-x64</WGBuildDir>
     <WGStaticMsvcRuntime>ON</WGStaticMsvcRuntime>
     <WGCMakeConfig>Release</WGCMakeConfig>
     <WGBuildTargets>sdl3-release</WGBuildTargets>
@@ -186,11 +187,11 @@
     <WGBuildTargetArg Condition="'$(WGBuildTargets)'!=''">--target $(WGBuildTargets)</WGBuildTargetArg>
     <IntDir>$(WGBuildDir)\msbuild\$(WGCMakeConfig)\</IntDir>
     <OutDir>$(WGBuildDir)\msbuild\$(WGCMakeConfig)\</OutDir>
-    <NMakeBuildCommandLine>cd /d "$(SolutionDir)" &amp;&amp; "$(WGCMake)" --preset $(WGPreset) -B "$(WGBuildDir)" -DWG_STATIC_MSVC_RUNTIME=$(WGStaticMsvcRuntime) &amp;&amp; "$(WGCMake)" --build "$(WGBuildDir)" --config "$(WGCMakeConfig)" $(WGBuildTargetArg)</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd /d "$(SolutionDir)" &amp;&amp; "$(WGCMake)" --preset $(WGPreset) -B "$(WGBuildDir)" -DWG_STATIC_MSVC_RUNTIME=$(WGStaticMsvcRuntime) &amp;&amp; "$(WGCMake)" --build "$(WGBuildDir)" --config "$(WGCMakeConfig)" $(WGBuildTargetArg) --clean-first</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd /d "$(SolutionDir)" &amp;&amp; "$(WGCMake)" --preset $(WGPreset) -B "$(WGBuildDir)" -DWG_STATIC_MSVC_RUNTIME=$(WGStaticMsvcRuntime) &amp;&amp; "$(WGCMake)" --build "$(WGBuildDir)" --config "$(WGCMakeConfig)" --target clean</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd /d "$(WGRoot)" &amp;&amp; "$(WGCMake)" --preset $(WGPreset) -B "$(WGBuildDir)" -DWG_STATIC_MSVC_RUNTIME=$(WGStaticMsvcRuntime) &amp;&amp; "$(WGCMake)" --build "$(WGBuildDir)" --config "$(WGCMakeConfig)" $(WGBuildTargetArg)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd /d "$(WGRoot)" &amp;&amp; "$(WGCMake)" --preset $(WGPreset) -B "$(WGBuildDir)" -DWG_STATIC_MSVC_RUNTIME=$(WGStaticMsvcRuntime) &amp;&amp; "$(WGCMake)" --build "$(WGBuildDir)" --config "$(WGCMakeConfig)" $(WGBuildTargetArg) --clean-first</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd /d "$(WGRoot)" &amp;&amp; "$(WGCMake)" --preset $(WGPreset) -B "$(WGBuildDir)" -DWG_STATIC_MSVC_RUNTIME=$(WGStaticMsvcRuntime) &amp;&amp; "$(WGCMake)" --build "$(WGBuildDir)" --config "$(WGCMakeConfig)" --target clean</NMakeCleanCommandLine>
     <NMakeOutput>$(WGBuildDir)\$(WGCMakeConfig)\wolf3d.exe</NMakeOutput>
-    <NMakeIncludeSearchPath>$(SolutionDir)lib\wolf3d\include;$(SolutionDir)platforms;$(SolutionDir)third_party\SDL3\include</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(WGRoot)lib\wolf3d\include;$(WGRoot)platforms;$(WGRoot)third_party\SDL3\include</NMakeIncludeSearchPath>
     <NMakePreprocessorDefinitions>WIN32_LEAN_AND_MEAN;UNICODE;_UNICODE;%(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
     <LocalDebuggerCommand>$(NMakeOutput)</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
@@ -199,16 +200,16 @@
     <NMakeOutput>$(WGBuildDir)\$(WGCMakeConfig)\wolf3d-sdl3.exe</NMakeOutput>
   </PropertyGroup>
   <ItemGroup>
-    <ClCompile Include="$(SolutionDir)platforms\*.c" />
-    <ClCompile Include="$(SolutionDir)platforms\linux-console\*.c" />
-    <ClCompile Include="$(SolutionDir)platforms\sdl3\*.c" />
-    <ClCompile Include="$(SolutionDir)platforms\win32\*.c" />
-    <ClInclude Include="$(SolutionDir)lib\wolf3d\include\*.h" />
-    <ClInclude Include="$(SolutionDir)platforms\*.h" />
-    <ClInclude Include="$(SolutionDir)platforms\linux-console\*.h" />
-    <None Include="$(SolutionDir)CMakeLists.txt" />
-    <None Include="$(SolutionDir)CMakePresets.json" />
-    <None Include="$(SolutionDir)README.md" />
+    <ClCompile Include="$(WGRoot)platforms\*.c" />
+    <ClCompile Include="$(WGRoot)platforms\linux-console\*.c" />
+    <ClCompile Include="$(WGRoot)platforms\sdl3\*.c" />
+    <ClCompile Include="$(WGRoot)platforms\win32\*.c" />
+    <ClInclude Include="$(WGRoot)lib\wolf3d\include\*.h" />
+    <ClInclude Include="$(WGRoot)platforms\*.h" />
+    <ClInclude Include="$(WGRoot)platforms\linux-console\*.h" />
+    <None Include="$(WGRoot)CMakeLists.txt" />
+    <None Include="$(WGRoot)CMakePresets.json" />
+    <None Include="$(WGRoot)README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

@@ -5,8 +5,11 @@ implementation lives in `scripts/windows/build.ps1` and delegates to the
 authoritative CMake presets.
 
 Linux uses the root Makefile as its human-facing dispatcher; run `make help`.
+Linux-hosted helper scripts, including the planned Docker/Open Watcom DOS
+cross-build, live under `scripts/linux/`.
 
-Windows XP-era x86 compiler builds use `build-legacy.cmd`. It selects the old
-Visual Studio generator, builds the pinned `wolf3d-lib` submodule, and stages a
-compiler-qualified Win32/GDI package without touching SDL3. Run it without
-arguments to display the accepted compiler and build options.
+Windows XP-era x86 compiler builds use
+`scripts/windows/legacy/build.cmd`. It selects the old Visual Studio generator,
+builds the pinned `wolf3d-lib` submodule, and stages a compiler-qualified
+Win32/GDI package without touching SDL3. Run it without arguments to display
+the accepted compiler and build options.

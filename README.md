@@ -31,6 +31,12 @@ archived [WolfGL download page](https://wolfgl.sourceforge.net/files.htm); the
 files are not redistributed by this project. Registered `WL6`, `SOD`, `SD1`,
 `SD2`, and `SD3` data must come from a legitimately obtained game copy.
 
+Default packages compile all three audio drivers. Select one at launch with
+`--opl nuked`, `--opl dbopl`, or `--opl silent`; silence preserves all original
+audio clocks and completion behavior. `--sample-rate HZ` changes the preferred
+PCM rate from its 48 kHz default (44.1 kHz is appropriate for the planned DOS
+SB16 host). Build frontends can omit drivers for constrained targets.
+
 ## Clone and initialize
 
 Clone recursively so both `wolf3d-lib` and the pinned SDL3 checkout are
@@ -100,7 +106,8 @@ scripts\windows\legacy\build.cmd vs2003
 scripts\windows\legacy\build.cmd vs2005
 ```
 
-These commands default to a Release package with Nuked-OPL3 and a static CRT.
+These commands default to a Release package with all audio drivers, Nuked as
+the runtime default, and a static CRT.
 Run the script without arguments for the complete option list. The resulting
 compiler-qualified x86 game folders are staged under `dist/`. This path builds
 only the Win32/GDI wrapper; SDL3 deliberately has no XP-era build profile.
@@ -160,6 +167,8 @@ make portable                # both in the Debian 10 compatibility container
 make musl-sdl3               # relocatable bundle with its own musl userspace
 make sdl3-release CC=clang   # use Clang
 make sdl3-release USE_SYSTEM_SDL3=ON
+make sdl3-release OPL_DEFAULT=dbopl
+make console-release OPL_DRIVERS=silent OPL_DEFAULT=silent
 ```
 
 Pinned SDL3 is the redistribution default. An installed SDL 3.2 or newer can

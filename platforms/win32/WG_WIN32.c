@@ -937,6 +937,19 @@ static int WG_Win32PCMInit(uint32_t sample_rate, uint16_t channels)
     return 1;
 }
 
+static int WG_Win32PCMInitEx(const wolf3d_pcm_format_t *requested,
+                             wolf3d_pcm_format_t *obtained)
+{
+    if (requested == NULL || obtained == NULL
+        || requested->bits_per_sample != 16U
+        || !WG_Win32PCMInit(requested->sample_rate, requested->channels))
+    {
+        return 0;
+    }
+    *obtained = *requested;
+    return 1;
+}
+
 static void WG_Win32PCMShutdown(void)
 {
     size_t index;
@@ -1034,7 +1047,8 @@ int WG_InstallPlatform(void)
         WG_Win32PCMInit,
         WG_Win32PCMShutdown,
         WG_Win32PCMWritableFrames,
-        WG_Win32PCMSubmit
+        WG_Win32PCMSubmit,
+        WG_Win32PCMInitEx
     };
 
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;

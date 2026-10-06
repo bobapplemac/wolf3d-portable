@@ -44,7 +44,7 @@ if(MSVC AND WG_STATIC_MSVC_RUNTIME)
         "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-# The submodule supplies the engine and its replaceable Nuked-OPL3 dependency.
+# The submodule supplies the engine and its configured audio drivers.
 # Its internal deterministic oracle is not part of production host builds.
 set(WG_BUILD_HEADLESS OFF CACHE BOOL "" FORCE)
 set(WG_WARNINGS_AS_ERRORS ${W3P_WARNINGS_AS_ERRORS} CACHE BOOL "" FORCE)
@@ -62,12 +62,22 @@ if(Git_FOUND)
 endif()
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WOLF3D-LIB.txt"
     "wolf3d-lib version: ${W3P_WOLF3D_VERSION}\n"
-    "wolf3d-lib commit: ${W3P_WOLF3D_COMMIT}\n")
+    "wolf3d-lib commit: ${W3P_WOLF3D_COMMIT}\n"
+    "OPL drivers: nuked=${WG_ENABLE_OPL_NUKED}, dbopl=${WG_ENABLE_OPL_DBOPL}, silent=${WG_ENABLE_OPL_SILENT}\n"
+    "default OPL driver: ${WG_DEFAULT_OPL_DRIVER}\n"
+    "preferred sample rate: ${WG_DEFAULT_SAMPLE_RATE} Hz\n")
 
-set(W3P_OPL_FILE_LINE
-    "  Nuked-OPL3.dll          Replaceable LGPL-2.1-or-later OPL emulator")
-set(W3P_OPL_KEEP_NOTE
-    "wolf3d.dll and Nuked-OPL3.dll must remain beside the executable. The\nWin32 executable is only a platform host and loads the engine from the first\nDLL. Nuked-OPL3.dll may be replaced with a compatible modified build, as\nprovided for by its GNU Lesser General Public License. Corresponding source is\nidentified in the source distribution and is included in the wolf3d-lib\nsubmodule.")
+if(TARGET nuked-opl3)
+    set(W3P_OPL_FILE_LINE
+        "  Nuked-OPL3.dll          Replaceable LGPL-2.1-or-later OPL emulator")
+    set(W3P_OPL_KEEP_NOTE
+        "wolf3d.dll and Nuked-OPL3.dll must remain beside the executable. The\nWin32 executable is only a platform host and loads the engine from the first\nDLL. Nuked-OPL3.dll may be replaced with a compatible modified build, as\nprovided for by its GNU Lesser General Public License. Corresponding source is\nidentified in the source distribution and is included in the wolf3d-lib\nsubmodule.")
+else()
+    set(W3P_OPL_FILE_LINE
+        "  (Selected OPL drivers are compiled into wolf3d.dll)")
+    set(W3P_OPL_KEEP_NOTE
+        "wolf3d.dll must remain beside the executable. Audio-driver details\nare recorded in WOLF3D-LIB.txt and the source distribution.")
+endif()
 configure_file(packaging/WIN32-README.txt.in
                ${CMAKE_CURRENT_BINARY_DIR}/WIN32-README.txt @ONLY)
 configure_file(packaging/LINUX-CONSOLE-README.txt.in
@@ -114,6 +124,31 @@ set(W3P_RELEASE_COMPILER_SUFFIX "")
 if(W3P_COMPILER_LABEL)
     set(W3P_RELEASE_COMPILER_SUFFIX "-${W3P_COMPILER_LABEL}")
 endif()
+set(W3P_RELEASE_AUDIO_SUFFIX "")
+if(NOT WG_ENABLE_OPL_NUKED OR NOT WG_ENABLE_OPL_DBOPL
+   OR NOT WG_ENABLE_OPL_SILENT)
+    set(W3P_ENABLED_OPL_NAMES "")
+    if(WG_ENABLE_OPL_NUKED)
+        list(APPEND W3P_ENABLED_OPL_NAMES nuked)
+    endif()
+    if(WG_ENABLE_OPL_DBOPL)
+        list(APPEND W3P_ENABLED_OPL_NAMES dbopl)
+    endif()
+    if(WG_ENABLE_OPL_SILENT)
+        list(APPEND W3P_ENABLED_OPL_NAMES silent)
+    endif()
+    string(REPLACE ";" "-" W3P_ENABLED_OPL_LABEL
+        "${W3P_ENABLED_OPL_NAMES}")
+    set(W3P_RELEASE_AUDIO_SUFFIX "-opl-${W3P_ENABLED_OPL_LABEL}")
+endif()
+if(NOT WG_DEFAULT_OPL_DRIVER STREQUAL "nuked")
+    string(APPEND W3P_RELEASE_AUDIO_SUFFIX
+        "-default-${WG_DEFAULT_OPL_DRIVER}")
+endif()
+if(NOT WG_DEFAULT_SAMPLE_RATE STREQUAL "48000")
+    string(APPEND W3P_RELEASE_AUDIO_SUFFIX
+        "-${WG_DEFAULT_SAMPLE_RATE}hz")
+endif()
 
 function(w3p_configure_host target)
     target_link_libraries(${target} PRIVATE wolf3d::wolf3d)
@@ -154,11 +189,15 @@ function(w3p_copy_engine_runtime target)
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 "$<TARGET_FILE:wolf3d>"
                 "$<TARGET_FILE_DIR:${target}>/$<TARGET_FILE_NAME:wolf3d>"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "$<TARGET_FILE:nuked-opl3>"
-                "$<TARGET_FILE_DIR:${target}>/$<TARGET_FILE_NAME:nuked-opl3>"
             COMMENT "Copying Wolf3D runtime libraries beside ${target}"
             VERBATIM)
+        if(TARGET nuked-opl3)
+            add_custom_command(TARGET ${target} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "$<TARGET_FILE:nuked-opl3>"
+                    "$<TARGET_FILE_DIR:${target}>/$<TARGET_FILE_NAME:nuked-opl3>"
+                VERBATIM)
+        endif()
     endif()
 endfunction()
 
@@ -176,7 +215,25 @@ if(W3P_BUILD_WIN32)
     w3p_copy_engine_runtime(wolf3d-win32)
 
     set(W3P_WIN32_RELEASE_DIR
-        "${W3P_DIST_ROOT}/wolf3d-portable-${PROJECT_VERSION}-win32-${W3P_RELEASE_ARCH}${W3P_RELEASE_COMPILER_SUFFIX}${W3P_RELEASE_RUNTIME_SUFFIX}")
+        "${W3P_DIST_ROOT}/wolf3d-portable-${PROJECT_VERSION}-win32-${W3P_RELEASE_ARCH}${W3P_RELEASE_COMPILER_SUFFIX}${W3P_RELEASE_RUNTIME_SUFFIX}${W3P_RELEASE_AUDIO_SUFFIX}")
+    set(W3P_WIN32_OPL_COMMANDS "")
+    set(W3P_WIN32_RELEASE_DEPENDS wolf3d-win32 wolf3d)
+    if(TARGET nuked-opl3)
+        list(APPEND W3P_WIN32_OPL_COMMANDS
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<TARGET_FILE:nuked-opl3>"
+                "${W3P_WIN32_RELEASE_DIR}/$<TARGET_FILE_NAME:nuked-opl3>"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${W3P_WOLF3D_SOURCE_DIR}/third_party/Nuked-OPL3/LICENSE"
+                "${W3P_WIN32_RELEASE_DIR}/LICENSES/Nuked-OPL3-LGPL-2.1.txt")
+        list(APPEND W3P_WIN32_RELEASE_DEPENDS nuked-opl3)
+    endif()
+    if(WG_ENABLE_OPL_DBOPL)
+        list(APPEND W3P_WIN32_OPL_COMMANDS
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${W3P_WOLF3D_SOURCE_DIR}/third_party/DBOPL/README.wolf3d-lib.md"
+                "${W3P_WIN32_RELEASE_DIR}/README.DBOPL.txt")
+    endif()
     add_custom_target(win32-release
         COMMAND ${CMAKE_COMMAND} -E remove_directory "${W3P_WIN32_RELEASE_DIR}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_WIN32_RELEASE_DIR}"
@@ -186,15 +243,11 @@ if(W3P_BUILD_WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:wolf3d>" "${W3P_WIN32_RELEASE_DIR}/$<TARGET_FILE_NAME:wolf3d>"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:nuked-opl3>" "${W3P_WIN32_RELEASE_DIR}/$<TARGET_FILE_NAME:nuked-opl3>"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_SOURCE_DIR}/LICENSE" "${W3P_WIN32_RELEASE_DIR}/LICENSE.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${W3P_WOLF3D_SOURCE_DIR}/LICENSE"
             "${W3P_WIN32_RELEASE_DIR}/LICENSES/wolf3d-lib-GPL-2.0.txt"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${W3P_WOLF3D_SOURCE_DIR}/third_party/Nuked-OPL3/LICENSE"
-            "${W3P_WIN32_RELEASE_DIR}/LICENSES/Nuked-OPL3-LGPL-2.1.txt"
+        ${W3P_WIN32_OPL_COMMANDS}
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_SOURCE_DIR}/THIRD_PARTY.md"
             "${W3P_WIN32_RELEASE_DIR}/THIRD_PARTY_NOTICES.txt"
@@ -202,7 +255,7 @@ if(W3P_BUILD_WIN32)
             "${CMAKE_CURRENT_BINARY_DIR}/WIN32-README.txt" "${W3P_WIN32_RELEASE_DIR}/README.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_CURRENT_BINARY_DIR}/WOLF3D-LIB.txt" "${W3P_WIN32_RELEASE_DIR}/WOLF3D-LIB.txt"
-        DEPENDS wolf3d-win32 wolf3d nuked-opl3
+        DEPENDS ${W3P_WIN32_RELEASE_DEPENDS}
         COMMENT "Staging ${W3P_RELEASE_ARCH} Win32 release" VERBATIM)
 endif()
 
@@ -233,7 +286,8 @@ if(W3P_BUILD_SDL3)
     endif()
 
     set(W3P_SDL3_RELEASE_DIR
-        "${W3P_DIST_ROOT}/wolf3d-portable-${PROJECT_VERSION}-sdl3-${W3P_RELEASE_SYSTEM}-${W3P_RELEASE_ARCH}${W3P_RELEASE_COMPILER_SUFFIX}${W3P_RELEASE_RUNTIME_SUFFIX}")
+        "${W3P_DIST_ROOT}/wolf3d-portable-${PROJECT_VERSION}-sdl3-${W3P_RELEASE_SYSTEM}-${W3P_RELEASE_ARCH}${W3P_RELEASE_COMPILER_SUFFIX}${W3P_RELEASE_RUNTIME_SUFFIX}${W3P_RELEASE_AUDIO_SUFFIX}")
+    set(W3P_SDL3_RELEASE_DEPENDS wolf3d-sdl3 wolf3d SDL3::SDL3-shared)
     set(W3P_SDL3_RELEASE_COMMANDS
         COMMAND ${CMAKE_COMMAND} -E remove_directory "${W3P_SDL3_RELEASE_DIR}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_SDL3_RELEASE_DIR}"
@@ -243,17 +297,12 @@ if(W3P_BUILD_SDL3)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:wolf3d>" "${W3P_SDL3_RELEASE_DIR}/$<TARGET_FILE_NAME:wolf3d>"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:nuked-opl3>" "${W3P_SDL3_RELEASE_DIR}/$<TARGET_FILE_NAME:nuked-opl3>"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:SDL3::SDL3-shared>" "${W3P_SDL3_RELEASE_DIR}/$<TARGET_FILE_NAME:SDL3::SDL3-shared>"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_SOURCE_DIR}/LICENSE" "${W3P_SDL3_RELEASE_DIR}/LICENSE.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${W3P_WOLF3D_SOURCE_DIR}/LICENSE"
             "${W3P_SDL3_RELEASE_DIR}/LICENSES/wolf3d-lib-GPL-2.0.txt"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${W3P_WOLF3D_SOURCE_DIR}/third_party/Nuked-OPL3/LICENSE"
-            "${W3P_SDL3_RELEASE_DIR}/LICENSES/Nuked-OPL3-LGPL-2.1.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${W3P_SDL3_LICENSE_FILE}"
             "${W3P_SDL3_RELEASE_DIR}/LICENSES/SDL3-Zlib.txt"
@@ -264,6 +313,22 @@ if(W3P_BUILD_SDL3)
             "${CMAKE_CURRENT_BINARY_DIR}/SDL3-README.txt" "${W3P_SDL3_RELEASE_DIR}/README.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_CURRENT_BINARY_DIR}/WOLF3D-LIB.txt" "${W3P_SDL3_RELEASE_DIR}/WOLF3D-LIB.txt")
+    if(TARGET nuked-opl3)
+        list(APPEND W3P_SDL3_RELEASE_COMMANDS
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<TARGET_FILE:nuked-opl3>"
+                "${W3P_SDL3_RELEASE_DIR}/$<TARGET_FILE_NAME:nuked-opl3>"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${W3P_WOLF3D_SOURCE_DIR}/third_party/Nuked-OPL3/LICENSE"
+                "${W3P_SDL3_RELEASE_DIR}/LICENSES/Nuked-OPL3-LGPL-2.1.txt")
+        list(APPEND W3P_SDL3_RELEASE_DEPENDS nuked-opl3)
+    endif()
+    if(WG_ENABLE_OPL_DBOPL)
+        list(APPEND W3P_SDL3_RELEASE_COMMANDS
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${W3P_WOLF3D_SOURCE_DIR}/third_party/DBOPL/README.wolf3d-lib.md"
+                "${W3P_SDL3_RELEASE_DIR}/README.DBOPL.txt")
+    endif()
     if(UNIX AND NOT APPLE)
         list(APPEND W3P_SDL3_RELEASE_COMMANDS
             COMMAND ${CMAKE_COMMAND} -E create_symlink
@@ -275,7 +340,7 @@ if(W3P_BUILD_SDL3)
                 "${W3P_SDL3_RELEASE_DIR}/$<TARGET_SONAME_FILE_NAME:SDL3::SDL3-shared>")
     endif()
     add_custom_target(sdl3-release ${W3P_SDL3_RELEASE_COMMANDS}
-        DEPENDS wolf3d-sdl3 wolf3d nuked-opl3 SDL3::SDL3-shared
+        DEPENDS ${W3P_SDL3_RELEASE_DEPENDS}
         COMMENT "Staging ${W3P_RELEASE_ARCH} SDL3 release" VERBATIM)
     if(BUILD_TESTING)
         add_test(NAME sdl3-help COMMAND wolf3d-sdl3 --sdl3-help)
@@ -294,7 +359,25 @@ if(W3P_BUILD_LINUX_CONSOLE)
         BUILD_WITH_INSTALL_RPATH ON INSTALL_RPATH "$ORIGIN")
 
     set(W3P_CONSOLE_RELEASE_DIR
-        "${W3P_DIST_ROOT}/wolf3d-portable-${PROJECT_VERSION}-console-${W3P_RELEASE_ARCH}")
+        "${W3P_DIST_ROOT}/wolf3d-portable-${PROJECT_VERSION}-console-${W3P_RELEASE_ARCH}${W3P_RELEASE_AUDIO_SUFFIX}")
+    set(W3P_CONSOLE_OPL_COMMANDS "")
+    set(W3P_CONSOLE_RELEASE_DEPENDS wolf3d-console wolf3d)
+    if(TARGET nuked-opl3)
+        list(APPEND W3P_CONSOLE_OPL_COMMANDS
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<TARGET_FILE:nuked-opl3>"
+                "${W3P_CONSOLE_RELEASE_DIR}/$<TARGET_FILE_NAME:nuked-opl3>"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${W3P_WOLF3D_SOURCE_DIR}/third_party/Nuked-OPL3/LICENSE"
+                "${W3P_CONSOLE_RELEASE_DIR}/LICENSES/Nuked-OPL3-LGPL-2.1.txt")
+        list(APPEND W3P_CONSOLE_RELEASE_DEPENDS nuked-opl3)
+    endif()
+    if(WG_ENABLE_OPL_DBOPL)
+        list(APPEND W3P_CONSOLE_OPL_COMMANDS
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${W3P_WOLF3D_SOURCE_DIR}/third_party/DBOPL/README.wolf3d-lib.md"
+                "${W3P_CONSOLE_RELEASE_DIR}/README.DBOPL.txt")
+    endif()
     add_custom_target(console-release
         COMMAND ${CMAKE_COMMAND} -E remove_directory "${W3P_CONSOLE_RELEASE_DIR}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_CONSOLE_RELEASE_DIR}"
@@ -308,15 +391,11 @@ if(W3P_BUILD_LINUX_CONSOLE)
         COMMAND ${CMAKE_COMMAND} -E create_symlink
             "$<TARGET_SONAME_FILE_NAME:wolf3d>" "${W3P_CONSOLE_RELEASE_DIR}/$<TARGET_LINKER_FILE_NAME:wolf3d>"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:nuked-opl3>" "${W3P_CONSOLE_RELEASE_DIR}/$<TARGET_FILE_NAME:nuked-opl3>"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_SOURCE_DIR}/LICENSE" "${W3P_CONSOLE_RELEASE_DIR}/LICENSE.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${W3P_WOLF3D_SOURCE_DIR}/LICENSE"
             "${W3P_CONSOLE_RELEASE_DIR}/LICENSES/wolf3d-lib-GPL-2.0.txt"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${W3P_WOLF3D_SOURCE_DIR}/third_party/Nuked-OPL3/LICENSE"
-            "${W3P_CONSOLE_RELEASE_DIR}/LICENSES/Nuked-OPL3-LGPL-2.1.txt"
+        ${W3P_CONSOLE_OPL_COMMANDS}
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_SOURCE_DIR}/THIRD_PARTY.md"
             "${W3P_CONSOLE_RELEASE_DIR}/THIRD_PARTY_NOTICES.txt"
@@ -324,7 +403,7 @@ if(W3P_BUILD_LINUX_CONSOLE)
             "${CMAKE_CURRENT_BINARY_DIR}/LINUX-CONSOLE-README.txt" "${W3P_CONSOLE_RELEASE_DIR}/README.txt"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_CURRENT_BINARY_DIR}/WOLF3D-LIB.txt" "${W3P_CONSOLE_RELEASE_DIR}/WOLF3D-LIB.txt"
-        DEPENDS wolf3d-console wolf3d nuked-opl3
+        DEPENDS ${W3P_CONSOLE_RELEASE_DEPENDS}
         COMMENT "Staging ${W3P_RELEASE_ARCH} console release" VERBATIM)
     if(BUILD_TESTING)
         add_test(NAME console-help COMMAND wolf3d-console --linux-console-help)

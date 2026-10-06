@@ -994,6 +994,22 @@ static int WG_LinuxConsolePCMInit(uint32_t sample_rate, uint16_t channels)
     return 1;
 }
 
+static int WG_LinuxConsolePCMInitEx(
+    const wolf3d_pcm_format_t *requested, wolf3d_pcm_format_t *obtained)
+{
+    if (requested == NULL || obtained == NULL
+        || requested->bits_per_sample != 16U
+        || !WG_LinuxConsolePCMInit(requested->sample_rate,
+                                   requested->channels))
+    {
+        return 0;
+    }
+    /* snd_pcm_set_params configures the application-facing stream at the
+       requested rate and lets ALSA perform any device-side conversion. */
+    *obtained = *requested;
+    return 1;
+}
+
 static void WG_LinuxConsolePCMShutdown(void)
 {
     if (wg_pcm != NULL)
@@ -1065,7 +1081,8 @@ int WG_InstallPlatform(void)
         WG_LinuxConsolePCMInit,
         WG_LinuxConsolePCMShutdown,
         WG_LinuxConsolePCMWritableFrames,
-        WG_LinuxConsolePCMSubmit
+        WG_LinuxConsolePCMSubmit,
+        WG_LinuxConsolePCMInitEx
     };
 
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;

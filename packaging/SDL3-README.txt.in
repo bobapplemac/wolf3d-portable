@@ -2,8 +2,8 @@ wolf3d-portable @PROJECT_VERSION@ - SDL3 GUI host
 ================================================
 
 This folder is a minimal cross-platform GUI build. Keep the executable,
-Wolf3D shared library, Nuked-OPL3 shared library, and SDL3 shared
-library together.
+Wolf3D shared library, SDL3 shared library, and every other included shared
+library together. WOLF3D-LIB.txt records the compiled audio drivers.
 
 On Linux, the local shared libraries are discovered relative to this
 executable, so SDL3 does not need to be installed separately. The package
@@ -31,9 +31,11 @@ game behavior remains in the separate Wolf3D library.
 Press F11 or Alt+Enter to toggle borderless desktop fullscreen. F11 is handled
 only by the host and will not dismiss an in-game "Press a key" prompt.
 
-Run with --sdl3-help for host-specific help or --help for game options.
+Run with --sdl3-help for host-specific help. Use --opl
+nuked|dbopl|silent to select an included audio driver and --sample-rate HZ to
+change the preferred PCM rate.
 
-SDL3 is distributed under the zlib license. Nuked-OPL3 is independently
-replaceable and distributed under LGPL-2.1-or-later. See the included
+SDL3 is distributed under the zlib license. When included, Nuked-OPL3 is
+independently replaceable and distributed under LGPL-2.1-or-later. See the included
 LICENSE.txt, LICENSES directory, and THIRD_PARTY_NOTICES.txt. The LICENSES
 directory also identifies wolf3d-lib's GPL-2.0 license explicitly.

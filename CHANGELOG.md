@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-06 - Runtime-selectable audio drivers
+
+- Advanced the pinned engine to wolf3d-lib 1.4.39 and platform API v3.
+- Updated Win32, SDL3, and Linux-console hosts to report their obtained
+  application-facing PCM format before the engine constructs its OPL driver.
+- Included Nuked-OPL3, DBOPL, and timing-preserving silence by default, with
+  `--opl` runtime selection and `--sample-rate` preferred-rate control.
+- Added independent compiled-driver-set, default-driver, and sample-rate
+  choices to GNU Make and the guided modern Windows, Linux, and XP build flows.
+- Gave non-default audio configurations deterministic package suffixes so they
+  coexist with canonical all-driver/Nuked/48 kHz releases.
+
 ## 2026-10-06 - Guided cross-platform build configuration
 
 - Advanced the pinned engine to wolf3d-lib 1.4.37.

@@ -22,6 +22,9 @@ Host-specific options:
   --no-audio
   --linux-console-help
 
+Game audio options are --opl nuked|dbopl|silent and --sample-rate HZ. Only
+drivers recorded in WOLF3D-LIB.txt are available.
+
 Without explicit device options, the host selects the first connected DRM
 display, opens usable evdev devices, and uses the ALSA "default" PCM. Missing
 or unavailable audio produces a warning and the game continues silently.
@@ -29,10 +32,10 @@ or unavailable audio produces a warning and the game continues silently.
 The host preserves the engine's 320x200 indexed framebuffer and displays it
 at the original monitor-intended 4:3 aspect ratio with letterboxing as needed.
 
-libwolf3d.so is the generic engine library. libNuked-OPL3.so is kept
-separate and replaceable under the LGPL-2.1 license. System libdrm, ALSA, libc,
-and their dependencies must be supplied by the target Linux installation.
+libwolf3d.so is the generic engine library. When present, libNuked-OPL3.so is
+kept separate and replaceable under the LGPL-2.1 license. System libdrm, ALSA,
+libc, and their dependencies must be supplied by the target Linux installation.
 
 See LICENSE.txt for wolf3d-portable's license, LICENSES/ for the explicit
-wolf3d-lib and Nuked-OPL3 license texts, and THIRD_PARTY_NOTICES.txt for
+wolf3d-lib and applicable component license texts, and THIRD_PARTY_NOTICES.txt for
 component provenance.

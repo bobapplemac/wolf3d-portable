@@ -14,6 +14,9 @@ BUILD_TYPE ?= Release
 CMAKE_ARGS ?=
 JOBS ?=
 USE_SYSTEM_SDL3 ?= OFF
+OPL_DRIVERS ?= nuked,dbopl,silent
+OPL_DEFAULT ?= nuked
+SAMPLE_RATE ?= 48000
 CONSOLE_BUILD_DIR ?= build/linux-console-$(COMPILER_NAME)
 SDL3_BUILD_DIR ?= build/linux-sdl3-$(COMPILER_NAME)
 PORTABLE_CONSOLE_BUILD_DIR ?= build/linux-console-portable-debian10-gcc
@@ -32,6 +35,12 @@ MUSL_SDL3_CMAKE_ARGS ?= -DW3P_DIST_ROOT=/src/$(MUSL_STAGE_ROOT) \
 	-DSDL_OPENGLES=OFF -DSDL_RENDER_GPU=OFF -DSDL_VULKAN=OFF
 DOCKER_RUN_ARGS ?=
 CMAKE_COMPILER_ARG := -DCMAKE_C_COMPILER="$(CC)"
+CMAKE_AUDIO_ARGS := \
+	-DWG_ENABLE_OPL_NUKED=$(if $(findstring nuked,$(OPL_DRIVERS)),ON,OFF) \
+	-DWG_ENABLE_OPL_DBOPL=$(if $(findstring dbopl,$(OPL_DRIVERS)),ON,OFF) \
+	-DWG_ENABLE_OPL_SILENT=$(if $(findstring silent,$(OPL_DRIVERS)),ON,OFF) \
+	-DWG_DEFAULT_OPL_DRIVER="$(OPL_DEFAULT)" \
+	-DWG_DEFAULT_SAMPLE_RATE="$(SAMPLE_RATE)"
 PARALLEL_ARG := --parallel $(JOBS)
 
 .DEFAULT_GOAL := all
@@ -72,6 +81,9 @@ help:
 		'  JOBS=N                       Parallel job limit.' \
 		'  BUILD_TYPE=Release|Debug     Build type (default: Release).' \
 		'  USE_SYSTEM_SDL3=ON|OFF       Installed SDL >= 3.2 or pinned SDL (default).' \
+		'  OPL_DRIVERS=nuked,dbopl,silent Drivers compiled into wolf3d (default: all).' \
+		'  OPL_DEFAULT=nuked|dbopl|silent Runtime default (default: nuked).' \
+		'  SAMPLE_RATE=Hz               Preferred PCM rate (default: 48000).' \
 		'  CMAKE_ARGS="..."             Additional CMake definitions.' \
 		'  DOCKER_RUN_ARGS="..."        Additional Docker run arguments.' \
 		'' \
@@ -87,7 +99,9 @@ print-config:
 		'CC=$(CC)' 'WOLF3D_VERSION=$(WOLF3D_VERSION)' \
 		'SDL3_BUILD_DIR=$(SDL3_BUILD_DIR)' 'CONSOLE_BUILD_DIR=$(CONSOLE_BUILD_DIR)' \
 		'MUSL_SDL3_BUILD_DIR=$(MUSL_SDL3_BUILD_DIR)' \
-		'USE_SYSTEM_SDL3=$(USE_SYSTEM_SDL3)' 'JOBS=$(JOBS)' 'CMAKE_ARGS=$(CMAKE_ARGS)'
+		'USE_SYSTEM_SDL3=$(USE_SYSTEM_SDL3)' 'OPL_DRIVERS=$(OPL_DRIVERS)' \
+		'OPL_DEFAULT=$(OPL_DEFAULT)' 'SAMPLE_RATE=$(SAMPLE_RATE)' \
+		'JOBS=$(JOBS)' 'CMAKE_ARGS=$(CMAKE_ARGS)'
 
 dependencies:
 	$(GIT) submodule update --init --recursive
@@ -105,7 +119,7 @@ configure-sdl3:
 	$(CMAKE) -S . -B "$(SDL3_BUILD_DIR)" -G "$(CMAKE_GENERATOR)" \
 		-DCMAKE_BUILD_TYPE="$(BUILD_TYPE)" -DW3P_BUILD_SDL3=ON \
 		-DW3P_BUILD_LINUX_CONSOLE=OFF -DW3P_USE_SYSTEM_SDL3=$(USE_SYSTEM_SDL3) \
-		-DW3P_WARNINGS_AS_ERRORS=ON $(CMAKE_COMPILER_ARG) $(CMAKE_ARGS)
+		-DW3P_WARNINGS_AS_ERRORS=ON $(CMAKE_COMPILER_ARG) $(CMAKE_AUDIO_ARGS) $(CMAKE_ARGS)
 
 sdl3-build: configure-sdl3
 	$(CMAKE) --build "$(SDL3_BUILD_DIR)" $(PARALLEL_ARG)
@@ -119,7 +133,7 @@ configure-console:
 	$(CMAKE) -S . -B "$(CONSOLE_BUILD_DIR)" -G "$(CMAKE_GENERATOR)" \
 		-DCMAKE_BUILD_TYPE="$(BUILD_TYPE)" -DW3P_BUILD_SDL3=OFF \
 		-DW3P_BUILD_LINUX_CONSOLE=ON -DW3P_WARNINGS_AS_ERRORS=ON \
-		$(CMAKE_COMPILER_ARG) $(CMAKE_ARGS)
+		$(CMAKE_COMPILER_ARG) $(CMAKE_AUDIO_ARGS) $(CMAKE_ARGS)
 
 console-release: configure-console
 	$(CMAKE) --build "$(CONSOLE_BUILD_DIR)" --target console-release $(PARALLEL_ARG)
@@ -136,6 +150,7 @@ portable-sdl3-release: portable-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		"$(PORTABLE_BUILD_IMAGE)" make sdl3-release CC=gcc \
+		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" SAMPLE_RATE="$(SAMPLE_RATE)" \
 		SDL3_BUILD_DIR="$(PORTABLE_SDL3_BUILD_DIR)" JOBS="$(JOBS)" USE_SYSTEM_SDL3=OFF
 	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
 		$(DOCKER_RUN_ARGS) "$(PORTABLE_BUILD_IMAGE)" sh tools/WG_GLIBC_AUDIT.sh \
@@ -145,6 +160,7 @@ portable-console-release: portable-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		"$(PORTABLE_BUILD_IMAGE)" make console-release CC=gcc \
+		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" SAMPLE_RATE="$(SAMPLE_RATE)" \
 		CONSOLE_BUILD_DIR="$(PORTABLE_CONSOLE_BUILD_DIR)" JOBS="$(JOBS)"
 	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
 		$(DOCKER_RUN_ARGS) "$(PORTABLE_BUILD_IMAGE)" sh tools/WG_GLIBC_AUDIT.sh \
@@ -164,6 +180,7 @@ musl-sdl3-release: musl-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		"$(MUSL_BUILD_IMAGE)" make sdl3-release CC="$(CC)" \
+		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" SAMPLE_RATE="$(SAMPLE_RATE)" \
 		SDL3_BUILD_DIR="$(MUSL_SDL3_BUILD_DIR)" JOBS="$(JOBS)" \
 		USE_SYSTEM_SDL3=OFF CMAKE_ARGS="$(MUSL_SDL3_CMAKE_ARGS)"
 	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \

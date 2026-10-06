@@ -33,6 +33,8 @@ Wolf3D displays the original Press a key/Working prompts; Spear holds SIGNON
 for three seconds automatically.
 Use --adlib to retain OPL music and AdLib effects while disabling digitized
 Sound Blaster effects; SIGNON then marks AdLib instead of Sound Blaster.
+Use --opl nuked, --opl dbopl, or --opl silent to select a driver recorded in
+WOLF3D-LIB.txt. Use --sample-rate HZ to change the preferred PCM rate.
 Mouse hardware is absent unless --mouse is supplied. Without it, SIGNON leaves
 Mouse unmarked, mouse events are ignored, and mouse menu entries are disabled.
 

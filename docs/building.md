@@ -47,22 +47,22 @@ modern project does not inherit obsolete generator constraints. From an x86
 Windows build host with the selected compiler installed:
 
 ```text
-scripts\windows\legacy\build.cmd COMPILER [CONFIG] [AUDIO] [OPL] [RUNTIME] [ACTION]
+scripts\windows\legacy\build.cmd COMPILER [CONFIG] [DRIVERS] [DEFAULT_OPL] [RUNTIME] [ACTION]
 ```
 
 The accepted values are:
 
 - `COMPILER`: `vc6`, `vs2002`, `vs2003`, or `vs2005`;
 - `CONFIG`: `Release` (default) or `Debug`;
-- `AUDIO`: `standard` (default) or `silent`;
-- `OPL`: `nuked` (default) or `dbopl`;
+- `DRIVERS`: `all` (default), one driver, or a hyphenated driver pair;
+- `DEFAULT_OPL`: `nuked` (default), `dbopl`, or `silent`, and must be included;
 - `RUNTIME`: `static` (default) or `dynamic`;
 - `ACTION`: `package` (default) or `build`.
 
 For example, this creates a ready-to-copy VC6 package:
 
 ```text
-scripts\windows\legacy\build.cmd vc6 Release standard nuked static package
+scripts\windows\legacy\build.cmd vc6 Release all nuked static package
 ```
 
 The legacy definition always compiles the pinned library submodule as part of
@@ -109,8 +109,9 @@ and MSVC 19.0.
 The root `build.ps1` is the human-facing entry point for selecting one build
 without memorizing preset names. It detects supported Visual Studio and MSYS2
 UCRT64 installations and exposes compiler, x86/x64 architecture, Win32/SDL3/both
-wrappers, Debug/Release, static/dynamic CRT, build/publish/clean actions,
-parallelism, and a dry-run mode:
+wrappers, Debug/Release, static/dynamic CRT, compiled OPL drivers, runtime
+default, preferred PCM rate, build/publish/clean actions, parallelism, and a
+dry-run mode:
 
 ```powershell
 .\build.ps1 -List
@@ -129,6 +130,8 @@ parallelism, and a dry-run mode:
 .\build.ps1 -Compiler mingw-ucrt64 -Wrapper all
 .\build.ps1 -Compiler mingw-ucrt64 -Wrapper all -Publish
 .\build.ps1 -Action build -Configuration Debug -Runtime dynamic -Wrapper all
+.\build.ps1 -Wrapper sdl3 -DefaultOpl dbopl -SampleRate 44100
+.\build.ps1 -Wrapper win32 -Drivers silent -DefaultOpl silent
 .\build.ps1 -Compiler vs2022 -Wrapper win32 -DryRun
 ```
 
@@ -190,9 +193,16 @@ make clean
 ```
 
 GCC is the default. Select Clang with `CC=clang`. Set
-`USE_SYSTEM_SDL3=ON` to use the installed SDL package. `CMAKE_ARGS` passes
-additional definitions through to configuration, and `JOBS=N` limits build
-parallelism.
+`USE_SYSTEM_SDL3=ON` to use the installed SDL package. `OPL_DRIVERS` is a
+comma-separated subset of `nuked,dbopl,silent`; `OPL_DEFAULT` chooses one
+included driver and `SAMPLE_RATE` sets the preferred application PCM rate.
+`CMAKE_ARGS` passes additional definitions through to configuration, and
+`JOBS=N` limits build parallelism.
+
+The canonical all-driver/Nuked/48 kHz configuration retains the short package
+name. Any reduced driver set, non-Nuked default, or non-48 kHz preferred rate
+is encoded as a deterministic directory suffix so multiple configurations can
+coexist under `dist/`.
 
 The console host requires libdrm and ALSA development packages. SDL3 builds do
 not require those packages directly. The pinned build dynamically discovers

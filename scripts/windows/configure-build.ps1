@@ -114,6 +114,10 @@ $configuration = if ($action -eq 'publish') { 'Release' } else {
 $runtime = if ($compiler.Name -eq 'mingw-ucrt64') { 'static' } else {
     Read-Choice 'Compiler runtime' @('static', 'dynamic')
 }
+$drivers = Read-Choice 'Compiled OPL drivers' @('all', 'nuked-dbopl', 'nuked-silent', 'dbopl-silent', 'nuked', 'dbopl', 'silent')
+$availableDefaults = if ($drivers -eq 'all') { @('nuked', 'dbopl', 'silent') } else { @($drivers -split '-') }
+$defaultOpl = Read-Choice 'Default OPL driver' $availableDefaults
+$sampleRate = Read-Choice 'Preferred PCM sample rate' @('48000', '44100')
 
 $arguments = @(
     '-Compiler', $compiler.Name,
@@ -121,6 +125,9 @@ $arguments = @(
     '-Wrapper', $wrapper,
     '-Configuration', $configuration,
     '-Runtime', $runtime,
+    '-Drivers', $drivers,
+    '-DefaultOpl', $defaultOpl,
+    '-SampleRate', $sampleRate,
     '-Action', $action,
     '-NonInteractive'
 )
@@ -133,6 +140,8 @@ Write-Host "  Architecture:  $architecture"
 Write-Host "  Wrapper:       $wrapper"
 Write-Host "  Result:        $action / $configuration"
 Write-Host "  Runtime:       $runtime"
+Write-Host "  OPL drivers:   $drivers (default: $defaultOpl)"
+Write-Host "  Sample rate:   $sampleRate Hz"
 Write-Host ''
 Write-Host 'Reproducible command:'
 Write-Host ('.\scripts\windows\invoke-build.ps1 ' + ($arguments -join ' '))

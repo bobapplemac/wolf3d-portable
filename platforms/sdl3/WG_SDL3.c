@@ -548,6 +548,19 @@ static int WG_SDLPCMInit(uint32_t sample_rate, uint16_t channels)
     return 1;
 }
 
+static int WG_SDLPCMInitEx(const wolf3d_pcm_format_t *requested,
+                           wolf3d_pcm_format_t *obtained)
+{
+    if (requested == NULL || obtained == NULL
+        || requested->bits_per_sample != 16U
+        || !WG_SDLPCMInit(requested->sample_rate, requested->channels))
+    {
+        return 0;
+    }
+    *obtained = *requested;
+    return 1;
+}
+
 static void WG_SDLPCMShutdown(void)
 {
     if (wg_audio != NULL)
@@ -607,7 +620,8 @@ int WG_InstallPlatform(void)
         WG_SDLPCMInit,
         WG_SDLPCMShutdown,
         WG_SDLPCMWritableFrames,
-        WG_SDLPCMSubmit
+        WG_SDLPCMSubmit,
+        WG_SDLPCMInitEx
     };
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;
 }
@@ -621,6 +635,8 @@ static void WG_SDLPrintHelp(const char *program)
     printf("  --sdl3-help   Show this help and exit\n\n");
     printf("Press F11 or Alt+Enter to toggle windowed/fullscreen mode.\n");
     printf("Pass --mouse to expose relative mouse input to the game.\n");
+    printf("Pass --opl nuked|dbopl|silent to select a compiled audio driver.\n");
+    printf("Pass --sample-rate HZ to request 8000--192000 Hz PCM.\n");
 }
 
 int main(int argc, char **argv)

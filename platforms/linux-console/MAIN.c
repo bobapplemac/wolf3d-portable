@@ -18,6 +18,8 @@ static void WG_PrintHelp(const char *program)
     printf("  --linux-console-help Show this help and exit\n\n");
     printf("Run from an active Linux virtual console with permission to access\n");
     printf("/dev/dri/card*, /dev/input/event*, and the selected ALSA device.\n");
+    printf("Game audio options: --opl nuked|dbopl|silent and ");
+    printf("--sample-rate HZ.\n");
 }
 
 int main(int argc, char **argv)

@@ -46,6 +46,16 @@ param(
     [ValidateSet('static', 'dynamic')]
     [string]$Runtime = 'static',
 
+    [ValidateSet('all', 'nuked', 'dbopl', 'silent', 'nuked-dbopl',
+        'nuked-silent', 'dbopl-silent')]
+    [string]$Drivers = 'all',
+
+    [ValidateSet('nuked', 'dbopl', 'silent')]
+    [string]$DefaultOpl = 'nuked',
+
+    [ValidateRange(8000, 192000)]
+    [int]$SampleRate = 48000,
+
     [ValidateSet('publish', 'build', 'clean')]
     [string]$Action = 'publish',
 
@@ -272,6 +282,10 @@ if ($PSBoundParameters.Count -eq 0 -and -not $NonInteractive -and $canPrompt) {
     }
     if ($Compiler -eq 'mingw-ucrt64') { $Runtime = 'static' }
     else { $Runtime = Read-BuildChoice 'MSVC runtime' @('static', 'dynamic') }
+    $Drivers = Read-BuildChoice 'Compiled OPL drivers' @('all', 'nuked-dbopl', 'nuked-silent', 'dbopl-silent', 'nuked', 'dbopl', 'silent')
+    $availableDefaults = if ($Drivers -eq 'all') { @('nuked', 'dbopl', 'silent') } else { @($Drivers -split '-') }
+    $DefaultOpl = Read-BuildChoice 'Default OPL driver' $availableDefaults
+    $SampleRate = [int](Read-BuildChoice 'Preferred PCM sample rate' @('48000', '44100'))
     Write-Host ''
     $confirmation = Read-Host 'Continue with this build? [Y/n]'
     if ($confirmation -and $confirmation -notmatch '^[Yy]') { exit 0 }
@@ -288,6 +302,10 @@ if ($List) {
 
 if ($Action -eq 'publish' -and $Configuration -ne 'Release') {
     throw 'Publishing is restricted to Release builds. Use -Action build for Debug.'
+}
+$driverList = if ($Drivers -eq 'all') { @('nuked', 'dbopl', 'silent') } else { @($Drivers -split '-') }
+if ($driverList -notcontains $DefaultOpl) {
+    throw "Default driver '$DefaultOpl' is not included by -Drivers $Drivers."
 }
 
 if ($Compiler -eq 'auto') {
@@ -323,10 +341,13 @@ if ($Wrapper -eq 'win32') {
 }
 
 $useDedicatedPreset = $Action -eq 'publish' -and $Runtime -eq 'static' `
-    -and $Wrapper -ne 'all'
+    -and $Wrapper -ne 'all' -and $Drivers -eq 'all' `
+    -and $DefaultOpl -eq 'nuked' -and $SampleRate -eq 48000
 $preset = if ($useDedicatedPreset) { $staticReleasePreset } else { $devPreset }
 $usePresetBinaryDir = $useDedicatedPreset -or `
-    ($Wrapper -eq 'all' -and $Runtime -eq 'static')
+    ($Wrapper -eq 'all' -and $Runtime -eq 'static' `
+     -and $Drivers -eq 'all' -and $DefaultOpl -eq 'nuked' `
+     -and $SampleRate -eq 48000)
 
 if ($usePresetBinaryDir) {
     $buildDir = $null
@@ -338,6 +359,9 @@ if ($usePresetBinaryDir) {
     if ($Runtime -eq 'dynamic') {
         $parts += 'dynamic-crt'
     }
+    if ($Drivers -ne 'all') { $parts += $Drivers }
+    if ($DefaultOpl -ne 'nuked') { $parts += "default-$DefaultOpl" }
+    if ($SampleRate -ne 48000) { $parts += "$SampleRate-hz" }
     $buildDir = Join-Path $root ('build\' + ($parts -join '-'))
 }
 
@@ -407,6 +431,9 @@ Write-Host "  Architecture:  $Architecture"
 Write-Host "  Wrapper:       $Wrapper"
 Write-Host "  Configuration: $Configuration"
 Write-Host "  Compiler CRT:  $Runtime"
+Write-Host "  OPL drivers:   $($driverList -join ', ')"
+Write-Host "  OPL default:   $DefaultOpl"
+Write-Host "  Sample rate:   $SampleRate Hz"
 Write-Host "  Action:        $Action"
 
 if ($Action -eq 'clean' -and $buildDir -and
@@ -423,7 +450,12 @@ if ($Action -ne 'clean') {
             "-DW3P_BUILD_WIN32=$(if ($Wrapper -eq 'all' -or $Wrapper -eq 'win32') { 'ON' } else { 'OFF' })",
             "-DW3P_BUILD_SDL3=$(if ($Wrapper -eq 'all' -or $Wrapper -eq 'sdl3') { 'ON' } else { 'OFF' })",
             "-DWG_STATIC_MSVC_RUNTIME=$(if ($Runtime -eq 'static') { 'ON' } else { 'OFF' })",
-            "-DWG_STATIC_GNU_RUNTIME=$(if ($Runtime -eq 'static') { 'ON' } else { 'OFF' })"
+            "-DWG_STATIC_GNU_RUNTIME=$(if ($Runtime -eq 'static') { 'ON' } else { 'OFF' })",
+            "-DWG_ENABLE_OPL_NUKED=$(if ($driverList -contains 'nuked') { 'ON' } else { 'OFF' })",
+            "-DWG_ENABLE_OPL_DBOPL=$(if ($driverList -contains 'dbopl') { 'ON' } else { 'OFF' })",
+            "-DWG_ENABLE_OPL_SILENT=$(if ($driverList -contains 'silent') { 'ON' } else { 'OFF' })",
+            "-DWG_DEFAULT_OPL_DRIVER=$DefaultOpl",
+            "-DWG_DEFAULT_SAMPLE_RATE=$SampleRate"
         )
     }
     Invoke-DisplayedCommand -Executable $selected.CMake -Arguments $configureArguments

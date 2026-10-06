@@ -1,5 +1,10 @@
 # Building wolf3d-portable
 
+The [build and compatibility matrix](support-matrix.md) is the concise record
+of supported compilers, wrappers, produced artifacts, and runtime-validated
+destination operating systems. This document supplies the detailed commands,
+dependencies, and package behavior.
+
 ## Dependencies
 
 Initialize both submodules before configuring:

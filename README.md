@@ -162,4 +162,7 @@ extension. Use `--mouse` to expose mouse hardware, `--fullscreen` to start
 fullscreen, and F11 or Alt+Enter to toggle fullscreen without acknowledging an
 engine "any key" wait.
 
-See [docs/building.md](docs/building.md) for build details.
+See the [build and compatibility matrix](docs/support-matrix.md) for every
+supported compiler, wrapper, build entry point, artifact, and validated
+destination operating system. [docs/building.md](docs/building.md) contains the
+complete commands and option details.

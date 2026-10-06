@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-06 - Build and compatibility matrices
+
+- Advanced the pinned engine to wolf3d-lib 1.4.32.
+- Added one authoritative matrix covering every supported Windows and Linux
+  build interface, compiler/toolset band, wrapper, architecture, staged
+  artifact, and validated destination operating system.
+- Clearly separated compiler/package validation from actual destination-OS
+  runtime validation and documented the different native-glibc, portable-
+  glibc, and bundled-musl compatibility models.
+- Recorded MinGW-w64 and Open Watcom/DOS32A as planned work rather than
+  implying that design discussion constitutes present support.
+
 ## 2026-10-05 - Native Windows XP-era wrapper builds
 
 - Advanced the pinned engine to wolf3d-lib 1.4.31.

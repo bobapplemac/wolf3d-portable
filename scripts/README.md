@@ -6,7 +6,7 @@ authoritative CMake presets.
 
 Linux uses the root Makefile as its human-facing dispatcher; run `make help`.
 
-When an empirically tested legacy Visual Studio band cannot use the modern
-dispatcher, its period-appropriate `.cmd` launcher belongs beside that band's
-solution under `ide/visual-studio/<compatibility-band>/`, not in this general
-scripts directory.
+Windows XP-era x86 compiler builds use `build-legacy.cmd`. It selects the old
+Visual Studio generator, builds the pinned `wolf3d-lib` submodule, and stages a
+compiler-qualified Win32/GDI package without touching SDL3. Run it without
+arguments to display the accepted compiler and build options.

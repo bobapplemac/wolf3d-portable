@@ -5,9 +5,11 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <shellapi.h>
-#include <xinput.h>
-
+#if defined(_MSC_VER) && _MSC_VER < 1600
+#include "WOLF3D_STDINT.h"
+#else
 #include <stdint.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 
@@ -20,15 +22,53 @@ static int wg_quit_pending;
 static int wg_start_fullscreen;
 static int wg_fullscreen;
 static int wg_fullscreen_enter_down;
+#ifdef WG_LEGACY_WIN32
+static LONG wg_windowed_style;
+#else
 static LONG_PTR wg_windowed_style;
+#endif
 static WINDOWPLACEMENT wg_windowed_placement = { sizeof(WINDOWPLACEMENT) };
 static uint8_t wg_text_screen[WOLF3D_TEXT_COLUMNS * WOLF3D_TEXT_ROWS
                               * WOLF3D_TEXT_CELL_BYTES];
 static uint16_t wg_text_columns;
 static uint16_t wg_text_rows;
 static HANDLE wg_console_output;
+#ifdef WG_LEGACY_WIN32
+static POINT wg_legacy_mouse_position;
+static int wg_legacy_mouse_position_valid;
+static int wg_legacy_mouse_requested;
+#endif
 
-typedef DWORD (WINAPI *wg_xinput_get_state_t)(DWORD, XINPUT_STATE *);
+/* XInput is loaded at run time, so carry its small public ABI here instead of
+   requiring a particular Windows SDK.  This keeps the same joystick path
+   available to the XP-era compiler bands. */
+typedef struct wg_xinput_gamepad
+{
+    WORD wButtons;
+    BYTE bLeftTrigger;
+    BYTE bRightTrigger;
+    SHORT sThumbLX;
+    SHORT sThumbLY;
+    SHORT sThumbRX;
+    SHORT sThumbRY;
+} wg_xinput_gamepad_t;
+
+typedef struct wg_xinput_state
+{
+    DWORD dwPacketNumber;
+    wg_xinput_gamepad_t Gamepad;
+} wg_xinput_state_t;
+
+#define WG_XINPUT_GAMEPAD_DPAD_UP    0x0001U
+#define WG_XINPUT_GAMEPAD_DPAD_DOWN  0x0002U
+#define WG_XINPUT_GAMEPAD_DPAD_LEFT  0x0004U
+#define WG_XINPUT_GAMEPAD_DPAD_RIGHT 0x0008U
+#define WG_XINPUT_GAMEPAD_A          0x1000U
+#define WG_XINPUT_GAMEPAD_B          0x2000U
+#define WG_XINPUT_GAMEPAD_X          0x4000U
+#define WG_XINPUT_GAMEPAD_Y          0x8000U
+
+typedef DWORD (WINAPI *wg_xinput_get_state_t)(DWORD, wg_xinput_state_t *);
 static HMODULE wg_xinput_module;
 static wg_xinput_get_state_t wg_xinput_get_state;
 static int16_t wg_joystick_x[WOLF3D_MAX_JOYSTICKS];
@@ -49,6 +89,21 @@ static uint8_t wg_wave_used[WG_PCM_BUFFER_COUNT];
 
 static void WG_Win32PCMShutdown(void);
 
+static int wg_attach_parent_console(void)
+{
+    typedef BOOL (WINAPI *wg_attach_console_t)(DWORD);
+    HMODULE kernel = GetModuleHandleA("kernel32.dll");
+    wg_attach_console_t attach_console;
+
+    if (kernel == NULL)
+    {
+        return 0;
+    }
+    attach_console = (wg_attach_console_t)GetProcAddress(kernel,
+                                                         "AttachConsole");
+    return attach_console != NULL && attach_console((DWORD)-1);
+}
+
 static HANDLE wg_console_output_handle(void)
 {
     HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -66,7 +121,7 @@ static HANDLE wg_console_output_handle(void)
         return output;
     }
     if ((output == NULL || output == INVALID_HANDLE_VALUE)
-        && AttachConsole(ATTACH_PARENT_PROCESS))
+        && wg_attach_parent_console())
     {
         output = CreateFileW(L"CONOUT$", GENERIC_READ | GENERIC_WRITE,
                              FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
@@ -194,7 +249,7 @@ static void wg_poll_joysticks(void)
     }
     for (joystick = 0U; joystick < WOLF3D_MAX_JOYSTICKS; ++joystick)
     {
-        XINPUT_STATE state;
+        wg_xinput_state_t state;
         int connected;
         int16_t x = 0;
         int16_t y = 0;
@@ -209,26 +264,26 @@ static void wg_poll_joysticks(void)
 
             x = state.Gamepad.sThumbLX;
             y = source_y == INT16_MIN ? INT16_MAX : (int16_t)-source_y;
-            if ((source & XINPUT_GAMEPAD_DPAD_LEFT) != 0U)
+            if ((source & WG_XINPUT_GAMEPAD_DPAD_LEFT) != 0U)
             {
                 x = INT16_MIN;
             }
-            else if ((source & XINPUT_GAMEPAD_DPAD_RIGHT) != 0U)
+            else if ((source & WG_XINPUT_GAMEPAD_DPAD_RIGHT) != 0U)
             {
                 x = INT16_MAX;
             }
-            if ((source & XINPUT_GAMEPAD_DPAD_UP) != 0U)
+            if ((source & WG_XINPUT_GAMEPAD_DPAD_UP) != 0U)
             {
                 y = INT16_MIN;
             }
-            else if ((source & XINPUT_GAMEPAD_DPAD_DOWN) != 0U)
+            else if ((source & WG_XINPUT_GAMEPAD_DPAD_DOWN) != 0U)
             {
                 y = INT16_MAX;
             }
-            buttons |= (source & XINPUT_GAMEPAD_A) != 0U ? 1U : 0U;
-            buttons |= (source & XINPUT_GAMEPAD_B) != 0U ? 2U : 0U;
-            buttons |= (source & XINPUT_GAMEPAD_X) != 0U ? 4U : 0U;
-            buttons |= (source & XINPUT_GAMEPAD_Y) != 0U ? 8U : 0U;
+            buttons |= (source & WG_XINPUT_GAMEPAD_A) != 0U ? 1U : 0U;
+            buttons |= (source & WG_XINPUT_GAMEPAD_B) != 0U ? 2U : 0U;
+            buttons |= (source & WG_XINPUT_GAMEPAD_X) != 0U ? 4U : 0U;
+            buttons |= (source & WG_XINPUT_GAMEPAD_Y) != 0U ? 8U : 0U;
         }
         if (connected != wg_joystick_connected[joystick]
             || x != wg_joystick_x[joystick]
@@ -260,6 +315,24 @@ static int WG_Win32SetFullscreen(int fullscreen)
     }
     if (fullscreen)
     {
+#ifdef WG_LEGACY_WIN32
+        wg_windowed_style = GetWindowLongW(wg_window, GWL_STYLE);
+        wg_windowed_placement.length = sizeof(wg_windowed_placement);
+        if (!GetWindowPlacement(wg_window, &wg_windowed_placement))
+        {
+            return 0;
+        }
+        SetWindowLongW(wg_window, GWL_STYLE,
+                       wg_windowed_style & ~(LONG)WS_OVERLAPPEDWINDOW);
+        if (!SetWindowPos(wg_window, HWND_TOP, 0, 0,
+                          GetSystemMetrics(SM_CXSCREEN),
+                          GetSystemMetrics(SM_CYSCREEN),
+                          SWP_NOOWNERZORDER | SWP_FRAMECHANGED))
+        {
+            SetWindowLongW(wg_window, GWL_STYLE, wg_windowed_style);
+            return 0;
+        }
+#else
         MONITORINFO monitor = { sizeof(MONITORINFO) };
 
         wg_windowed_style = GetWindowLongPtrW(wg_window, GWL_STYLE);
@@ -283,10 +356,15 @@ static int WG_Win32SetFullscreen(int fullscreen)
             SetWindowLongPtrW(wg_window, GWL_STYLE, wg_windowed_style);
             return 0;
         }
+#endif
     }
     else
     {
+#ifdef WG_LEGACY_WIN32
+        SetWindowLongW(wg_window, GWL_STYLE, wg_windowed_style);
+#else
         SetWindowLongPtrW(wg_window, GWL_STYLE, wg_windowed_style);
+#endif
         if (!SetWindowPlacement(wg_window, &wg_windowed_placement)
             || !SetWindowPos(wg_window, NULL, 0, 0, 0, 0,
                              SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER
@@ -364,6 +442,7 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
             return 0;
         }
 
+#ifndef WG_LEGACY_WIN32
         case WM_INPUT:
         {
             RAWINPUT input;
@@ -418,6 +497,88 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
             }
             return 0;
         }
+#endif
+
+#ifdef WG_LEGACY_WIN32
+        case WM_MOUSEMOVE:
+        {
+            POINT position;
+
+            position.x = (SHORT)LOWORD(lparam);
+            position.y = (SHORT)HIWORD(lparam);
+            if (wg_legacy_mouse_requested)
+            {
+                RECT client;
+                POINT center;
+                LONG x;
+                LONG y;
+
+                GetClientRect(window, &client);
+                center.x = (client.right - client.left) / 2;
+                center.y = (client.bottom - client.top) / 2;
+                x = position.x - center.x;
+                y = position.y - center.y;
+                if (x != 0 || y != 0)
+                {
+                    wolf3d_event_t event = { 0 };
+                    POINT screen_center = center;
+
+                    event.type = WOLF3D_EVENT_MOUSE_MOTION;
+                    event.x = (int16_t)(x > INT16_MAX ? INT16_MAX
+                                         : x < INT16_MIN ? INT16_MIN : x);
+                    event.y = (int16_t)(y > INT16_MAX ? INT16_MAX
+                                         : y < INT16_MIN ? INT16_MIN : y);
+                    wg_queue_event(&event);
+                    if (ClientToScreen(window, &screen_center))
+                    {
+                        SetCursorPos(screen_center.x, screen_center.y);
+                    }
+                }
+            }
+            else if (wg_legacy_mouse_position_valid)
+            {
+                LONG x = position.x - wg_legacy_mouse_position.x;
+                LONG y = position.y - wg_legacy_mouse_position.y;
+
+                if (x != 0 || y != 0)
+                {
+                    wolf3d_event_t event = { 0 };
+
+                    event.type = WOLF3D_EVENT_MOUSE_MOTION;
+                    event.x = (int16_t)(x > INT16_MAX ? INT16_MAX
+                                         : x < INT16_MIN ? INT16_MIN : x);
+                    event.y = (int16_t)(y > INT16_MAX ? INT16_MAX
+                                         : y < INT16_MIN ? INT16_MIN : y);
+                    wg_queue_event(&event);
+                }
+            }
+            wg_legacy_mouse_position = position;
+            wg_legacy_mouse_position_valid = 1;
+            return 0;
+        }
+
+        case WM_LBUTTONDOWN:
+        case WM_LBUTTONUP:
+            wg_queue_mouse_button(1U, message == WM_LBUTTONDOWN);
+            return 0;
+
+        case WM_RBUTTONDOWN:
+        case WM_RBUTTONUP:
+            wg_queue_mouse_button(2U, message == WM_RBUTTONDOWN);
+            return 0;
+
+        case WM_MBUTTONDOWN:
+        case WM_MBUTTONUP:
+            wg_queue_mouse_button(3U, message == WM_MBUTTONDOWN);
+            return 0;
+
+        case WM_ACTIVATE:
+            if (LOWORD(wparam) == WA_INACTIVE)
+            {
+                wg_legacy_mouse_position_valid = 0;
+            }
+            return DefWindowProcW(window, message, wparam, lparam);
+#endif
 
         case WM_CLOSE:
             wg_quit_pending = 1;
@@ -437,7 +598,9 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
 
 static int WG_Win32Init(void)
 {
+#ifndef WG_LEGACY_WIN32
     RAWINPUTDEVICE mouse;
+#endif
     WNDCLASSW window_class;
     RECT rectangle;
     HINSTANCE instance;
@@ -472,6 +635,7 @@ static int WG_Win32Init(void)
         return 0;
     }
 
+#ifndef WG_LEGACY_WIN32
     mouse.usUsagePage = 0x01U;
     mouse.usUsage = 0x02U;
     mouse.dwFlags = 0U;
@@ -482,6 +646,9 @@ static int WG_Win32Init(void)
         wg_window = NULL;
         return 0;
     }
+#else
+    wg_legacy_mouse_position_valid = 0;
+#endif
 
     QueryPerformanceFrequency(&wg_counter_frequency);
     QueryPerformanceCounter(&wg_counter_start);
@@ -869,7 +1036,7 @@ int WG_InstallPlatform(void)
 }
 
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
-                    PWSTR command_line, int show_command)
+                    LPWSTR command_line, int show_command)
 {
     int argc;
     wchar_t **wide_argv;
@@ -936,6 +1103,12 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
         {
             wg_start_fullscreen = 1;
         }
+#ifdef WG_LEGACY_WIN32
+        else if (index > 0 && strcmp(argv[index], "--mouse") == 0)
+        {
+            wg_legacy_mouse_requested = 1;
+        }
+#endif
     }
 
     result = wolf3d_Create(argc, argv);

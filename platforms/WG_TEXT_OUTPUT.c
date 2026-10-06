@@ -6,6 +6,21 @@
 #ifdef _WIN32
 #include <io.h>
 #include <windows.h>
+
+static int WG_AttachParentConsole(void)
+{
+    typedef BOOL (WINAPI *wg_attach_console_t)(DWORD);
+    HMODULE kernel = GetModuleHandleA("kernel32.dll");
+    wg_attach_console_t attach_console;
+
+    if (kernel == NULL)
+    {
+        return 0;
+    }
+    attach_console = (wg_attach_console_t)GetProcAddress(kernel,
+                                                         "AttachConsole");
+    return attach_console != NULL && attach_console((DWORD)-1);
+}
 #else
 #include <unistd.h>
 #endif
@@ -154,7 +169,7 @@ void WG_WriteWindowsTextScreen(const uint8_t *cells,
     if (output == NULL || output == INVALID_HANDLE_VALUE
         || !GetConsoleMode(output, &mode))
     {
-        (void)AttachConsole(ATTACH_PARENT_PROCESS);
+        (void)WG_AttachParentConsole();
         output = CreateFileW(L"CONOUT$", GENERIC_READ | GENERIC_WRITE,
                              FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                              OPEN_EXISTING, 0, NULL);

@@ -78,9 +78,24 @@ solution bands remain follow-up work, while their command-line and generated
 CMake solutions are validated now. SDL3 is intentionally excluded from every
 legacy compiler profile.
 
-An additional `windows-vs2015-xp-*` profile produces XP-targeting candidate
-packages using `v140_xp`. These builds pass host-side compilation and PE import
-audits, but remain candidates until exercised on actual XP systems.
+Windows XP-era x86 builds use the separate CMake definition and native CMD
+dispatcher validated with VC6 SP6 and Visual Studio 2002 SP1, 2003 SP1, and
+2005 SP1:
+
+```text
+scripts\build-legacy.cmd vc6
+scripts\build-legacy.cmd vs2002
+scripts\build-legacy.cmd vs2003
+scripts\build-legacy.cmd vs2005
+```
+
+These commands default to a Release package with Nuked-OPL3 and a static CRT.
+Run the script without arguments for the complete option list. The resulting
+compiler-qualified x86 game folders are staged under `dist/`. This path builds
+only the Win32/GDI wrapper; SDL3 deliberately has no XP-era build profile.
+
+The parallel `windows-vs2015-xp-*` profiles provide a newer XP-targeting
+alternative using the v140_xp toolset.
 
 For a guided command line, `build.ps1` detects installed supported Visual
 Studio versions and defaults to publishing both x64 wrappers with the newest

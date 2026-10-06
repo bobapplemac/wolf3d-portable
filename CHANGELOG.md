@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-10-05 - Native Windows XP-era wrapper builds
+
+- Advanced the pinned engine to wolf3d-lib 1.4.31.
+- Added a separate CMake 3.5 build and CMD dispatcher for VC6 SP6, VS2002 SP1,
+  VS2003 SP1, and VS2005 SP1 x86 Win32/GDI packages.
+- Kept every legacy wrapper build compiling the pinned engine and selected OPL
+  backend while leaving the modern CMake project and SDL3 support untouched.
+- Preserved joystick support without an SDK XInput dependency and supplied an
+  old-SDK mouse/fullscreen fallback for compiler generations predating raw
+  input and pointer-sized window APIs.
+- Compile-and-package validated all four compiler bands on Windows XP SP3 and
+  launched the VC6 package there with real WL1 shareware data.
+
 ## 2026-10-05 - Win32 legacy compiler span
 
 - Advanced the pinned engine to wolf3d-lib 1.4.30.

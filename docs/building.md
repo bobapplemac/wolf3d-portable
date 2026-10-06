@@ -33,8 +33,44 @@ VS2008/v90. All cover x86/x64 and static/dynamic CRT builds. SDL3 remains a
 modern-compiler target and is deliberately excluded from these profiles; no
 SDL backport is part of the legacy Windows support policy.
 The parallel `windows-vs2015-xp-*` presets select `v140_xp`; their PE minimums
-are Windows 5.01 for x86 and 5.02 for x64. They remain runtime candidates until
-tested on matching operating systems.
+are Windows 5.01 for x86 and 5.02 for x64.
+
+### Windows XP-era native compilers
+
+VC6 through VS2005 use an intentionally separate CMake 3.5 definition so the
+modern project does not inherit obsolete generator constraints. From an x86
+Windows build host with the selected compiler installed:
+
+```text
+scripts\build-legacy.cmd COMPILER [CONFIG] [AUDIO] [OPL] [RUNTIME] [ACTION]
+```
+
+The accepted values are:
+
+- `COMPILER`: `vc6`, `vs2002`, `vs2003`, or `vs2005`;
+- `CONFIG`: `Release` (default) or `Debug`;
+- `AUDIO`: `standard` (default) or `silent`;
+- `OPL`: `nuked` (default) or `dbopl`;
+- `RUNTIME`: `static` (default) or `dynamic`;
+- `ACTION`: `package` (default) or `build`.
+
+For example, this creates a ready-to-copy VC6 package:
+
+```text
+scripts\build-legacy.cmd vc6 Release standard nuked static package
+```
+
+The legacy definition always compiles the pinned library submodule as part of
+the wrapper build. It supports x86 only and never configures SDL3. Old Windows
+SDKs lack raw-input declarations, so these builds use ordinary Win32 mouse
+messages; keyboard, GDI presentation, WinMM audio, fullscreen toggling, and
+dynamically discovered XInput remain available. Fullscreen covers the primary
+display on these profiles, matching the single-monitor assumptions of their
+target era.
+
+The current compatibility baseline has been compile-and-package validated with
+VC6 SP6, VS2002 SP1, VS2003 SP1, and VS2005 SP1. The VC6 package has also been
+launched on Windows XP SP3 x86 with real WL1 shareware data.
 
 The development preset builds both GUI hosts. Dedicated distribution presets
 are `windows-release-{x64,x86}` for Win32 and `windows-sdl3-{x64,x86}` for

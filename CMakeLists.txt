@@ -64,6 +64,10 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WOLF3D-LIB.txt"
     "wolf3d-lib version: ${W3P_WOLF3D_VERSION}\n"
     "wolf3d-lib commit: ${W3P_WOLF3D_COMMIT}\n")
 
+set(W3P_OPL_FILE_LINE
+    "  Nuked-OPL3.dll          Replaceable LGPL-2.1-or-later OPL emulator")
+set(W3P_OPL_KEEP_NOTE
+    "wolf3d.dll and Nuked-OPL3.dll must remain beside the executable. The\nWin32 executable is only a platform host and loads the engine from the first\nDLL. Nuked-OPL3.dll may be replaced with a compatible modified build, as\nprovided for by its GNU Lesser General Public License. Corresponding source is\nidentified in the source distribution and is included in the wolf3d-lib\nsubmodule.")
 configure_file(packaging/WIN32-README.txt.in
                ${CMAKE_CURRENT_BINARY_DIR}/WIN32-README.txt @ONLY)
 configure_file(packaging/LINUX-CONSOLE-README.txt.in

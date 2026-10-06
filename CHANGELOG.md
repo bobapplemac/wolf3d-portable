@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-06 - Custom audio package auditing
+
+- Advanced the pinned engine to wolf3d-lib 1.4.40.
+- Matched GNU Make's portable glibc and musl staging/audit paths to the
+  deterministic suffix emitted for non-default audio configurations.
+
 ## 2026-10-06 - Runtime-selectable audio drivers
 
 - Advanced the pinned engine to wolf3d-lib 1.4.39 and platform API v3.

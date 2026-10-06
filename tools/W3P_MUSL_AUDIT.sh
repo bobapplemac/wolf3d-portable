@@ -40,4 +40,12 @@ if [ "$found_elf" -ne 1 ]; then
 fi
 
 "$bundle/wolf3d" --sdl3-help >/dev/null
-echo "musl bundle audit: closed dependency set and launcher smoke test passed"
+
+Xvfb :99 -screen 0 640x480x24 >/tmp/wolf3d-xvfb.log 2>&1 &
+xvfb_pid=$!
+trap 'kill "$xvfb_pid" >/dev/null 2>&1 || true' EXIT INT TERM
+sleep 1
+DISPLAY=:99 SDL_VIDEODRIVER=x11 SDL_AUDIODRIVER=dummy \
+    "$bundle/wolf3d" --sdl3-video-smoke
+
+echo "musl bundle audit: closed dependency set, launcher, and X11 video smoke tests passed"

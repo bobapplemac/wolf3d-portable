@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-10-06 - Functional musl desktop backends
+
+- Bundled musl-built X11, Wayland, ALSA, and PulseAudio client libraries plus
+  their recursive ELF dependencies instead of attempting to load incompatible
+  glibc system libraries into the private musl process.
+- Added an Xvfb-backed SDL window smoke test to the musl package audit so a
+  help-only launch can no longer pass with no functional video device.
+- Disabled the musl-native PipeWire and libdecor plugin paths; PipeWire
+  desktops remain supported through PulseAudio compatibility, while Wayland
+  uses SDL's protocol-native decoration path.
+
 ## 2026-10-06 - Custom audio package auditing
 
 - Advanced the pinned engine to wolf3d-lib 1.4.40.

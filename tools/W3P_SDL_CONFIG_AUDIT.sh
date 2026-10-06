@@ -22,8 +22,6 @@ SDL_VIDEO_DRIVER_WAYLAND_DYNAMIC_EGL
 SDL_VIDEO_DRIVER_WAYLAND_DYNAMIC_XKBCOMMON
 SDL_AUDIO_DRIVER_ALSA
 SDL_AUDIO_DRIVER_ALSA_DYNAMIC
-SDL_AUDIO_DRIVER_PIPEWIRE
-SDL_AUDIO_DRIVER_PIPEWIRE_DYNAMIC
 SDL_AUDIO_DRIVER_PULSEAUDIO
 SDL_AUDIO_DRIVER_PULSEAUDIO_DYNAMIC'
 
@@ -34,4 +32,4 @@ for macro in $required; do
     fi
 done
 
-echo "SDL configuration audit: dynamic X11, Wayland, ALSA, PipeWire, and PulseAudio enabled"
+echo "SDL configuration audit: dynamic X11, Wayland, ALSA, and PulseAudio enabled"

@@ -9,6 +9,7 @@ so the application does not depend on the destination distribution's glibc
 version and does not require SDL3 to be installed.
 
 The destination still supplies a Linux kernel and whichever desktop/audio
-services SDL uses at runtime. X11, Wayland, ALSA, PulseAudio, and PipeWire are
-loaded dynamically when present. The software renderer does not require a
-host OpenGL or Vulkan implementation.
+services SDL uses at runtime. Musl-compatible X11, Wayland, eudev, ALSA, and
+PulseAudio client libraries are included and loaded dynamically when their
+services are present. The software renderer does not require a host OpenGL or
+Vulkan implementation.

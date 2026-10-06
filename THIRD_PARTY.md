@@ -43,12 +43,25 @@ MIT license with additional permissive notices; its notice is included as
 `packaging/COPYING.musl.txt` and copied into that distribution as
 `LICENSES/musl-MIT.txt`.
 
+### Bundled musl desktop clients
+
+The relocatable musl package also carries the Alpine 3.20 runtime objects
+needed by SDL's dynamically loaded X11, Wayland, eudev, ALSA, and PulseAudio
+paths, including their ELF dependency closure. These are unmodified shared
+libraries and remain independently replaceable. The principal upstream
+projects and licenses are X.Org libraries (MIT/X11), Wayland (MIT), xkbcommon
+(MIT), eudev (LGPL-2.1-or-later), ALSA lib (LGPL-2.1-or-later), PulseAudio
+(LGPL-2.1-or-later), and PulseAudio's codec/runtime dependencies under their
+respective permissive or LGPL licenses. The package includes the LGPL 2.1
+license as `LICENSES/LGPL-2.1.txt`; exact pinned binary provenance is the
+digest-pinned Alpine 3.20.10 builder in `packaging/linux-musl/Dockerfile`.
+
 ## Wayland 1.18 build toolchain
 
 The optional Debian 10 portable-release container downloads the official
 Wayland 1.18.0 source archive by pinned SHA-256 and builds its scanner and
 development files under an isolated prefix. This supplies SDL's minimum
 native-Wayland build interface without raising the Debian 10 glibc baseline.
-Wayland uses the MIT license. No Wayland shared library is copied into a
-wolf3d-portable distribution; SDL dynamically uses the destination system's
-Wayland runtime when that backend is selected.
+Wayland uses the MIT license. The glibc portable package dynamically uses the
+destination system's Wayland runtime. The relocatable musl package instead
+ships the matching musl-built Wayland client objects as described above.

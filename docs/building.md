@@ -250,9 +250,15 @@ toolchain in the same container and keeps its build tree separate.
 The audit rejects GLIBC symbol versions, rejects unresolved direct ELF
 dependencies, and executes `wolf3d --sdl3-help` through the bundled loader.
 The resulting directory can be copied intact to another x86-64 Linux system;
-SDL discovers the destination's X11 or Wayland display and ALSA, PulseAudio,
-or PipeWire service dynamically. OpenGL, OpenGL ES, Vulkan, SDL GPU, and KMSDRM
-are deliberately disabled in this package: wolf3d-portable already renders
-its framebuffer in software, and excluding those paths avoids graphics-stack
-ABI dependencies. The separate direct-console host remains available for a
-DRM/KMS-only system.
+The bundle carries musl-built X11, Wayland, eudev, ALSA, and PulseAudio client
+libraries because its private musl process cannot load a destination's
+glibc-built copies. It discovers the destination display, input, and audio
+services at runtime without replacing their servers or device drivers. PipeWire's
+native client path is omitted from this bundle because it requires a separate
+plugin/configuration tree; PipeWire systems remain supported through their
+PulseAudio compatibility service. OpenGL, OpenGL ES, Vulkan, SDL GPU, and
+KMSDRM are deliberately disabled: wolf3d-portable already renders its
+framebuffer in software, and excluding those paths avoids graphics-stack ABI
+dependencies. The audit opens an SDL software-rendered window under Xvfb so a
+help-only launch can no longer conceal a missing video backend. The separate
+direct-console host remains available for a DRM/KMS-only system.

@@ -27,6 +27,7 @@ RUN apk add --no-cache \
         pipewire-dev \
         pulseaudio-dev \
         wayland-dev \
-        wayland-protocols
+        wayland-protocols \
+        xvfb
 
 WORKDIR /src

@@ -651,6 +651,15 @@ int main(int argc, char **argv)
             WG_SDLPrintHelp(argv[0]);
             return 0;
         }
+        if (strcmp(argv[index], "--sdl3-video-smoke") == 0)
+        {
+            if (!WG_SDLInit())
+            {
+                return 1;
+            }
+            WG_SDLShutdown();
+            return 0;
+        }
         if (strcmp(argv[index], "--mouse") == 0)
         {
             wg_mouse_enabled = 1;

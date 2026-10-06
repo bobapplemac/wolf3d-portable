@@ -11,6 +11,8 @@
 - Added Git dependency verification and confirmed initialization of missing
   recorded submodule revisions without installing external build tools or
   advancing dependency versions implicitly.
+- Accepted complete source-export trees without Git metadata when all recorded
+  dependency contents are already present.
 
 ## 2026-10-06 - Windows publish-switch alias
 

@@ -57,6 +57,13 @@ function Initialize-RecordedSubmodules {
         return
     }
 
+    $insideWorkTree = & $git.Source -C $root rev-parse --is-inside-work-tree 2>$null
+    if ($LASTEXITCODE -ne 0 -or $insideWorkTree -ne 'true') {
+        if ($missing) { throw 'Required dependencies are absent and this source export has no Git metadata from which to initialize them.' }
+        Write-Host 'Source export dependencies: present (Git metadata is unavailable).'
+        return
+    }
+
     $status = @(& $git.Source -C $root submodule status --recursive 2>&1)
     if ($LASTEXITCODE -ne 0) { throw "Git could not inspect submodules: $($status -join ' ')" }
     $uninitialized = @($status | Where-Object { $_ -match '^-' })

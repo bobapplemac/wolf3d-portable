@@ -30,23 +30,29 @@ confirm() { local answer; read -r -p "$1 [Y/n] " answer; [[ -z $answer || $answe
 
 printf 'wolf3d-portable guided Linux build\n'
 if ready git; then
-    status=$(git -C "$root" submodule status --recursive 2>&1) || {
-        printf 'Git could not inspect submodules:\n%s\n' "$status" >&2; exit 2;
-    }
-    if [[ $status == *$'\n-'* || $status == -* ]] ||
-       [ ! -f "$root/lib/wolf3d/CMakeLists.txt" ] ||
-       [ ! -f "$root/third_party/SDL3/CMakeLists.txt" ]; then
-        printf 'Required recorded Git dependencies are not initialized.\n'
-        if confirm 'Initialize the recorded submodule revisions now?'; then
-            git -C "$root" submodule update --init --recursive
+    if git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        status=$(git -C "$root" submodule status --recursive 2>&1) || {
+            printf 'Git could not inspect submodules:\n%s\n' "$status" >&2; exit 2;
+        }
+        if [[ $status == *$'\n-'* || $status == -* ]] ||
+           [ ! -f "$root/lib/wolf3d/CMakeLists.txt" ] ||
+           [ ! -f "$root/third_party/SDL3/CMakeLists.txt" ]; then
+            printf 'Required recorded Git dependencies are not initialized.\n'
+            if confirm 'Initialize the recorded submodule revisions now?'; then
+                git -C "$root" submodule update --init --recursive
+            else
+                printf 'Cannot build until required submodules are initialized.\n' >&2; exit 2
+            fi
         else
-            printf 'Cannot build until required submodules are initialized.\n' >&2; exit 2
+            printf 'Git dependencies: initialized and usable.\n'
         fi
+        if printf '%s\n' "$status" | grep -q '^+'; then
+            printf 'Warning: a submodule differs from its recorded revision; local dependency work was left untouched.\n' >&2
+        fi
+    elif [ -f "$root/lib/wolf3d/CMakeLists.txt" ] && [ -f "$root/third_party/SDL3/CMakeLists.txt" ]; then
+        printf 'Source export dependencies: present (Git metadata is unavailable).\n'
     else
-        printf 'Git dependencies: initialized and usable.\n'
-    fi
-    if printf '%s\n' "$status" | grep -q '^+'; then
-        printf 'Warning: a submodule differs from its recorded revision; local dependency work was left untouched.\n' >&2
+        printf 'Required dependencies are absent and this source export has no Git metadata.\n' >&2; exit 2
     fi
 elif [ ! -f "$root/lib/wolf3d/CMakeLists.txt" ] || [ ! -f "$root/third_party/SDL3/CMakeLists.txt" ]; then
     printf 'Required submodules are absent and Git was not found.\n' >&2; exit 2

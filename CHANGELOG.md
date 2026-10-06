@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-06 - Guided cross-platform build configuration
+
+- Advanced the pinned engine to wolf3d-lib 1.4.37.
+- Split modern Windows configuration from deterministic execution while
+  retaining all existing parameter-driven root commands.
+- Added dependency-free guided entry points for modern Windows, Linux, and
+  Windows XP that detect supported local build paths and print reproducible
+  commands before executing them.
+- Added Git dependency verification and confirmed initialization of missing
+  recorded submodule revisions without installing external build tools or
+  advancing dependency versions implicitly.
+
 ## 2026-10-06 - Windows publish-switch alias
 
 - Added `-Publish` as a convenient alias for `-Action publish` in the Windows

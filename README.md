@@ -93,6 +93,7 @@ dispatcher validated with VC6 SP6 and Visual Studio 2002 SP1, 2003 SP1, and
 2005 SP1:
 
 ```text
+build.cmd
 scripts\windows\legacy\build.cmd vc6
 scripts\windows\legacy\build.cmd vs2002
 scripts\windows\legacy\build.cmd vs2003
@@ -125,8 +126,10 @@ interactively walks through the choices:
 .\build.ps1 -Action build -Configuration Debug -Wrapper sdl3
 ```
 
-Run `Get-Help .\scripts\windows\build.ps1 -Detailed` for every option. The
-root launcher only dispatches to the same checked-in CMake presets and targets.
+Run `Get-Help .\scripts\windows\invoke-build.ps1 -Detailed` for every
+automation option. With no arguments, the root launcher verifies recorded Git
+submodules, offers to initialize missing revisions, and then guides the user
+through valid detected choices. It never installs external build tools.
 Pass `-Msys2Root C:\path\to\msys64` for a portable or non-default MSYS2
 installation. MinGW release packages target x64 UCRT and statically link GCC
 support code; publishing audits every EXE/DLL to prevent accidental MSYS,
@@ -145,8 +148,9 @@ the replaceable `Nuked-OPL3.dll`, all required host DLLs, notices, and a
 
 ## Linux
 
-Run `make help` for the complete command and variable list. The usual paths
-are:
+Run `./build.sh` for a dependency-aware guided scan of native, portable-glibc,
+and musl choices. Explicit arguments are forwarded to Make. `make help`
+remains the complete command and variable reference; the usual paths are:
 
 ```text
 make                         # pinned-SDL3 distribution

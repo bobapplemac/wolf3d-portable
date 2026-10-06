@@ -22,13 +22,13 @@ or the local submodule's `lib/wolf3d/docs/support-matrix.md`.
 | Windows Win32/GDI | Windows | `.\build.ps1 -Wrapper win32` | `dist/wolf3d-portable-<version>-win32-<arch>-<compiler>/` |
 | Windows SDL3 | Windows with VS2019/2022 or MinGW UCRT64 | `.\build.ps1 -Wrapper sdl3` | `dist/wolf3d-portable-<version>-sdl3-windows-<arch>-<compiler>/` |
 | Both modern Windows wrappers | Windows with VS2019/2022 or MinGW UCRT64 | `.\build.ps1 -Wrapper all` | Both folders above |
-| Native Linux SDL3 | Linux | `make` or `make sdl3-release CC=clang` | `dist/wolf3d-portable-<version>-sdl3-linux-<arch>/` |
+| Native Linux SDL3 | Linux | `./build.sh` or `make sdl3-release CC=clang` | `dist/wolf3d-portable-<version>-sdl3-linux-<arch>/` |
 | Native Linux console | Linux | `make console-release` | `dist/wolf3d-portable-<version>-console-<arch>/` |
 | Both native Linux wrappers | Linux | `make releases` | Both native folders |
-| Portable glibc Linux wrappers | Linux + Docker | `make portable` | SDL3 and console x86-64 folders audited to glibc 2.28 |
-| Bundled-musl Linux SDL3 | Linux + Docker | `make musl-sdl3` | Relocatable AppDir-style x86-64 folder |
+| Portable glibc Linux wrappers | Linux + Docker | `./build.sh` or `make portable` | SDL3 and console x86-64 folders audited to glibc 2.28 |
+| Bundled-musl Linux SDL3 | Linux + Docker | `./build.sh` or `make musl-sdl3` | Relocatable AppDir-style x86-64 folder |
 
-Run `make help`, `.\build.ps1 -List`, or the XP-era dispatcher without
+Run `./build.sh`, `make help`, `.\build.ps1`, or root `build.cmd` without
 arguments for all selectable options. See [building.md](building.md) for exact
 presets, package contents, and dependency setup.
 

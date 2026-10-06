@@ -132,13 +132,16 @@ parallelism, and a dry-run mode:
 .\build.ps1 -Compiler vs2022 -Wrapper win32 -DryRun
 ```
 
-With no arguments it interactively prompts for the relevant choices and a
-final confirmation. Explicit arguments remain suitable for automation;
-`-NonInteractive` applies the defaults without prompting. `auto` prefers
+With no arguments it verifies recorded submodules, offers to initialize
+missing revisions, reports detected toolchains, prompts for relevant choices,
+prints a reproducible build plan, and requests final confirmation. It never
+installs external tools or advances a submodule beyond the recorded commit.
+Explicit arguments remain suitable for automation; `-NonInteractive` applies
+the defaults without prompting. `auto` prefers
 VS2022/v143 and falls back through each installed compiler to VS2008/v90. All
 v141-and-older and v140_xp choices accept only `-Wrapper win32`. Publishing is
 a Release-only operation; Debug remains a development build. The root launcher
-delegates to `scripts/windows/build.ps1`, which prints every CMake command
+delegates to `scripts/windows/invoke-build.ps1`, which prints every CMake command
 before running it and does not duplicate build logic.
 
 The MinGW profile targets x64 through MSYS2 UCRT64. Install the UCRT64 GCC
@@ -163,6 +166,12 @@ cmake --build --preset windows-mingw-ucrt64-sdl3-x64
 ```
 
 ## Linux
+
+Run `./build.sh` without arguments for the guided Linux configurator. It
+verifies and, with confirmation, initializes the recorded submodules; reports
+GCC, Clang, CMake, Make, Docker, and Git; shows only usable build paths; and
+prints the exact Make command before executing it. Arguments bypass the
+wizard and are forwarded to Make.
 
 `make` defaults to the pinned-SDL3 distribution. Useful targets include:
 

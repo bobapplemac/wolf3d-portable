@@ -1,0 +1,136 @@
+<#
+.SYNOPSIS
+Interactively configure and run a wolf3d-portable Windows build.
+
+.DESCRIPTION
+This dependency-free frontend verifies recorded Git submodules, detects
+supported local toolchains, filters incompatible wrappers, displays the
+reproducible executor command, and optionally runs it. It never installs
+external tools or advances submodules beyond the revisions recorded here.
+#>
+[CmdletBinding()]
+param([string]$Msys2Root = 'C:\msys64')
+
+Set-StrictMode -Version 2.0
+$ErrorActionPreference = 'Stop'
+
+$root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$executor = Join-Path $PSScriptRoot 'invoke-build.ps1'
+
+function Read-Choice {
+    param([string]$Prompt, [object[]]$Options, [string]$LabelProperty = '')
+    while ($true) {
+        Write-Host ''
+        Write-Host $Prompt
+        for ($i = 0; $i -lt $Options.Count; ++$i) {
+            $label = if ($LabelProperty) { $Options[$i].$LabelProperty } else { [string]$Options[$i] }
+            $marker = if ($i -eq 0) { ' (recommended)' } else { '' }
+            Write-Host ('  {0}. {1}{2}' -f ($i + 1), $label, $marker)
+        }
+        $answer = Read-Host 'Selection'
+        if ([string]::IsNullOrWhiteSpace($answer)) { return $Options[0] }
+        $number = 0
+        if ([int]::TryParse($answer, [ref]$number) -and
+            $number -ge 1 -and $number -le $Options.Count) {
+            return $Options[$number - 1]
+        }
+        Write-Warning 'Enter one of the listed numbers.'
+    }
+}
+
+function Confirm-Step {
+    param([string]$Prompt, [bool]$DefaultYes = $true)
+    $suffix = if ($DefaultYes) { '[Y/n]' } else { '[y/N]' }
+    $answer = Read-Host "$Prompt $suffix"
+    if ([string]::IsNullOrWhiteSpace($answer)) { return $DefaultYes }
+    return $answer -match '^[Yy]'
+}
+
+function Initialize-RecordedSubmodules {
+    $git = Get-Command git.exe -ErrorAction SilentlyContinue
+    if (-not $git) { $git = Get-Command git -ErrorAction SilentlyContinue }
+    $missing = -not (Test-Path -LiteralPath (Join-Path $root 'lib\wolf3d\CMakeLists.txt')) -or
+        -not (Test-Path -LiteralPath (Join-Path $root 'third_party\SDL3\CMakeLists.txt'))
+    if (-not $git) {
+        if ($missing) { throw 'Required submodules are absent and Git was not found. Install Git, then run git submodule update --init --recursive.' }
+        Write-Warning 'Git was not found; existing dependency directories cannot be verified.'
+        return
+    }
+
+    $status = @(& $git.Source -C $root submodule status --recursive 2>&1)
+    if ($LASTEXITCODE -ne 0) { throw "Git could not inspect submodules: $($status -join ' ')" }
+    $uninitialized = @($status | Where-Object { $_ -match '^-' })
+    $different = @($status | Where-Object { $_ -match '^\+' })
+    if ($different.Count -gt 0) {
+        Write-Warning 'One or more submodules differ from the recorded revision. The configurator will not overwrite local dependency work.'
+        $different | ForEach-Object { Write-Host "  $_" }
+    }
+    if ($missing -or $uninitialized.Count -gt 0) {
+        Write-Host ''
+        Write-Host 'Required recorded Git dependencies are not initialized.'
+        if (-not (Confirm-Step 'Initialize the recorded submodule revisions now?')) {
+            throw 'Cannot build until required submodules are initialized.'
+        }
+        & $git.Source -C $root submodule update --init --recursive
+        if ($LASTEXITCODE -ne 0) { throw 'Git submodule initialization failed.' }
+    } else {
+        Write-Host 'Git dependencies: initialized and usable.'
+    }
+}
+
+Write-Host 'wolf3d-portable guided Windows build'
+Initialize-RecordedSubmodules
+Write-Host 'Scanning supported compilers and build tools...'
+$toolchains = @(& $executor -ListObjects -NonInteractive -Msys2Root $Msys2Root)
+$available = @($toolchains | Where-Object { $_.Available })
+
+Write-Host ''
+Write-Host 'Detected build environments:'
+foreach ($toolchain in $toolchains) {
+    $status = if ($toolchain.Available) { 'ready' } else { 'not found/incomplete' }
+    $location = if ($toolchain.Installation) { " - $($toolchain.Installation)" } else { '' }
+    Write-Host ('  {0,-14} {1,-12} {2}{3}' -f $toolchain.Name, $toolchain.Toolset, $status, $location)
+}
+if ($available.Count -eq 0) {
+    throw 'No complete supported Windows build environment was detected. See docs/building.md for prerequisite details.'
+}
+
+$compiler = Read-Choice 'Compiler' $available 'Name'
+$architectures = if ($compiler.Name -eq 'mingw-ucrt64') { @('x64') } else { @('x64', 'x86') }
+$architecture = Read-Choice 'Architecture' $architectures
+$wrappers = if ($compiler.SupportsSDL3) { @('all', 'win32', 'sdl3') } else { @('win32') }
+$wrapper = Read-Choice 'Wrapper' $wrappers
+$action = Read-Choice 'What would you like to produce?' @('publish', 'build', 'clean')
+$configuration = if ($action -eq 'publish') { 'Release' } else {
+    Read-Choice 'Configuration' @('Release', 'Debug')
+}
+$runtime = if ($compiler.Name -eq 'mingw-ucrt64') { 'static' } else {
+    Read-Choice 'Compiler runtime' @('static', 'dynamic')
+}
+
+$arguments = @(
+    '-Compiler', $compiler.Name,
+    '-Architecture', $architecture,
+    '-Wrapper', $wrapper,
+    '-Configuration', $configuration,
+    '-Runtime', $runtime,
+    '-Action', $action,
+    '-NonInteractive'
+)
+if ($compiler.Name -eq 'mingw-ucrt64') { $arguments += @('-Msys2Root', $Msys2Root) }
+
+Write-Host ''
+Write-Host 'Build plan:'
+Write-Host "  Compiler:      $($compiler.Name) / $($compiler.Toolset)"
+Write-Host "  Architecture:  $architecture"
+Write-Host "  Wrapper:       $wrapper"
+Write-Host "  Result:        $action / $configuration"
+Write-Host "  Runtime:       $runtime"
+Write-Host ''
+Write-Host 'Reproducible command:'
+Write-Host ('.\scripts\windows\invoke-build.ps1 ' + ($arguments -join ' '))
+Write-Host ''
+if (-not (Confirm-Step 'Run this build now?')) { exit 0 }
+
+& $executor @arguments
+if (-not $?) { exit 1 }

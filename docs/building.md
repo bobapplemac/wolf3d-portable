@@ -127,6 +127,7 @@ parallelism, and a dry-run mode:
 .\build.ps1 -Compiler mingw-ucrt64 -Wrapper win32
 .\build.ps1 -Compiler mingw-ucrt64 -Wrapper sdl3
 .\build.ps1 -Compiler mingw-ucrt64 -Wrapper all
+.\build.ps1 -Compiler mingw-ucrt64 -Wrapper all -Publish
 .\build.ps1 -Action build -Configuration Debug -Runtime dynamic -Wrapper all
 .\build.ps1 -Compiler vs2022 -Wrapper win32 -DryRun
 ```

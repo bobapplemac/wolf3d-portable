@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-06 - Windows publish-switch alias
+
+- Added `-Publish` as a convenient alias for `-Action publish` in the Windows
+  build dispatcher, including the documented MinGW all-wrapper command.
+
 ## 2026-10-06 - MinGW UCRT64 Windows builds
 
 - Advanced the pinned engine to wolf3d-lib 1.4.36.

@@ -121,6 +121,7 @@ interactively walks through the choices:
 .\build.ps1 -Compiler vs2008 -Architecture x86 -Wrapper win32
 .\build.ps1 -Compiler mingw-ucrt64 -Wrapper win32
 .\build.ps1 -Compiler mingw-ucrt64 -Wrapper sdl3
+.\build.ps1 -Compiler mingw-ucrt64 -Wrapper all -Publish
 .\build.ps1 -Action build -Configuration Debug -Wrapper sdl3
 ```
 

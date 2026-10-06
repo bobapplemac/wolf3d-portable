@@ -21,6 +21,10 @@ Publishes the 32-bit Win32 host with Visual Studio 2015/v140.
 Builds (but does not stage) the x64 SDL3 Debug host.
 
 .EXAMPLE
+.\build.ps1 -Compiler mingw-ucrt64 -Wrapper all -Publish
+Publishes both MinGW UCRT64 wrappers. -Publish is an alias for -Action publish.
+
+.EXAMPLE
 .\build.ps1 -List
 Shows the supported compiler installations detected on this computer.
 #>
@@ -51,12 +55,20 @@ param(
     [string]$Msys2Root = 'C:\msys64',
 
     [switch]$List,
+    [switch]$Publish,
     [switch]$DryRun,
     [switch]$NonInteractive
 )
 
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
+
+if ($Publish) {
+    if ($PSBoundParameters.ContainsKey('Action') -and $Action -ne 'publish') {
+        throw '-Publish cannot be combined with a non-publish -Action value.'
+    }
+    $Action = 'publish'
+}
 
 $root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'

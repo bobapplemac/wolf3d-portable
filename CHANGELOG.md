@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-07 - MSYS2 bootstrap documentation
+
+- Documented the complete fresh-install MSYS2 UCRT64 update and package setup
+  needed by the MinGW build profile, including its PowerShell detection check.
+- Clarified that the Windows MinGW build compiles the repository's pinned SDL3
+  submodule and does not require MSYS2's SDL3 package.
+
 ## 2026-10-07 - Guided Windows build execution
 
 - Advanced the pinned engine to wolf3d-lib 1.4.42.

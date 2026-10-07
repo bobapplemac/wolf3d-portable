@@ -160,6 +160,28 @@ the current process environment. Release packages statically link GCC support
 code while retaining Windows' UCRT, and the publish action rejects imports of
 `msys-2.0.dll`, `cygwin1.dll`, libgcc, libstdc++, or winpthread DLLs.
 
+For a fresh MSYS2 installation, open the **MSYS2 UCRT64** terminal and update
+the package database and base installation:
+
+```sh
+pacman -Syu
+```
+
+If MSYS2 asks you to close the terminal, reopen the **MSYS2 UCRT64** terminal
+and run `pacman -Syu` again. Then install the required x64 UCRT toolchain and
+build tools:
+
+```sh
+pacman -S --needed \
+  mingw-w64-ucrt-x86_64-toolchain \
+  mingw-w64-ucrt-x86_64-cmake \
+  mingw-w64-ucrt-x86_64-ninja
+```
+
+Return to ordinary PowerShell and run `.\build.ps1 -List` to verify that
+`mingw-ucrt64` is reported as ready. Do not install MSYS2's SDL3 package for
+this project: the portable build compiles the pinned SDL3 submodule.
+
 The equivalent direct presets, run from an MSYS2 UCRT64 shell, are:
 
 ```text

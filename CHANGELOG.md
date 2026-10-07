@@ -2,6 +2,8 @@
 
 ## 2026-10-07 - Runtime-selectable DOS OPL emulation
 
+- Advanced the pinned engine to wolf3d-lib 1.4.47 and kept Open Watcom
+  diagnostic reports inside build output rather than the source checkout.
 - Enabled Nuked-OPL3, DBOPL, and timing-preserving silence in the default DOS
   build and exposed the existing `--opl` runtime selection consistently.
 - Retained Nuked as the reference default while documenting DBOPL as the

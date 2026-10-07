@@ -22,12 +22,12 @@ WG_OPENWATCOM_SAMPLE_RATE="$sample_rate" \
 sh "$root/lib/wolf3d/scripts/linux/openwatcom/build-library.sh"
 
 echo "Open Watcom C: platforms/dos/WG_DOS.c"
-wcc386 -zq -bt=dos -mf -5r -ox -w4 -we \
+wcc386 -zq -bt=dos -mf -5r -ox -fr -w4 -we \
     -dWOLF3D_STATIC -i="$root/lib/wolf3d/include" -i="$root/platforms/dos" \
     -fo="$build_dir/objects/WG_DOS.obj" \
     "$root/platforms/dos/WG_DOS.c"
 echo "Open Watcom C: platforms/dos/WG_DOS_SB16.c"
-wcc386 -zq -bt=dos -mf -5r -ox -w4 -we \
+wcc386 -zq -bt=dos -mf -5r -ox -fr -w4 -we \
     -dWOLF3D_STATIC -i="$root/lib/wolf3d/include" -i="$root/platforms/dos" \
     -fo="$build_dir/objects/WG_DOS_SB16.obj" \
     "$root/platforms/dos/WG_DOS_SB16.c"

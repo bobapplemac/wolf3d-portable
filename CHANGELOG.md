@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-07 - MSVC 2008 warning-clean library build
+
+- Advanced the pinned engine to wolf3d-lib 1.4.45.
+- Restored warning-clean VS2008/v90 wrapper builds by inheriting the library's
+  explicit opt-out for the legacy CRT's `_vsnprintf` deprecation diagnostic.
+
 ## 2026-10-07 - Windows runtime compatibility validation
 
 - Advanced the pinned engine to wolf3d-lib 1.4.44.

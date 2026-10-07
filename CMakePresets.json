@@ -125,6 +125,7 @@
         "W3P_BUILD_SDL3": "ON",
         "W3P_WARNINGS_AS_ERRORS": "ON",
         "WG_STATIC_MSVC_RUNTIME": "ON",
+        "W3P_COMPILER_LABEL": "msvc-v145",
         "WG_COMPILER_LABEL": "msvc-v145"
       }
     },

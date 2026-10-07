@@ -6,6 +6,8 @@
 - Added native Visual Studio 2026/v145 x86 and x64 presets, dispatcher
   detection, and a generation-specific solution with Win32/GDI and SDL3
   development and publish configurations.
+- Gave VS2026 packages the same collision-resistant `msvc-v145` directory
+  label used by every other compiler-qualified Windows distribution.
 - Corrected exact VS2017 IDE discovery and made it borrow a newer CMake when
   its bundled CMake is too old for presets, while retaining the v141 compiler
   and native Visual Studio 15 generator.

@@ -61,8 +61,9 @@ gitlink before treating that result as an official release.
 ## Windows
 
 Open `ide/visual-studio/vs2019/wolf3d-portable.sln` in Visual Studio 2019 or
-`ide/visual-studio/vs2022/wolf3d-portable.sln` in Visual Studio 2022, or use
-CMake. The established names below select VS2019/v142:
+the matching generation-specific solution under `ide/visual-studio/` for
+Visual Studio 2022 or 2026, or use CMake. The established names below select
+VS2019/v142:
 
 ```text
 cmake --preset windows-dev-x64
@@ -75,7 +76,8 @@ cmake --build --preset windows-sdl3-x64
 
 For VS2022/v143, add `vs2022` after `windows`, for example
 `windows-vs2022-dev-x64`, `windows-vs2022-release-x64`, or
-`windows-vs2022-sdl3-x64`.
+`windows-vs2022-sdl3-x64`. Substitute `vs2026` for the corresponding
+VS2026/v145 presets.
 
 From an MSYS2 UCRT64 shell, use the native-GCC x64 presets:
 
@@ -123,6 +125,7 @@ interactively walks through the choices:
 ```powershell
 .\build.ps1 -List
 .\build.ps1
+.\build.ps1 -Compiler vs2026 -Architecture x64 -Wrapper all
 .\build.ps1 -Compiler vs2019 -Architecture x86 -Wrapper win32
 .\build.ps1 -Compiler vs2015 -Architecture x86 -Wrapper win32
 .\build.ps1 -Compiler vs2015-xp -Architecture x86 -Wrapper win32

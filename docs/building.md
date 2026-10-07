@@ -27,10 +27,10 @@ cmake --build --preset windows-dev-x64
 ```
 
 The established `windows-*` preset names explicitly select Visual Studio 2019
-and v142. Add `vs2022` after `windows` for the parallel v143 presets, for
-example `windows-vs2022-dev-x64`, `windows-vs2022-release-x64`, or
-`windows-vs2022-sdl3-x64`. Their build trees and staged package names identify
-the compiler generation so both sets can coexist.
+and v142. Add `vs2022` or `vs2026` after `windows` for the parallel v143 or
+v145 presets, for example `windows-vs2026-dev-x64`,
+`windows-vs2026-release-x64`, or `windows-vs2026-sdl3-x64`. Their build trees
+and staged package names identify the compiler generation so all sets coexist.
 
 The Win32/GDI host additionally provides compiler-qualified presets for
 VS2017/v141, VS2015/v140, VS2013/v120, VS2012/v110, VS2010/v100, and
@@ -84,10 +84,10 @@ SDL3. The MSVC runtime is statically linked by default; set
 `WG_STATIC_MSVC_RUNTIME=OFF` in a separate build tree to use the matching
 Visual C++ Redistributable.
 
-The checked-in `ide/visual-studio/vs2019/wolf3d-portable.sln` and
-`ide/visual-studio/vs2022/wolf3d-portable.sln` invoke these same configurations
-through v142 and v143 respectively. Select one of the following solution
-configurations and build:
+The checked-in VS2019, VS2022, and VS2026 solutions under
+`ide/visual-studio/` invoke these same configurations through v142, v143, and
+v145 respectively. Select one of the following solution configurations and
+build:
 
 - `Publish Win32` stages only the dependency-free Win32/GDI host.
 - `Publish SDL3` stages only the SDL3 host.
@@ -95,6 +95,10 @@ configurations and build:
 
 Choose `x64` or `Win32` independently in the platform selector. Publish
 configurations are Release builds with the static MSVC runtime and produce
+Visual Studio 2017's bundled CMake predates preset support, so its dispatcher
+and native project locate CMake 3.20 or newer from `PATH` or a newer installed
+Visual Studio while retaining the native VS15 generator and v141 compiler.
+
 For the native Visual Studio 2015 IDE, open
 `ide/visual-studio/vs2015/wolf3d-portable.sln`. This focused
 compatibility-band solution exposes Debug, Release, dynamic-CRT variants, and
@@ -116,6 +120,7 @@ dry-run mode:
 ```powershell
 .\build.ps1 -List
 .\build.ps1
+.\build.ps1 -Compiler vs2026 -Architecture x64 -Wrapper all
 .\build.ps1 -Compiler vs2022 -Architecture x64 -Wrapper sdl3
 .\build.ps1 -Compiler vs2019 -Architecture x86 -Wrapper win32
 .\build.ps1 -Compiler vs2017 -Architecture x64 -Wrapper win32
@@ -141,7 +146,7 @@ prints a reproducible build plan, and requests final confirmation. It never
 installs external tools or advances a submodule beyond the recorded commit.
 Explicit arguments remain suitable for automation; `-NonInteractive` applies
 the defaults without prompting. `auto` prefers
-VS2022/v143 and falls back through each installed compiler to VS2008/v90. All
+VS2026/v145 and falls back through each installed compiler to VS2008/v90. All
 v141-and-older and v140_xp choices accept only `-Wrapper win32`. Publishing is
 a Release-only operation; Debug remains a development build. The root launcher
 delegates to `scripts/windows/invoke-build.ps1`, which prints every CMake command

@@ -20,8 +20,8 @@ or the local submodule's `lib/wolf3d/docs/support-matrix.md`.
 | Desired package | Build host | Command | Staged result |
 | --- | --- | --- | --- |
 | Windows Win32/GDI | Windows | `.\build.ps1 -Wrapper win32` | `dist/wolf3d-portable-<version>-win32-<arch>-<compiler>/` |
-| Windows SDL3 | Windows with VS2019/2022 or MinGW UCRT64 | `.\build.ps1 -Wrapper sdl3` | `dist/wolf3d-portable-<version>-sdl3-windows-<arch>-<compiler>/` |
-| Both modern Windows wrappers | Windows with VS2019/2022 or MinGW UCRT64 | `.\build.ps1 -Wrapper all` | Both folders above |
+| Windows SDL3 | Windows with VS2019/2022/2026 or MinGW UCRT64 | `.\build.ps1 -Wrapper sdl3` | `dist/wolf3d-portable-<version>-sdl3-windows-<arch>-<compiler>/` |
+| Both modern Windows wrappers | Windows with VS2019/2022/2026 or MinGW UCRT64 | `.\build.ps1 -Wrapper all` | Both folders above |
 | Native Linux SDL3 | Linux | `./build.sh` or `make sdl3-release CC=clang` | `dist/wolf3d-portable-<version>-sdl3-linux-<arch>/` |
 | Native Linux console | Linux | `make console-release` | `dist/wolf3d-portable-<version>-console-<arch>/` |
 | Both native Linux wrappers | Linux | `make releases` | Both native folders |
@@ -37,9 +37,10 @@ presets, package contents, and dependency setup.
 | Compiler environment | Toolset | Architectures | Win32/GDI | SDL3 | Build entry point | Destination validation |
 | --- | --- | --- | --- | --- | --- | --- |
 | MSYS2 UCRT64 | MinGW-w64 GCC 16.2 | x64 | Validated | Validated | `build.ps1`, CMake presets | Package/API/SDL help validated on current Windows host; full-game runtime pending |
+| Visual Studio 2026 | v145 | x86, x64 | Validated | Validated | `build.ps1`, native VS2026 solution, CMake presets | Windows 11 compatibility host |
 | Visual Studio 2022 | v143 | x86, x64 | Validated | Validated | `build.ps1`, native VS2022 solution, CMake presets | Current Windows development host |
 | Visual Studio 2019 | v142 | x86, x64 | Validated | Validated | `build.ps1`, native VS2019 solution, CMake presets | Current Windows development host |
-| VS2017 v141 (compiler hosted by VS2019; native IDE files pending lab validation) | v141 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2017 solution, CMake presets | No legacy-OS minimum claimed |
+| Visual Studio 2017 | v141 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2017 solution, CMake presets | Windows 11 compatibility host; no legacy-OS minimum claimed |
 | Visual Studio 2015 | v140 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2015 solution, CMake presets | No legacy-OS minimum claimed |
 | Visual Studio 2015 XP SDK | v140_xp | x86, x64 | Validated | Not supported | `build.ps1`, VS2015 solution, CMake presets | Pending on actual XP; PE minimum 5.01 x86 / 5.02 x64 |
 | Visual Studio 2013 Update 5 | v120 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2013 solution, CMake presets | No legacy-OS minimum claimed |
@@ -64,6 +65,7 @@ default; dynamic CRT packages require the matching Microsoft redistributable.
 
 | Interface | Supported scope |
 | --- | --- |
+| `ide/visual-studio/vs2026/wolf3d-portable.sln` | VS2026/v145; Win32 and SDL3; x86/x64; publish configurations stage `dist/` |
 | `ide/visual-studio/vs2022/wolf3d-portable.sln` | VS2022/v143; Win32 and SDL3; x86/x64; publish configurations stage `dist/` |
 | `ide/visual-studio/vs2019/wolf3d-portable.sln` | VS2019/v142; Win32 and SDL3; x86/x64; publish configurations stage `dist/` |
 | `ide/visual-studio/vs2017/wolf3d-portable.sln` | VS2017/v141; Win32 only; x86/x64 |
@@ -72,7 +74,7 @@ default; dynamic CRT packages require the matching Microsoft redistributable.
 | `ide/visual-studio/vs2008/wolf3d-portable.sln` | Native VS2008/v90; Win32 only; x86/x64 |
 | `ide/visual-studio/vs2002/`, `vs2003/`, `vs2005/` | Matching period IDE/compiler; Win32 x86 only |
 | `ide/visual-studio/vc6/wolf3d-portable.dsw` | Native VC6 workspace/project; Win32 x86 only |
-| Root `build.ps1` | Interactive or scripted selection from VS2008 through VS2022 and MinGW UCRT64; SDL3 for VS2019/2022 and MinGW |
+| Root `build.ps1` | Interactive or scripted selection from VS2008 through VS2026 and MinGW UCRT64; SDL3 for VS2019/2022/2026 and MinGW |
 | Direct CMake presets | Same modern compiler profiles as the dispatcher; useful for automation |
 | `scripts\windows\legacy\build.cmd` | VC6, VS2002, VS2003, VS2005; Win32 x86 only; build or package |
 

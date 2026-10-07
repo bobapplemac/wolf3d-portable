@@ -116,6 +116,19 @@
       }
     },
     {
+      "name": "windows-vs2026-base",
+      "hidden": true,
+      "generator": "Visual Studio 18 2026",
+      "toolset": "v145",
+      "cacheVariables": {
+        "W3P_BUILD_WIN32": "ON",
+        "W3P_BUILD_SDL3": "ON",
+        "W3P_WARNINGS_AS_ERRORS": "ON",
+        "WG_STATIC_MSVC_RUNTIME": "ON",
+        "WG_COMPILER_LABEL": "msvc-v145"
+      }
+    },
+    {
       "name": "windows-vs2008-dev-x64", "inherits": "windows-vs2008-base",
       "binaryDir": "${sourceDir}/build/windows-vs2008-dev-x64", "architecture": "x64"
     },
@@ -356,6 +369,48 @@
       "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF" }
     },
     {
+      "name": "windows-vs2026-dev-x64",
+      "displayName": "Visual Studio 2026 hosts (x64)",
+      "inherits": "windows-vs2026-base",
+      "binaryDir": "${sourceDir}/build/windows-vs2026-dev-x64",
+      "architecture": "x64"
+    },
+    {
+      "name": "windows-vs2026-dev-x86",
+      "displayName": "Visual Studio 2026 hosts (x86)",
+      "inherits": "windows-vs2026-base",
+      "binaryDir": "${sourceDir}/build/windows-vs2026-dev-x86",
+      "architecture": "Win32"
+    },
+    {
+      "name": "windows-vs2026-release-x64",
+      "displayName": "Visual Studio 2026 Win32 release (x64)",
+      "inherits": "windows-vs2026-dev-x64",
+      "binaryDir": "${sourceDir}/build/windows-vs2026-release-x64",
+      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF" }
+    },
+    {
+      "name": "windows-vs2026-release-x86",
+      "displayName": "Visual Studio 2026 Win32 release (x86)",
+      "inherits": "windows-vs2026-dev-x86",
+      "binaryDir": "${sourceDir}/build/windows-vs2026-release-x86",
+      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF" }
+    },
+    {
+      "name": "windows-vs2026-sdl3-x64",
+      "displayName": "Visual Studio 2026 SDL3 release (x64)",
+      "inherits": "windows-vs2026-dev-x64",
+      "binaryDir": "${sourceDir}/build/windows-vs2026-sdl3-x64",
+      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF" }
+    },
+    {
+      "name": "windows-vs2026-sdl3-x86",
+      "displayName": "Visual Studio 2026 SDL3 release (x86)",
+      "inherits": "windows-vs2026-dev-x86",
+      "binaryDir": "${sourceDir}/build/windows-vs2026-sdl3-x86",
+      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF" }
+    },
+    {
       "name": "windows-mingw-ucrt64-base",
       "hidden": true,
       "generator": "Ninja",
@@ -457,6 +512,12 @@
     { "name": "windows-vs2022-release-x86", "configurePreset": "windows-vs2022-release-x86", "configuration": "Release", "targets": ["win32-release"] },
     { "name": "windows-vs2022-sdl3-x64", "configurePreset": "windows-vs2022-sdl3-x64", "configuration": "Release", "targets": ["sdl3-release"] },
     { "name": "windows-vs2022-sdl3-x86", "configurePreset": "windows-vs2022-sdl3-x86", "configuration": "Release", "targets": ["sdl3-release"] },
+    { "name": "windows-vs2026-dev-x64", "configurePreset": "windows-vs2026-dev-x64", "configuration": "Release" },
+    { "name": "windows-vs2026-dev-x86", "configurePreset": "windows-vs2026-dev-x86", "configuration": "Release" },
+    { "name": "windows-vs2026-release-x64", "configurePreset": "windows-vs2026-release-x64", "configuration": "Release", "targets": ["win32-release"] },
+    { "name": "windows-vs2026-release-x86", "configurePreset": "windows-vs2026-release-x86", "configuration": "Release", "targets": ["win32-release"] },
+    { "name": "windows-vs2026-sdl3-x64", "configurePreset": "windows-vs2026-sdl3-x64", "configuration": "Release", "targets": ["sdl3-release"] },
+    { "name": "windows-vs2026-sdl3-x86", "configurePreset": "windows-vs2026-sdl3-x86", "configuration": "Release", "targets": ["sdl3-release"] },
     { "name": "windows-mingw-ucrt64-dev-x64", "configurePreset": "windows-mingw-ucrt64-dev-x64" },
     { "name": "windows-mingw-ucrt64-release-x64", "configurePreset": "windows-mingw-ucrt64-release-x64", "targets": ["win32-release"] },
     { "name": "windows-mingw-ucrt64-sdl3-x64", "configurePreset": "windows-mingw-ucrt64-sdl3-x64", "targets": ["sdl3-release"] },

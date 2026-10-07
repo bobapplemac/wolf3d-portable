@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-07 - Visual Studio 2017 and 2026 validation
+
+- Advanced the pinned engine to wolf3d-lib 1.4.41.
+- Added native Visual Studio 2026/v145 x86 and x64 presets, dispatcher
+  detection, and a generation-specific solution with Win32/GDI and SDL3
+  development and publish configurations.
+- Corrected exact VS2017 IDE discovery and made it borrow a newer CMake when
+  its bundled CMake is too old for presets, while retaining the v141 compiler
+  and native Visual Studio 15 generator.
+- Validated the Win32 wrapper with exact VS2017 and both Windows wrappers with
+  exact VS2019, VS2022, and VS2026 compilers on Windows 11.
+
 ## 2026-10-06 - Musl launcher data discovery
 
 - Preserved the top-level launcher's path as the hosted SDL executable's

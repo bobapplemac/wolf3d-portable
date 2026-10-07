@@ -6,6 +6,7 @@ sources and pinned `wolf3d-lib` submodule.
 
 | Directory | IDE/toolset | Wrappers |
 | --- | --- | --- |
+| `vs2026/` | Visual Studio 2026/v145 | Win32/GDI and SDL3 |
 | `vs2022/` | Visual Studio 2022/v143 | Win32/GDI and SDL3 |
 | `vs2019/` | Visual Studio 2019/v142 | Win32/GDI and SDL3 |
 | `vs2017/` | Visual Studio 2017/v141 | Win32/GDI only |

@@ -260,16 +260,21 @@ Docker is usable. The result is staged at
 Copy a legally obtained WL1, WL6, SDM, SOD, SD1, SD2, or SD3 data set beside
 the two executable files, then run `WOLF3D`. The supported baseline is a
 Pentium-class or newer x86 DOS system with VGA. The initial host uses direct
-mode 13h presentation, IRQ 1 keyboard input, and a 700 Hz PIT IRQ 0 clock. It
-compiles only the timing-preserving silent driver; SB16 PCM, emulated OPL, and
-native AdLib output remain later checkpoints.
+mode 13h presentation, IRQ 1 keyboard input, a 700 Hz PIT IRQ 0 clock, and
+SB16 44.1 kHz 16-bit signed stereo auto-initialize DMA. Sound Blaster settings
+come from the standard `BLASTER` environment variable and require an SB16-
+compatible DSP plus a high-DMA channel. If detection fails, a timed null sink
+keeps audio rendering and completion clocks alive without producing samples.
+The default package still compiles only the timing-preserving silent OPL
+driver; emulated and native hardware OPL remain later checkpoints.
 
-The current package is compile-and-package validated and has completed a
-headless DOSBox startup smoke with WL1 data. That test establishes that the
-extender loads and the engine remains in its run loop; physical DOS hardware
-gameplay is not yet claimed. `make clean-dos` removes its build tree and its
-project-specific Docker image. `make clean` includes the same cleanup without
-pruning unrelated Docker objects.
+The current package is compile-and-package validated and has completed
+headless DOSBox startup smokes with WL1 data both with an emulated SB16 and
+with no usable audio destination. Those tests establish that the extender,
+DMA/IRQ initialization, null fallback, and engine run loop remain live;
+physical DOS hardware gameplay is not yet claimed. `make clean-dos` removes
+its build tree and project-specific Docker image. `make clean` includes the
+same cleanup without pruning unrelated Docker objects.
 
 ## Reproducibility and latest-main builds
 

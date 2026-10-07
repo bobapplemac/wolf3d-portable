@@ -36,8 +36,8 @@ files are not redistributed by this project. Registered `WL6`, `SOD`, `SD1`,
 Default packages compile all three audio drivers. Select one at launch with
 `--opl nuked`, `--opl dbopl`, or `--opl silent`; silence preserves all original
 audio clocks and completion behavior. `--sample-rate HZ` changes the preferred
-PCM rate from its 48 kHz default (44.1 kHz is reserved for the forthcoming DOS
-SB16 host). Build frontends can omit drivers for constrained targets. The
+PCM rate from its 48 kHz default (44.1 kHz is used by the DOS SB16 host).
+Build frontends can omit drivers for constrained targets. The
 initial DOS profile deliberately includes only timing-preserving silence.
 
 ## Clone and initialize
@@ -190,8 +190,9 @@ drop-in `DOS4GW.EXE` loader under
 `dist/wolf3d-portable-<version>-dos32-x86/`. Copy original game data beside
 both files and run `WOLF3D` on a Pentium-class or newer DOS system. This first
 checkpoint has VGA mode 13h output, keyboard input, the original-style 700 Hz
-PIT clock, and silent audio; Sound Blaster and hardware OPL support are still
-in development.
+PIT clock, and SB16 44.1 kHz 16-bit stereo PCM. Its default library profile
+still uses the timing-preserving silent OPL driver; runtime-selectable emulated
+OPL and native hardware OPL are the next DOS audio checkpoints.
 
 ## Running
 

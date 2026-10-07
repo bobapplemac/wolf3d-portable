@@ -23,9 +23,14 @@ sh "$root/lib/wolf3d/scripts/linux/openwatcom/build-library.sh"
 
 echo "Open Watcom C: platforms/dos/WG_DOS.c"
 wcc386 -zq -bt=dos -mf -5r -ox -w4 -we \
-    -dWOLF3D_STATIC -i="$root/lib/wolf3d/include" \
+    -dWOLF3D_STATIC -i="$root/lib/wolf3d/include" -i="$root/platforms/dos" \
     -fo="$build_dir/objects/WG_DOS.obj" \
     "$root/platforms/dos/WG_DOS.c"
+echo "Open Watcom C: platforms/dos/WG_DOS_SB16.c"
+wcc386 -zq -bt=dos -mf -5r -ox -w4 -we \
+    -dWOLF3D_STATIC -i="$root/lib/wolf3d/include" -i="$root/platforms/dos" \
+    -fo="$build_dir/objects/WG_DOS_SB16.obj" \
+    "$root/platforms/dos/WG_DOS_SB16.c"
 
 link_libraries="$library_dist/WOLF3D.LIB"
 if [ -f "$library_dist/NUKEDOPL.LIB" ]; then
@@ -35,7 +40,7 @@ fi
 echo "Open Watcom Link: WOLF3D.EXE"
 wlink system dos4g option quiet \
     name "$dist_dir/WOLF3D.EXE" \
-    file "$build_dir/objects/WG_DOS.obj" \
+    file "$build_dir/objects/WG_DOS.obj,$build_dir/objects/WG_DOS_SB16.obj" \
     library "$link_libraries"
 
 # WLINK's DOS/4G system target requests DOS4GW.EXE by name. DOS/32A is a
@@ -62,12 +67,16 @@ DOS/32A drop-in loader, not the original DOS/4GW binary.
 
 Copy legally obtained Wolfenstein 3D or Spear of Destiny data files beside
 WOLF3D.EXE, then run WOLF3D. The initial DOS host provides VGA mode 13h,
-keyboard input, original-style 700 Hz PIT timing, and timing-preserving silent
-audio. A Pentium-class or newer x86 system is the supported baseline.
+keyboard input, original-style 700 Hz PIT timing, and SB16 44.1 kHz 16-bit
+stereo PCM output. It reads the base port, IRQ, and high-DMA channel from the
+BLASTER environment variable. Without a compatible card it uses a timed null
+sink so the engine's audio clocks continue to advance. A Pentium-class or
+newer x86 system is the supported baseline.
 
 The game and DOS/32A loader must remain together. This initial checkpoint has
-not yet been validated on physical DOS hardware and does not yet implement
-Sound Blaster PCM output.
+not yet been validated on physical DOS hardware. The default package still
+compiles only the silent OPL driver; DBOPL and Nuked-OPL3 package selection is
+the next compatibility checkpoint.
 EOF
 
 echo "Open Watcom DOS32 application staged: $dist_dir"

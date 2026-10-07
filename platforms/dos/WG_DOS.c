@@ -1,4 +1,5 @@
 #include "WOLF3D.h"
+#include "WG_DOS_SB16.h"
 
 #include <conio.h>
 #include <dos.h>
@@ -30,6 +31,12 @@ static uint8_t wg_graphics_active;
 static uint8_t wg_text_presented;
 static uint8_t wg_palette_cache[WOLF3D_PALETTE_COLORS * 3U];
 static uint8_t wg_palette_valid;
+static uint8_t wg_null_pcm;
+static uint32_t wg_null_pcm_rate;
+static uint32_t wg_null_pcm_ready_at;
+
+static int WG_DOSPCMInitEx(const wolf3d_pcm_format_t *requested,
+                           wolf3d_pcm_format_t *obtained);
 
 static void WG_DOSSetVideoMode(uint8_t mode)
 {
@@ -162,6 +169,10 @@ static int WG_DOSInit(void)
 
 static void WG_DOSShutdown(void)
 {
+    WG_DOSSB16Shutdown();
+    wg_null_pcm = 0U;
+    wg_null_pcm_rate = 0U;
+    wg_null_pcm_ready_at = 0U;
     _disable();
     WG_DOSProgramTimer(0U);
     if (wg_old_timer_interrupt != NULL)
@@ -317,33 +328,69 @@ static void WG_DOSPresentText(const uint8_t *cells, uint16_t columns,
 
 static int WG_DOSPCMInit(uint32_t sample_rate, uint16_t channels)
 {
-    (void)sample_rate;
-    (void)channels;
-    return 0;
+    wolf3d_pcm_format_t requested;
+    wolf3d_pcm_format_t obtained;
+
+    requested.sample_rate = sample_rate;
+    requested.channels = channels;
+    requested.bits_per_sample = 16U;
+    return WG_DOSPCMInitEx(&requested, &obtained);
 }
 
 static int WG_DOSPCMInitEx(const wolf3d_pcm_format_t *requested,
                            wolf3d_pcm_format_t *obtained)
 {
-    (void)requested;
-    (void)obtained;
-    return 0;
+    if (requested == NULL || obtained == NULL
+        || requested->sample_rate == 0U || requested->channels != 2U
+        || requested->bits_per_sample != 16U)
+    {
+        return 0;
+    }
+    WG_DOSSB16Shutdown();
+    wg_null_pcm = 0U;
+    if (WG_DOSSB16Init(requested, obtained))
+    {
+        return 1;
+    }
+    *obtained = *requested;
+    wg_null_pcm = 1U;
+    wg_null_pcm_rate = requested->sample_rate;
+    wg_null_pcm_ready_at = WG_DOSGetTicksMs();
+    return 1;
 }
 
 static void WG_DOSPCMShutdown(void)
 {
+    WG_DOSSB16Shutdown();
+    wg_null_pcm = 0U;
+    wg_null_pcm_rate = 0U;
+    wg_null_pcm_ready_at = 0U;
 }
 
 static size_t WG_DOSPCMWritableFrames(void)
 {
-    return 0U;
+    if (wg_null_pcm)
+    {
+        return (int32_t)(WG_DOSGetTicksMs() - wg_null_pcm_ready_at) >= 0
+                   ? 1024U : 0U;
+    }
+    return WG_DOSSB16WritableFrames();
 }
 
 static int WG_DOSPCMSubmit(const int16_t *samples, size_t frame_count)
 {
-    (void)samples;
-    (void)frame_count;
-    return 0;
+    if (wg_null_pcm)
+    {
+        if (samples == NULL || frame_count == 0U || wg_null_pcm_rate == 0U)
+        {
+            return 0;
+        }
+        wg_null_pcm_ready_at = WG_DOSGetTicksMs()
+            + (uint32_t)((frame_count * 1000U + wg_null_pcm_rate - 1U)
+                         / wg_null_pcm_rate);
+        return 1;
+    }
+    return WG_DOSSB16Submit(samples, frame_count);
 }
 
 static int WG_DOSInstallPlatform(void)

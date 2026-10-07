@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-10-07 - DOS Sound Blaster 16 PCM transport
+
+- Added 44.1 kHz, 16-bit signed stereo SB16 output through auto-initialize
+  high-DMA double buffering and shared-IRQ-safe DSP acknowledgement.
+- Read the base port, IRQ, and high-DMA channel from the standard `BLASTER`
+  environment variable and required a version 4.x-or-newer DSP.
+- Added a wall-clocked null PCM sink when no compatible card is available so
+  silent DOS systems continue advancing the same mixer and completion clocks.
+- Kept the package's initial OPL selection silent pending the separate DBOPL
+  and Nuked runtime validation checkpoint.
+- Rebuilt warning-clean with Open Watcom and completed DOSBox startup smokes
+  with WL1 data through both emulated-SB16 and null-audio paths.
+
 ## 2026-10-07 - Initial Open Watcom DOS32 host
 
 - Advanced the pinned engine to wolf3d-lib 1.4.46 and consumed its canonical

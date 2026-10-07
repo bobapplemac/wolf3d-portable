@@ -106,7 +106,7 @@ drivers, device permissions, or a sound server.
 | Windows SDL3 | `wolf3d-sdl3.exe` | `wolf3d.dll`, SDL3 DLLs; `Nuked-OPL3.dll` for the default backend |
 | Linux SDL3 | `wolf3d-sdl3` (native/glibc package) or top-level `wolf3d` launcher (musl bundle) | `libwolf3d.so`, pinned SDL3 when selected, and default Nuked-OPL3 shared object |
 | Linux console | `wolf3d` | `libwolf3d.so`, system DRM/ALSA libraries, and default Nuked-OPL3 shared object |
-| 32-bit DOS | `WOLF3D.EXE` | DOS/32A loader staged as `DOS4GW.EXE`; initial profile uses silent audio |
+| 32-bit DOS | `WOLF3D.EXE` | DOS/32A loader staged as `DOS4GW.EXE`; SB16 PCM uses `BLASTER`; initial OPL profile is silent |
 
 Each staged folder also contains plain-text project and third-party licenses
 and `WOLF3D-LIB.txt`, which records the exact engine version and commit. Copy
@@ -117,11 +117,12 @@ Original game data is not included.
 
 | Compiler environment | Architecture | Host facilities | Build entry point | Validation |
 | --- | --- | --- | --- | --- |
-| Official Open Watcom v2 2026-10-01 snapshot in Docker | 32-bit x86, Pentium+ | VGA mode 13h, IRQ 1 keyboard, 700 Hz PIT, timing-preserving silent audio, DOS/32A | `make dos` or guided `./build.sh` | Warning-clean compile/package validated; DOSBox 0.74 startup smoke with WL1 data; physical DOS gameplay pending |
+| Official Open Watcom v2 2026-10-01 snapshot in Docker | 32-bit x86, Pentium+ | VGA mode 13h, IRQ 1 keyboard, 700 Hz PIT, SB16 44.1 kHz 16-bit stereo DMA with timed null fallback, DOS/32A | `make dos` or guided `./build.sh` | Warning-clean compile/package validated; DOSBox 0.74 startup smokes with WL1 data and emulated SB16/null audio; physical DOS gameplay pending |
 
 The Open Watcom snapshot, Linux builder base, and downloaded toolchain hash are
 pinned by `wolf3d-lib`. The package does not redistribute the proprietary
 DOS/4GW extender: its adjacent `DOS4GW.EXE` is DOS/32A's compatible loader and
-includes the DOS/32A license. SB16 PCM, DBOPL, Nuked-OPL3, and native AdLib
-output are not part of this first host checkpoint.
+includes the DOS/32A license. The host's SB16 PCM transport is present, but the
+default package still selects silent OPL while DBOPL/Nuked package defaults
+are validated. Native AdLib output remains a later checkpoint.
 

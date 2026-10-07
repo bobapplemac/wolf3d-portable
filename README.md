@@ -196,6 +196,11 @@ native AdLib drivers are compiled by default and selected with the same
 is the faster emulated choice for period hardware; `--opl adlib` sends the
 original register stream to compatible hardware at port 388h.
 
+For native IDE development, open `ide/open-watcom/wolf3d-portable.wpj` through
+the adjacent `open-ide.cmd`. That workspace builds the engine and all DOS host
+libraries as separate targets before linking the executable. `make dos`
+remains the canonical package-producing path.
+
 ## Running
 
 Copy one original game installation beside the selected executable, or pass

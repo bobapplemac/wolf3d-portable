@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-10-07 - Native Open Watcom DOS workspace
+
+- Added one Open Watcom IDE workspace that builds the pinned engine,
+  independently replaceable Nuked implementation, `WGADLIB.LIB`, and the DOS
+  executable from their canonical source files.
+- Added a dependency-free launcher with submodule validation and shared include
+  and driver configuration.
+- Added deterministic descriptor generation and ignored all IDE build output.
+
 ## 2026-10-07 - Open Watcom IDE integration
 
 - Advanced the pinned engine to wolf3d-lib 1.4.51, including its validated

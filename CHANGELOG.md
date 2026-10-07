@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-07 - Windows runtime compatibility validation
+
+- Advanced the pinned engine to wolf3d-lib 1.4.44.
+- Validated both MinGW UCRT64 wrappers with WL1 data on Windows 11 x64 after
+  package dependency audits confirmed no MSYS2/Cygwin runtime leakage.
+- Validated the v140_xp x86 Win32/GDI package with WL1 data on Windows XP SP3;
+  Windows XP x64 remains intentionally outside the destination test plan.
+
 ## 2026-10-07 - MSYS2 bootstrap documentation
 
 - Documented the complete fresh-install MSYS2 UCRT64 update and package setup

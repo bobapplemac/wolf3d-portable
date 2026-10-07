@@ -36,13 +36,13 @@ presets, package contents, and dependency setup.
 
 | Compiler environment | Toolset | Architectures | Win32/GDI | SDL3 | Build entry point | Destination validation |
 | --- | --- | --- | --- | --- | --- | --- |
-| MSYS2 UCRT64 | MinGW-w64 GCC 16.2 | x64 | Validated | Validated | `build.ps1`, CMake presets | Package/API/SDL help validated on current Windows host; full-game runtime pending |
+| MSYS2 UCRT64 | MinGW-w64 GCC 16.2 | x64 | Validated | Validated | `build.ps1`, CMake presets | Both packaged wrappers validated with WL1 data on Windows 11 x64; dependency audit rejects MSYS2/Cygwin runtime leakage |
 | Visual Studio 2026 | v145 | x86, x64 | Validated | Validated | `build.ps1`, native VS2026 solution, CMake presets | Windows 11 compatibility host |
 | Visual Studio 2022 | v143 | x86, x64 | Validated | Validated | `build.ps1`, native VS2022 solution, CMake presets | Current Windows development host |
 | Visual Studio 2019 | v142 | x86, x64 | Validated | Validated | `build.ps1`, native VS2019 solution, CMake presets | Current Windows development host |
 | Visual Studio 2017 | v141 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2017 solution, CMake presets | Windows 11 compatibility host; no legacy-OS minimum claimed |
 | Visual Studio 2015 | v140 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2015 solution, CMake presets | No legacy-OS minimum claimed |
-| Visual Studio 2015 XP SDK | v140_xp | x86, x64 | Validated | Not supported | `build.ps1`, VS2015 solution, CMake presets | Pending on actual XP; PE minimum 5.01 x86 / 5.02 x64 |
+| Visual Studio 2015 XP SDK | v140_xp | x86, x64 | Validated | Not supported | `build.ps1`, VS2015 solution, CMake presets | x86 Win32/GDI package validated with WL1 data on Windows XP SP3; x64 destination untested; PE minimum 5.01 x86 / 5.02 x64 |
 | Visual Studio 2013 Update 5 | v120 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2013 solution, CMake presets | No legacy-OS minimum claimed |
 | Visual Studio 2012 Update 5 | v110 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2012 solution, CMake presets | No legacy-OS minimum claimed |
 | Visual Studio 2010 SP1 | v100 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2010 solution, CMake presets | No legacy-OS minimum claimed |

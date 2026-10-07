@@ -103,8 +103,9 @@ For the native Visual Studio 2015 IDE, open
 `ide/visual-studio/vs2015/wolf3d-portable.sln`. This focused
 compatibility-band solution exposes Debug, Release, dynamic-CRT variants, and
 `Publish Win32` without presenting unsupported SDL3 configurations. Its
-`Publish Win32 XP` configuration selects the candidate v140_xp profile. VS2015
-does not bundle CMake, so the solution uses CMake 3.20 or newer from `PATH` or
+`Publish Win32 XP` configuration selects the v140_xp profile; its x86 output
+is XP-validated and its x64 destination remains untested. VS2015 does not
+bundle CMake, so the solution uses CMake 3.20 or newer from `PATH` or
 from a newer installed Visual Studio while still compiling through MSBuild 14
 and MSVC 19.0.
 

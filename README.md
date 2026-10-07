@@ -37,8 +37,8 @@ Default packages compile all three audio drivers. Select one at launch with
 `--opl nuked`, `--opl dbopl`, or `--opl silent`; silence preserves all original
 audio clocks and completion behavior. `--sample-rate HZ` changes the preferred
 PCM rate from its 48 kHz default (44.1 kHz is used by the DOS SB16 host).
-Build frontends can omit drivers for constrained targets. The
-initial DOS profile deliberately includes only timing-preserving silence.
+Build frontends can omit drivers for constrained targets; normal packages,
+including DOS, compile Nuked-OPL3, DBOPL, and timing-preserving silence.
 
 ## Clone and initialize
 
@@ -190,9 +190,10 @@ drop-in `DOS4GW.EXE` loader under
 `dist/wolf3d-portable-<version>-dos32-x86/`. Copy original game data beside
 both files and run `WOLF3D` on a Pentium-class or newer DOS system. This first
 checkpoint has VGA mode 13h output, keyboard input, the original-style 700 Hz
-PIT clock, and SB16 44.1 kHz 16-bit stereo PCM. Its default library profile
-still uses the timing-preserving silent OPL driver; runtime-selectable emulated
-OPL and native hardware OPL are the next DOS audio checkpoints.
+PIT clock, and SB16 44.1 kHz 16-bit stereo PCM. Nuked-OPL3, DBOPL, and silent
+drivers are compiled by default and selected with the same `--opl` option used
+by other wrappers. Nuked is the reference default; DBOPL is the faster choice
+for period hardware. Native hardware OPL is the next DOS audio checkpoint.
 
 ## Running
 
@@ -208,6 +209,7 @@ For DOS, copy a data set into the distribution directory and run:
 
 ```text
 WOLF3D.EXE --game WL1
+WOLF3D.EXE --game WL1 --opl dbopl
 ```
 
 Executable names beginning with `wolf` prefer WL1/WL6 data. Names beginning

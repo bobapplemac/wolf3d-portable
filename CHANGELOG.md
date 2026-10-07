@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-07 - Runtime-selectable DOS OPL emulation
+
+- Enabled Nuked-OPL3, DBOPL, and timing-preserving silence in the default DOS
+  build and exposed the existing `--opl` runtime selection consistently.
+- Retained Nuked as the reference default while documenting DBOPL as the
+  lower-CPU option for period hardware.
+- Added an Open Watcom relink kit whenever Nuked is included, keeping its
+  implementation in a separately replaceable library and supplying the host
+  objects and response file required for LGPL-compliant relinking.
+- Retained compile-time subsets through `DOS_OPL_DRIVERS` and
+  `DOS_OPL_DEFAULT` for constrained targets.
+
 ## 2026-10-07 - DOS Sound Blaster 16 PCM transport
 
 - Added 44.1 kHz, 16-bit signed stereo SB16 output through auto-initialize

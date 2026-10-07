@@ -5,8 +5,8 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
 version=$(sed -n '1p' "$root/lib/wolf3d/VERSION")
 build_dir=${W3P_OPENWATCOM_BUILD_DIR:-$root/build/openwatcom-dos32}
 dist_dir=${W3P_OPENWATCOM_DIST_DIR:-$root/dist/wolf3d-portable-$version-dos32-x86}
-drivers=${W3P_OPENWATCOM_OPL_DRIVERS:-silent}
-default_driver=${W3P_OPENWATCOM_DEFAULT_OPL:-silent}
+drivers=${W3P_OPENWATCOM_OPL_DRIVERS:-nuked,dbopl,silent}
+default_driver=${W3P_OPENWATCOM_DEFAULT_OPL:-nuked}
 sample_rate=${W3P_OPENWATCOM_SAMPLE_RATE:-44100}
 library_build="$build_dir/wolf3d-lib"
 library_dist="$build_dir/wolf3d-lib-dist"
@@ -53,6 +53,15 @@ cp "$library_dist/WOLF3D-LIB.txt" "$dist_dir/WOLF3D-LIB.txt"
 if [ -f "$library_dist/licenses/NUKED-OPL3-LGPL-2.1.txt" ]; then
     cp "$library_dist/licenses/NUKED-OPL3-LGPL-2.1.txt" \
        "$dist_dir/LICENSES/Nuked-OPL3-LGPL-2.1.txt"
+    mkdir -p "$dist_dir/RELINK"
+    cp "$build_dir/objects/WG_DOS.obj" "$dist_dir/RELINK/WG_DOS.obj"
+    cp "$build_dir/objects/WG_DOS_SB16.obj" \
+       "$dist_dir/RELINK/WG_DOS_SB16.obj"
+    cp "$library_dist/WOLF3D.LIB" "$dist_dir/RELINK/WOLF3D.LIB"
+    cp "$library_dist/NUKEDOPL.LIB" "$dist_dir/RELINK/NUKEDOPL.LIB"
+    cp "$root/packaging/DOS-RELINK.LNK" "$dist_dir/RELINK/RELINK.LNK"
+    cp "$root/packaging/DOS-RELINK-README.txt" \
+       "$dist_dir/RELINK/README.txt"
 fi
 if [ -f "$library_dist/licenses/DBOPL-PROVENANCE.txt" ]; then
     cp "$library_dist/licenses/DBOPL-PROVENANCE.txt" \
@@ -73,10 +82,13 @@ BLASTER environment variable. Without a compatible card it uses a timed null
 sink so the engine's audio clocks continue to advance. A Pentium-class or
 newer x86 system is the supported baseline.
 
-The game and DOS/32A loader must remain together. This initial checkpoint has
-not yet been validated on physical DOS hardware. The default package still
-compiles only the silent OPL driver; DBOPL and Nuked-OPL3 package selection is
-the next compatibility checkpoint.
+The default build includes Nuked-OPL3, DBOPL, and silent drivers. Select one
+with --opl nuked, --opl dbopl, or --opl silent. Nuked is the reference default;
+DBOPL is substantially faster on period hardware. Packages containing Nuked
+also include RELINK materials so its LGPL implementation can be replaced.
+
+The game and DOS/32A loader must remain together. This checkpoint has not yet
+been validated on physical DOS hardware.
 EOF
 
 echo "Open Watcom DOS32 application staged: $dist_dir"

@@ -104,8 +104,8 @@ drivers=all
 default_opl=nuked
 sample_rate=48000
 if [[ $target == dos-* ]]; then
-    drivers=silent
-    default_opl=silent
+    drivers=all
+    default_opl=nuked
     sample_rate=44100
 elif [[ $target != clean ]]; then
     drivers=$(choose 'Compiled OPL drivers' all nuked-dbopl nuked-silent dbopl-silent nuked dbopl silent)

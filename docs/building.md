@@ -265,13 +265,28 @@ SB16 44.1 kHz 16-bit signed stereo auto-initialize DMA. Sound Blaster settings
 come from the standard `BLASTER` environment variable and require an SB16-
 compatible DSP plus a high-DMA channel. If detection fails, a timed null sink
 keeps audio rendering and completion clocks alive without producing samples.
-The default package still compiles only the timing-preserving silent OPL
-driver; emulated and native hardware OPL remain later checkpoints.
+The default package compiles Nuked-OPL3, DBOPL, and timing-preserving silence;
+select them at runtime with `--opl nuked`, `--opl dbopl`, or `--opl silent`.
+Nuked is the preservation reference and default. DBOPL is the practical
+lower-CPU choice for period hardware. Native hardware OPL remains a later
+checkpoint.
+
+When Nuked is included, the package's `RELINK/` directory carries the host
+objects, engine library, separately replaceable `NUKEDOPL.LIB`, response file,
+and plain-text instructions needed to relink with Open Watcom. This is part of
+the DOS package's LGPL compliance and should remain with redistributed builds.
+Constrained custom builds can still set `DOS_OPL_DRIVERS` and
+`DOS_OPL_DEFAULT`, for example:
+
+```text
+make dos DOS_OPL_DRIVERS=dbopl,silent DOS_OPL_DEFAULT=dbopl
+```
 
 The current package is compile-and-package validated and has completed
-headless DOSBox startup smokes with WL1 data both with an emulated SB16 and
-with no usable audio destination. Those tests establish that the extender,
-DMA/IRQ initialization, null fallback, and engine run loop remain live;
+headless DOSBox startup smokes with WL1 data through the Nuked, DBOPL, silent,
+SB16, and no-device paths. Those tests establish that the extender, DMA/IRQ
+initialization, null fallback, runtime driver selection, and engine run loop
+remain live;
 physical DOS hardware gameplay is not yet claimed. `make clean-dos` removes
 its build tree and project-specific Docker image. `make clean` includes the
 same cleanup without pruning unrelated Docker objects.

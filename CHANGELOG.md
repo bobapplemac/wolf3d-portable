@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-07 - Open Watcom IDE integration
+
+- Advanced the pinned engine to wolf3d-lib 1.4.51, including its validated
+  native Open Watcom workspace and clean generated-output policy.
+- Kept the Docker/Open Watcom package build as the reproducible DOS release
+  path while making the engine library directly browsable and buildable in the
+  period-appropriate IDE.
+
 ## 2026-10-07 - Native DOS AdLib hardware output
 
 - Advanced the pinned engine to wolf3d-lib 1.4.48 and its optional hardware

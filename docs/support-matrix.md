@@ -9,6 +9,8 @@ The status language is intentionally precise:
 - **Build validated** means the compiler produced and packaged the wrapper.
 - **Runtime validated** means that package was also executed on the named
   destination operating system.
+- **Startup smoke** means the extender and executable entered and remained in
+  the game loop, but complete gameplay on the destination is not yet claimed.
 - **Planned** means there is no supported build command yet.
 
 For the engine-only SDK and its larger compiler matrix, see the companion
@@ -27,6 +29,7 @@ or the local submodule's `lib/wolf3d/docs/support-matrix.md`.
 | Both native Linux wrappers | Linux | `make releases` | Both native folders |
 | Portable glibc Linux wrappers | Linux + Docker | `./build.sh` or `make portable` | SDL3 and console x86-64 folders audited to glibc 2.28 |
 | Bundled-musl Linux SDL3 | Linux + Docker | `./build.sh` or `make musl-sdl3` | Relocatable AppDir-style x86-64 folder |
+| 32-bit protected-mode DOS | Linux + Docker | `./build.sh` or `make dos` | `dist/wolf3d-portable-<version>-dos32-x86/` |
 
 Run `./build.sh`, `make help`, `.\build.ps1`, or root `build.cmd` without
 arguments for all selectable options. See [building.md](building.md) for exact
@@ -103,15 +106,22 @@ drivers, device permissions, or a sound server.
 | Windows SDL3 | `wolf3d-sdl3.exe` | `wolf3d.dll`, SDL3 DLLs; `Nuked-OPL3.dll` for the default backend |
 | Linux SDL3 | `wolf3d-sdl3` (native/glibc package) or top-level `wolf3d` launcher (musl bundle) | `libwolf3d.so`, pinned SDL3 when selected, and default Nuked-OPL3 shared object |
 | Linux console | `wolf3d` | `libwolf3d.so`, system DRM/ALSA libraries, and default Nuked-OPL3 shared object |
+| 32-bit DOS | `WOLF3D.EXE` | DOS/32A loader staged as `DOS4GW.EXE`; initial profile uses silent audio |
 
 Each staged folder also contains plain-text project and third-party licenses
 and `WOLF3D-LIB.txt`, which records the exact engine version and commit. Copy
 the whole staged folder rather than selecting individual DLLs/shared objects.
 Original game data is not included.
 
-## Planned, not currently supported
+## DOS wrapper/compiler matrix
 
-| Target | Intended direction | Current status |
-| --- | --- | --- |
-| 32-bit DOS | Open Watcom cross-build in a Linux/Docker workflow, DOS/32A extender, dedicated DOS host | Planned; not part of the current Windows or Linux matrices |
+| Compiler environment | Architecture | Host facilities | Build entry point | Validation |
+| --- | --- | --- | --- | --- |
+| Official Open Watcom v2 2026-10-01 snapshot in Docker | 32-bit x86, Pentium+ | VGA mode 13h, IRQ 1 keyboard, 700 Hz PIT, timing-preserving silent audio, DOS/32A | `make dos` or guided `./build.sh` | Warning-clean compile/package validated; DOSBox 0.74 startup smoke with WL1 data; physical DOS gameplay pending |
+
+The Open Watcom snapshot, Linux builder base, and downloaded toolchain hash are
+pinned by `wolf3d-lib`. The package does not redistribute the proprietary
+DOS/4GW extender: its adjacent `DOS4GW.EXE` is DOS/32A's compatible loader and
+includes the DOS/32A license. SB16 PCM, DBOPL, Nuked-OPL3, and native AdLib
+output are not part of this first host checkpoint.
 

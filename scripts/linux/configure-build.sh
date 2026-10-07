@@ -73,8 +73,8 @@ if ready cmake && ready make; then
     labels+=('native SDL3 distribution' 'native console distribution' 'both native distributions' 'clean local build outputs')
 fi
 if ready docker && ready make; then
-    targets+=(portable portable-sdl3 portable-console musl-sdl3)
-    labels+=('both portable glibc distributions (Docker)' 'portable glibc SDL3 distribution (Docker)' 'portable glibc console distribution (Docker)' 'relocatable musl SDL3 distribution (Docker)')
+    targets+=(portable portable-sdl3 portable-console musl-sdl3 dos-release)
+    labels+=('both portable glibc distributions (Docker)' 'portable glibc SDL3 distribution (Docker)' 'portable glibc console distribution (Docker)' 'relocatable musl SDL3 distribution (Docker)' '32-bit DOS Open Watcom distribution (Docker)')
 fi
 if [ ${#targets[@]} -eq 0 ]; then
     printf '\nNo usable build path was detected. See docs/building.md for prerequisites.\n' >&2; exit 2
@@ -87,7 +87,7 @@ for ((i=0; i<${#labels[@]}; ++i)); do
 done
 
 compiler=gcc
-if [[ $target != portable* && $target != musl-* && $target != clean ]]; then
+if [[ $target != portable* && $target != musl-* && $target != dos-* && $target != clean ]]; then
     compilers=()
     ready gcc && compilers+=(gcc)
     ready clang && compilers+=(clang)
@@ -103,7 +103,11 @@ fi
 drivers=all
 default_opl=nuked
 sample_rate=48000
-if [[ $target != clean ]]; then
+if [[ $target == dos-* ]]; then
+    drivers=silent
+    default_opl=silent
+    sample_rate=44100
+elif [[ $target != clean ]]; then
     drivers=$(choose 'Compiled OPL drivers' all nuked-dbopl nuked-silent dbopl-silent nuked dbopl silent)
     if [ "$drivers" = all ]; then
         default_opl=$(choose 'Default OPL driver' nuked dbopl silent)
@@ -115,10 +119,19 @@ if [[ $target != clean ]]; then
 fi
 opl_drivers=${drivers//-/,}
 [ "$drivers" = all ] && opl_drivers=nuked,dbopl,silent
-read -r -p 'Parallel jobs (blank lets the build tool decide): ' jobs
-args=("$target" "CC=$compiler" "USE_SYSTEM_SDL3=$system_sdl" \
-      "OPL_DRIVERS=$opl_drivers" "OPL_DEFAULT=$default_opl" \
-      "SAMPLE_RATE=$sample_rate")
+jobs=''
+if [[ $target != dos-* ]]; then
+    read -r -p 'Parallel jobs (blank lets the build tool decide): ' jobs
+fi
+if [[ $target == dos-* ]]; then
+    compiler='Open Watcom 2 (2026-10-01)'
+    args=("$target" "DOS_OPL_DRIVERS=$opl_drivers" \
+          "DOS_OPL_DEFAULT=$default_opl" "DOS_SAMPLE_RATE=$sample_rate")
+else
+    args=("$target" "CC=$compiler" "USE_SYSTEM_SDL3=$system_sdl" \
+          "OPL_DRIVERS=$opl_drivers" "OPL_DEFAULT=$default_opl" \
+          "SAMPLE_RATE=$sample_rate")
+fi
 [ -n "$jobs" ] && args+=("JOBS=$jobs")
 
 printf '\nBuild plan:\n  Target:      %s\n  Compiler:    %s\n  SDL3:        %s\n  OPL drivers: %s (default: %s)\n  Sample rate: %s Hz\n' "$target" "$compiler" "$system_sdl" "$opl_drivers" "$default_opl" "$sample_rate"

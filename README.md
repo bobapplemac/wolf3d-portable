@@ -9,7 +9,9 @@ The repository currently contains:
 
 - a dependency-free Win32/GDI host;
 - a cross-platform SDL3 host for Windows, X11, Wayland, and other SDL targets;
-- a Linux virtual-console host using DRM/KMS, evdev, and ALSA.
+- a Linux virtual-console host using DRM/KMS, evdev, and ALSA;
+- an initial 32-bit protected-mode DOS host using VGA, the keyboard controller,
+  PIT timing, Open Watcom, and DOS/32A.
 
 No commercial game data is included. Supply files from a supported original
 Wolfenstein 3D or Spear of Destiny installation: WL1, WL6, SDM, SOD, SD1,
@@ -34,8 +36,9 @@ files are not redistributed by this project. Registered `WL6`, `SOD`, `SD1`,
 Default packages compile all three audio drivers. Select one at launch with
 `--opl nuked`, `--opl dbopl`, or `--opl silent`; silence preserves all original
 audio clocks and completion behavior. `--sample-rate HZ` changes the preferred
-PCM rate from its 48 kHz default (44.1 kHz is appropriate for the planned DOS
-SB16 host). Build frontends can omit drivers for constrained targets.
+PCM rate from its 48 kHz default (44.1 kHz is reserved for the forthcoming DOS
+SB16 host). Build frontends can omit drivers for constrained targets. The
+initial DOS profile deliberately includes only timing-preserving silence.
 
 ## Clone and initialize
 
@@ -168,6 +171,7 @@ make console-release         # DRM/evdev/ALSA distribution
 make releases                # both distributions
 make portable                # both in the Debian 10 compatibility container
 make musl-sdl3               # relocatable bundle with its own musl userspace
+make dos                     # Open Watcom/DOS32A x86 distribution
 make sdl3-release CC=clang   # use Clang
 make sdl3-release USE_SYSTEM_SDL3=ON
 make sdl3-release OPL_DEFAULT=dbopl
@@ -180,6 +184,15 @@ the established glibc 2.28 build baseline and audit every staged ELF. The
 musl target instead packages a private loader and closed shared-library set,
 so it has no dependency on the destination's glibc version.
 
+The DOS target is also a Linux-hosted Docker cross-build; Open Watcom does not
+need to be installed on the host. It stages `WOLF3D.EXE` and the DOS/32A
+drop-in `DOS4GW.EXE` loader under
+`dist/wolf3d-portable-<version>-dos32-x86/`. Copy original game data beside
+both files and run `WOLF3D` on a Pentium-class or newer DOS system. This first
+checkpoint has VGA mode 13h output, keyboard input, the original-style 700 Hz
+PIT clock, and silent audio; Sound Blaster and hardware OPL support are still
+in development.
+
 ## Running
 
 Copy one original game installation beside the selected executable, or pass
@@ -188,6 +201,12 @@ its location explicitly:
 ```text
 wolf3d-sdl3 --data /path/to/WL1
 wolf3d --data /path/to/WL6 --game WL6
+```
+
+For DOS, copy a data set into the distribution directory and run:
+
+```text
+WOLF3D.EXE --game WL1
 ```
 
 Executable names beginning with `wolf` prefer WL1/WL6 data. Names beginning

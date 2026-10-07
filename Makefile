@@ -43,6 +43,12 @@ MUSL_STAGE_ROOT ?= build/linux-sdl3-musl-stage
 MUSL_STAGE_DIR ?= $(MUSL_STAGE_ROOT)/wolf3d-portable-$(WOLF3D_VERSION)-sdl3-linux-x64$(AUDIO_SUFFIX)
 MUSL_SDL3_DIST_DIR ?= dist/wolf3d-portable-$(WOLF3D_VERSION)-sdl3-linux-musl-x64$(AUDIO_SUFFIX)
 MUSL_BUILD_IMAGE ?= wolf3d-portable-build-alpine-musl
+DOS_BUILD_DIR ?= build/openwatcom-dos32
+DOS_DIST_DIR ?= dist/wolf3d-portable-$(WOLF3D_VERSION)-dos32-x86
+DOS_BUILD_IMAGE ?= wolf3d-portable-build-openwatcom-20261001
+DOS_OPL_DRIVERS ?= silent
+DOS_OPL_DEFAULT ?= silent
+DOS_SAMPLE_RATE ?= 44100
 MUSL_SDL3_CMAKE_ARGS ?= -DW3P_DIST_ROOT=/src/$(MUSL_STAGE_ROOT) \
 	-DWG_LINUX_LIBC=musl -DSDL_KMSDRM=OFF -DSDL_OPENGL=OFF \
 	-DSDL_OPENGLES=OFF -DSDL_RENDER_GPU=OFF -DSDL_VULKAN=OFF \
@@ -64,7 +70,8 @@ PARALLEL_ARG := --parallel $(JOBS)
 	portable portable-sdl3 portable-sdl3-release portable-console \
 	portable-console-release portable-image portable-glibc-audit print-config \
 	musl-sdl3 musl-sdl3-release musl-image musl-audit universal-sdl3 \
-	clean clean-sdl3 clean-console clean-portable clean-musl
+	dos dos-release dos-image clean clean-sdl3 clean-console clean-portable \
+	clean-musl clean-dos
 
 all: sdl3-release
 
@@ -90,6 +97,10 @@ help:
 		'  make universal-sdl3          Alias for make musl-sdl3.' \
 		'  make musl-audit              Re-audit an existing musl SDL3 bundle.' \
 		'' \
+		'32-bit DOS cross-build:' \
+		'  make dos                     Build the Open Watcom/DOS32A distribution.' \
+		'  make dos-release             Explicit form of make dos.' \
+		'' \
 		'Useful variables:' \
 		'  CC=gcc|clang                 Compiler (default: gcc).' \
 		'  JOBS=N                       Parallel job limit.' \
@@ -100,19 +111,24 @@ help:
 		'  SAMPLE_RATE=Hz               Preferred PCM rate (default: 48000).' \
 		'  CMAKE_ARGS="..."             Additional CMake definitions.' \
 		'  DOCKER_RUN_ARGS="..."        Additional Docker run arguments.' \
+		'  DOS_OPL_DRIVERS=...          DOS drivers (default: silent).' \
+		'  DOS_OPL_DEFAULT=...          DOS runtime default (default: silent).' \
+		'  DOS_SAMPLE_RATE=Hz           DOS preferred PCM rate (default: 44100).' \
 		'' \
 		'Cleanup:' \
 		'  make clean                   Remove build trees and project builder images.' \
 		'  make clean-sdl3              Remove the SDL3 build tree.' \
 		'  make clean-console           Remove the console build tree.' \
 		'  make clean-portable          Remove Debian portable trees and builder image.' \
-		'  make clean-musl              Remove musl trees and builder image.'
+		'  make clean-musl              Remove musl trees and builder image.' \
+		'  make clean-dos               Remove DOS32 tree and builder image.'
 
 print-config:
 	@printf '%s\n' \
 		'CC=$(CC)' 'WOLF3D_VERSION=$(WOLF3D_VERSION)' \
 		'SDL3_BUILD_DIR=$(SDL3_BUILD_DIR)' 'CONSOLE_BUILD_DIR=$(CONSOLE_BUILD_DIR)' \
 		'MUSL_SDL3_BUILD_DIR=$(MUSL_SDL3_BUILD_DIR)' \
+		'DOS_BUILD_DIR=$(DOS_BUILD_DIR)' 'DOS_DIST_DIR=$(DOS_DIST_DIR)' \
 		'USE_SYSTEM_SDL3=$(USE_SYSTEM_SDL3)' 'OPL_DRIVERS=$(OPL_DRIVERS)' \
 		'OPL_DEFAULT=$(OPL_DEFAULT)' 'SAMPLE_RATE=$(SAMPLE_RATE)' \
 		'JOBS=$(JOBS)' 'CMAKE_ARGS=$(CMAKE_ARGS)'
@@ -215,6 +231,21 @@ musl-audit: musl-image
 		$(DOCKER_RUN_ARGS) "$(MUSL_BUILD_IMAGE)" sh tools/W3P_MUSL_AUDIT.sh \
 		"$(MUSL_SDL3_DIST_DIR)"
 
+dos-image:
+	$(DOCKER) build --tag "$(DOS_BUILD_IMAGE)" lib/wolf3d/packaging/openwatcom
+
+dos-release: dos-image
+	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
+		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
+		--env W3P_OPENWATCOM_BUILD_DIR="/src/$(DOS_BUILD_DIR)" \
+		--env W3P_OPENWATCOM_DIST_DIR="/src/$(DOS_DIST_DIR)" \
+		--env W3P_OPENWATCOM_OPL_DRIVERS="$(DOS_OPL_DRIVERS)" \
+		--env W3P_OPENWATCOM_DEFAULT_OPL="$(DOS_OPL_DEFAULT)" \
+		--env W3P_OPENWATCOM_SAMPLE_RATE="$(DOS_SAMPLE_RATE)" \
+		"$(DOS_BUILD_IMAGE)" sh scripts/linux/openwatcom/build-dos.sh
+
+dos: dos-release
+
 clean-sdl3:
 	$(CMAKE) -E remove_directory "$(SDL3_BUILD_DIR)"
 clean-console:
@@ -229,4 +260,13 @@ clean-musl:
 	$(CMAKE) -E remove_directory "$(MUSL_STAGE_ROOT)"
 	@if command -v "$(DOCKER)" >/dev/null 2>&1; then \
 		$(DOCKER) image rm "$(MUSL_BUILD_IMAGE)" >/dev/null 2>&1 || true; fi
-clean: clean-sdl3 clean-console clean-portable clean-musl
+clean-dos:
+	@case "$(DOS_BUILD_DIR)" in \
+		build/*) ;; \
+		*) printf '%s\n' 'Refusing to remove a DOS build tree outside build/:' \
+			'  $(DOS_BUILD_DIR)'; exit 2 ;; \
+	esac
+	$(CMAKE) -E remove_directory "$(DOS_BUILD_DIR)"
+	@if command -v "$(DOCKER)" >/dev/null 2>&1; then \
+		$(DOCKER) image rm "$(DOS_BUILD_IMAGE)" >/dev/null 2>&1 || true; fi
+clean: clean-sdl3 clean-console clean-portable clean-musl clean-dos

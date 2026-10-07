@@ -217,6 +217,7 @@ make portable-sdl3
 make portable-console
 make portable
 make musl-sdl3
+make dos
 make clean
 ```
 
@@ -235,6 +236,40 @@ coexist under `dist/`.
 The console host requires libdrm and ALSA development packages. SDL3 builds do
 not require those packages directly. The pinned build dynamically discovers
 available X11, Wayland, KMS/DRM, and audio backends.
+
+## 32-bit DOS cross-build
+
+The DOS wrapper is built on Linux through Docker; no native Open Watcom
+installation is required. The library submodule pins the exact official Open
+Watcom v2 snapshot and verifies its installer before creating the builder
+image. Run:
+
+```text
+make dos
+```
+
+The guided `./build.sh` configurator also offers **DOS32 / Open Watcom** when
+Docker is usable. The result is staged at
+`dist/wolf3d-portable-1.4.REVISION-dos32-x86/` and contains:
+
+- `WOLF3D.EXE`, the 32-bit LE protected-mode game;
+- `DOS4GW.EXE`, which is the bundled DOS/32A drop-in loader rather than the
+  original proprietary DOS/4GW program;
+- project, engine, third-party, and DOS/32A notices.
+
+Copy a legally obtained WL1, WL6, SDM, SOD, SD1, SD2, or SD3 data set beside
+the two executable files, then run `WOLF3D`. The supported baseline is a
+Pentium-class or newer x86 DOS system with VGA. The initial host uses direct
+mode 13h presentation, IRQ 1 keyboard input, and a 700 Hz PIT IRQ 0 clock. It
+compiles only the timing-preserving silent driver; SB16 PCM, emulated OPL, and
+native AdLib output remain later checkpoints.
+
+The current package is compile-and-package validated and has completed a
+headless DOSBox startup smoke with WL1 data. That test establishes that the
+extender loads and the engine remains in its run loop; physical DOS hardware
+gameplay is not yet claimed. `make clean-dos` removes its build tree and its
+project-specific Docker image. `make clean` includes the same cleanup without
+pruning unrelated Docker objects.
 
 ## Reproducibility and latest-main builds
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-10-07 - Initial Open Watcom DOS32 host
+
+- Advanced the pinned engine to wolf3d-lib 1.4.46 and consumed its canonical
+  Open Watcom library build.
+- Added a Docker-only Linux cross-build for a 32-bit protected-mode DOS host
+  with direct VGA mode 13h output, IRQ 1 keyboard input, and original-style
+  700 Hz PIT timing.
+- Staged DOS/32A as the separately licensed `DOS4GW.EXE` drop-in loader and
+  documented the Pentium-or-newer baseline and complete package contents.
+- Kept the first checkpoint intentionally silent while preserving audio
+  clocks; SB16 PCM and OPL backends remain subsequent milestones.
+- Compile-and-package validated the distribution and completed a headless
+  DOSBox startup smoke with WL1 data. Physical DOS gameplay remains pending.
+
 ## 2026-10-07 - MSVC 2008 warning-clean library build
 
 - Advanced the pinned engine to wolf3d-lib 1.4.45.

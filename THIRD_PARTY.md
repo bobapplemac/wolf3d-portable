@@ -65,3 +65,15 @@ native-Wayland build interface without raising the Debian 10 glibc baseline.
 Wayland uses the MIT license. The glibc portable package dynamically uses the
 destination system's Wayland runtime. The relocatable musl package instead
 ships the matching musl-built Wayland client objects as described above.
+
+## DOS/32A
+
+- Upstream: `dos32a.sourceforge.net`
+- Bundled component: DOS/32A 9.1.2 from the pinned Open Watcom v2 toolchain
+- License: permissive DOS/32A license; see `LICENSES/DOS32A.txt` in
+  the DOS distribution
+
+The 32-bit DOS package uses DOS/32 Advanced DOS Extender technology. The file
+staged as `DOS4GW.EXE` is DOS/32A's compatible drop-in loader, not the original
+proprietary DOS/4GW binary. It remains a separate, replaceable executable and
+is distributed with its required license text.

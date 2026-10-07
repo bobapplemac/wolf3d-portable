@@ -1,4 +1,5 @@
 #include "WOLF3D.h"
+#include "WG_DOS_ADLIB.h"
 #include "WG_DOS_SB16.h"
 
 #include <conio.h>
@@ -414,7 +415,10 @@ static int WG_DOSInstallPlatform(void)
         WG_DOSPCMShutdown,
         WG_DOSPCMWritableFrames,
         WG_DOSPCMSubmit,
-        WG_DOSPCMInitEx
+        WG_DOSPCMInitEx,
+        WG_DOSAdLibInit,
+        WG_DOSAdLibShutdown,
+        WG_DOSAdLibWrite
     };
 
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;

@@ -621,7 +621,10 @@ int WG_InstallPlatform(void)
         WG_SDLPCMShutdown,
         WG_SDLPCMWritableFrames,
         WG_SDLPCMSubmit,
-        WG_SDLPCMInitEx
+        WG_SDLPCMInitEx,
+        NULL,
+        NULL,
+        NULL
     };
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;
 }

@@ -1048,7 +1048,10 @@ int WG_InstallPlatform(void)
         WG_Win32PCMShutdown,
         WG_Win32PCMWritableFrames,
         WG_Win32PCMSubmit,
-        WG_Win32PCMInitEx
+        WG_Win32PCMInitEx,
+        NULL,
+        NULL,
+        NULL
     };
 
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;

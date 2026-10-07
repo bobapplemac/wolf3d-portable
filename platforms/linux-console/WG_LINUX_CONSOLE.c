@@ -1082,7 +1082,10 @@ int WG_InstallPlatform(void)
         WG_LinuxConsolePCMShutdown,
         WG_LinuxConsolePCMWritableFrames,
         WG_LinuxConsolePCMSubmit,
-        WG_LinuxConsolePCMInitEx
+        WG_LinuxConsolePCMInitEx,
+        NULL,
+        NULL,
+        NULL
     };
 
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;

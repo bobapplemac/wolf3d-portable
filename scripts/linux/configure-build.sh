@@ -124,6 +124,7 @@ if [[ $target != dos-* ]]; then
     read -r -p 'Parallel jobs (blank lets the build tool decide): ' jobs
 fi
 if [[ $target == dos-* ]]; then
+    [ "$drivers" = all ] && opl_drivers=nuked,dbopl,silent,adlib
     compiler='Open Watcom 2 (2026-10-01)'
     args=("$target" "DOS_OPL_DRIVERS=$opl_drivers" \
           "DOS_OPL_DEFAULT=$default_opl" "DOS_SAMPLE_RATE=$sample_rate")

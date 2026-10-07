@@ -106,7 +106,7 @@ drivers, device permissions, or a sound server.
 | Windows SDL3 | `wolf3d-sdl3.exe` | `wolf3d.dll`, SDL3 DLLs; `Nuked-OPL3.dll` for the default backend |
 | Linux SDL3 | `wolf3d-sdl3` (native/glibc package) or top-level `wolf3d` launcher (musl bundle) | `libwolf3d.so`, pinned SDL3 when selected, and default Nuked-OPL3 shared object |
 | Linux console | `wolf3d` | `libwolf3d.so`, system DRM/ALSA libraries, and default Nuked-OPL3 shared object |
-| 32-bit DOS | `WOLF3D.EXE` | DOS/32A loader staged as `DOS4GW.EXE`; SB16 PCM uses `BLASTER`; Nuked/DBOPL/silent are runtime selectable; Nuked packages include `RELINK/` materials |
+| 32-bit DOS | `WOLF3D.EXE` | DOS/32A loader staged as `DOS4GW.EXE`; SB16 PCM uses `BLASTER`; Nuked/DBOPL/silent/native-AdLib are runtime selectable; Nuked packages include `RELINK/` materials |
 
 Each staged folder also contains plain-text project and third-party licenses
 and `WOLF3D-LIB.txt`, which records the exact engine version and commit. Copy
@@ -117,7 +117,7 @@ Original game data is not included.
 
 | Compiler environment | Architecture | Host facilities | Build entry point | Validation |
 | --- | --- | --- | --- | --- |
-| Official Open Watcom v2 2026-10-01 snapshot in Docker | 32-bit x86, Pentium+ | VGA mode 13h, IRQ 1 keyboard, 700 Hz PIT, SB16 44.1 kHz 16-bit stereo DMA with timed null fallback, runtime Nuked/DBOPL/silent, DOS/32A | `make dos` or guided `./build.sh` | Warning-clean compile/package validated; DOSBox 0.74 startup smokes with WL1 data through all three OPL choices and SB16/null audio; physical DOS gameplay pending |
+| Official Open Watcom v2 2026-10-01 snapshot in Docker | 32-bit x86, Pentium+ | VGA mode 13h, IRQ 1 keyboard, 700 Hz PIT, SB16 44.1 kHz 16-bit stereo DMA with timed null fallback, runtime Nuked/DBOPL/silent/native AdLib, DOS/32A | `make dos` or guided `./build.sh` | Warning-clean compile/package validated; DOSBox 0.74 startup smokes with WL1 data through all four OPL choices and SB16/null audio; physical DOS gameplay pending |
 
 The Open Watcom snapshot, Linux builder base, and downloaded toolchain hash are
 pinned by `wolf3d-lib`. The package does not redistribute the proprietary

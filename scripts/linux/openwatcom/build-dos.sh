@@ -5,7 +5,7 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
 version=$(sed -n '1p' "$root/lib/wolf3d/VERSION")
 build_dir=${W3P_OPENWATCOM_BUILD_DIR:-$root/build/openwatcom-dos32}
 dist_dir=${W3P_OPENWATCOM_DIST_DIR:-$root/dist/wolf3d-portable-$version-dos32-x86}
-drivers=${W3P_OPENWATCOM_OPL_DRIVERS:-nuked,dbopl,silent}
+drivers=${W3P_OPENWATCOM_OPL_DRIVERS:-nuked,dbopl,silent,adlib}
 default_driver=${W3P_OPENWATCOM_DEFAULT_OPL:-nuked}
 sample_rate=${W3P_OPENWATCOM_SAMPLE_RATE:-44100}
 library_build="$build_dir/wolf3d-lib"
@@ -31,8 +31,16 @@ wcc386 -zq -bt=dos -mf -5r -ox -fr -w4 -we \
     -dWOLF3D_STATIC -i="$root/lib/wolf3d/include" -i="$root/platforms/dos" \
     -fo="$build_dir/objects/WG_DOS_SB16.obj" \
     "$root/platforms/dos/WG_DOS_SB16.c"
+echo "Open Watcom C: platforms/dos/WG_DOS_ADLIB.c"
+wcc386 -zq -bt=dos -mf -5r -ox -fr -w4 -we \
+    -i="$root/platforms/dos" \
+    -fo="$build_dir/objects/WG_DOS_ADLIB.obj" \
+    "$root/platforms/dos/WG_DOS_ADLIB.c"
+echo "Open Watcom Library: WGADLIB.LIB"
+wlib -q -n "$build_dir/WGADLIB.LIB" \
+    +"$build_dir/objects/WG_DOS_ADLIB.obj"
 
-link_libraries="$library_dist/WOLF3D.LIB"
+link_libraries="$library_dist/WOLF3D.LIB,$build_dir/WGADLIB.LIB"
 if [ -f "$library_dist/NUKEDOPL.LIB" ]; then
     link_libraries="$link_libraries,$library_dist/NUKEDOPL.LIB"
 fi
@@ -57,6 +65,7 @@ if [ -f "$library_dist/licenses/NUKED-OPL3-LGPL-2.1.txt" ]; then
     cp "$build_dir/objects/WG_DOS.obj" "$dist_dir/RELINK/WG_DOS.obj"
     cp "$build_dir/objects/WG_DOS_SB16.obj" \
        "$dist_dir/RELINK/WG_DOS_SB16.obj"
+    cp "$build_dir/WGADLIB.LIB" "$dist_dir/RELINK/WGADLIB.LIB"
     cp "$library_dist/WOLF3D.LIB" "$dist_dir/RELINK/WOLF3D.LIB"
     cp "$library_dist/NUKEDOPL.LIB" "$dist_dir/RELINK/NUKEDOPL.LIB"
     cp "$root/packaging/DOS-RELINK.LNK" "$dist_dir/RELINK/RELINK.LNK"
@@ -82,10 +91,12 @@ BLASTER environment variable. Without a compatible card it uses a timed null
 sink so the engine's audio clocks continue to advance. A Pentium-class or
 newer x86 system is the supported baseline.
 
-The default build includes Nuked-OPL3, DBOPL, and silent drivers. Select one
-with --opl nuked, --opl dbopl, or --opl silent. Nuked is the reference default;
-DBOPL is substantially faster on period hardware. Packages containing Nuked
-also include RELINK materials so its LGPL implementation can be replaced.
+The default build includes Nuked-OPL3, DBOPL, silent, and native AdLib drivers.
+Select one with --opl nuked, --opl dbopl, --opl silent, or --opl adlib. Nuked
+is the reference default; DBOPL is substantially faster on period hardware;
+AdLib writes the original register stream directly to port 388h. Packages
+containing Nuked also include RELINK materials so its LGPL implementation can
+be replaced. WGADLIB.LIB is kept separate in that relink kit.
 
 The game and DOS/32A loader must remain together. This checkpoint has not yet
 been validated on physical DOS hardware.

@@ -46,7 +46,7 @@ MUSL_BUILD_IMAGE ?= wolf3d-portable-build-alpine-musl
 DOS_BUILD_DIR ?= build/openwatcom-dos32
 DOS_DIST_DIR ?= dist/wolf3d-portable-$(WOLF3D_VERSION)-dos32-x86
 DOS_BUILD_IMAGE ?= wolf3d-portable-build-openwatcom-20261001
-DOS_OPL_DRIVERS ?= nuked,dbopl,silent
+DOS_OPL_DRIVERS ?= nuked,dbopl,silent,adlib
 DOS_OPL_DEFAULT ?= nuked
 DOS_SAMPLE_RATE ?= 44100
 MUSL_SDL3_CMAKE_ARGS ?= -DW3P_DIST_ROOT=/src/$(MUSL_STAGE_ROOT) \
@@ -111,7 +111,7 @@ help:
 		'  SAMPLE_RATE=Hz               Preferred PCM rate (default: 48000).' \
 		'  CMAKE_ARGS="..."             Additional CMake definitions.' \
 		'  DOCKER_RUN_ARGS="..."        Additional Docker run arguments.' \
-		'  DOS_OPL_DRIVERS=...          DOS drivers (default: all).' \
+		'  DOS_OPL_DRIVERS=...          DOS drivers (default: nuked,dbopl,silent,adlib).' \
 		'  DOS_OPL_DEFAULT=...          DOS runtime default (default: nuked).' \
 		'  DOS_SAMPLE_RATE=Hz           DOS preferred PCM rate (default: 44100).' \
 		'' \

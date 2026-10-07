@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-10-07 - Native DOS AdLib hardware output
+
+- Advanced the pinned engine to wolf3d-lib 1.4.48 and its optional hardware
+  OPL bridge.
+- Added an original-style port-388h AdLib adapter with timer-based hardware
+  detection, register initialization, required bus delays, and clean shutdown.
+- Added `--opl adlib` to the default DOS runtime choices while retaining Nuked
+  as the preservation reference and leaving non-DOS build defaults unchanged.
+- Built the hardware adapter as a separate `WGADLIB.LIB` and included it in
+  the DOS relink kit alongside the separately replaceable Nuked library.
+
 ## 2026-10-07 - Runtime-selectable DOS OPL emulation
 
 - Advanced the pinned engine to wolf3d-lib 1.4.47 and kept Open Watcom

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-07 - Guided Windows build execution
+
+- Advanced the pinned engine to wolf3d-lib 1.4.42.
+- Corrected the interactive Windows wizard's final handoff to use named
+  PowerShell parameter splatting, so accepting the displayed plan now invokes
+  exactly the reproducible executor command shown above it.
+
 ## 2026-10-07 - Visual Studio 2017 and 2026 validation
 
 - Advanced the pinned engine to wolf3d-lib 1.4.41.

@@ -172,7 +172,7 @@ void WG_WriteWindowsTextScreen(const uint8_t *cells,
         || !GetConsoleMode(output, &mode))
     {
         (void)WG_AttachParentConsole();
-        output = CreateFileW(L"CONOUT$", GENERIC_READ | GENERIC_WRITE,
+        output = CreateFile(TEXT("CONOUT$"), GENERIC_READ | GENERIC_WRITE,
                              FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                              OPEN_EXISTING, 0, NULL);
     }
@@ -197,7 +197,7 @@ void WG_WriteWindowsTextScreen(const uint8_t *cells,
         prompt_rectangle.Right = (SHORT)(prompt_length - 1);
         prompt_rectangle.Bottom = console_info.dwCursorPosition.Y;
         if (prompt == NULL
-            || !ReadConsoleOutputW(output, prompt, prompt_size, prompt_origin,
+            || !ReadConsoleOutputA(output, prompt, prompt_size, prompt_origin,
                                    &prompt_rectangle))
         {
             free(prompt);
@@ -223,8 +223,12 @@ void WG_WriteWindowsTextScreen(const uint8_t *cells,
     rectangle.Top = 0;
     rectangle.Right = (SHORT)(columns - 1U);
     rectangle.Bottom = (SHORT)(rows - 1U);
+#ifdef WG_WIN9X
+    previous_output_code_page = 0U;
+#else
     previous_output_code_page = GetConsoleOutputCP();
     (void)SetConsoleOutputCP(437U);
+#endif
     (void)WriteConsoleOutputA(output, characters, size, origin, &rectangle);
     free(characters);
 
@@ -248,15 +252,17 @@ void WG_WriteWindowsTextScreen(const uint8_t *cells,
         prompt_rectangle.Top = origin.Y;
         prompt_rectangle.Right = (SHORT)(prompt_length - 1);
         prompt_rectangle.Bottom = origin.Y;
-        (void)WriteConsoleOutputW(output, prompt, prompt_size, prompt_origin,
+        (void)WriteConsoleOutputA(output, prompt, prompt_size, prompt_origin,
                                   &prompt_rectangle);
         origin.X = prompt_length;
     }
     (void)SetConsoleCursorPosition(output, origin);
+#ifndef WG_WIN9X
     if (previous_output_code_page != 0U)
     {
         (void)SetConsoleOutputCP(previous_output_code_page);
     }
+#endif
     free(prompt);
 }
 #endif

@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-10-08 - Linux-hosted Windows cross-build matrix
+
+- Advanced the engine to wolf3d-lib 1.4.61.
+- Added Docker profiles for Win9x x86 (Open Watcom), XP x86 and Win7 x86/x64
+  (MinGW-w64/MSVCRT), independent Win7 x86/x64 (LLVM-MinGW/MSVCRT), and
+  Win10 x64 (LLVM-MinGW/UCRT), all producing native PE packages without Wine.
+- Kept SDL3 in the Win7+ bands while providing dependency-free Win32/GDI
+  packages throughout, including ANSI APIs and legacy mouse input on Win9x.
+- Added PE/import dependency audits, guided-build choices, documentation, and
+  safe cleanup for the complete cross-build matrix.
+
 ## 2026-10-08 - Dataset-local configuration and saves
 
 - Advanced the engine to wolf3d-lib 1.4.60.

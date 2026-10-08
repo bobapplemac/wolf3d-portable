@@ -239,6 +239,27 @@ interface (`$FRAMEBUFFER` or `/dev/fb0`); both paths retain evdev input and ALSA
 audio. SDL3 builds do not require those packages directly. The pinned build
 dynamically discovers available X11, Wayland, KMS/DRM, and audio backends.
 
+## Windows cross-compilation from Linux
+
+The Linux/Docker dispatcher can emit native Windows packages without Wine:
+
+```text
+make windows-win9x       # Open Watcom x86 Win32/GDI
+make windows-xp          # MinGW-w64/MSVCRT x86 Win32/GDI
+make windows-win7        # MinGW-w64/MSVCRT x86+x64 Win32/GDI and SDL3
+make windows-llvm-win7   # LLVM-MinGW/MSVCRT x86+x64 Win32/GDI and SDL3
+make windows-win10       # LLVM-MinGW/UCRT x64 Win32/GDI and SDL3
+make windows-cross       # complete matrix
+```
+
+SDL3 deliberately starts at the Windows 7 cross profile. The Win9x host uses
+ANSI Win32 APIs and the legacy cursor-warp input path; the XP profile keeps the
+dependency-free Win32/GDI host. Every package compiles the recorded
+`wolf3d-lib` submodule and includes its runtime DLLs. Automated PE audits
+verify architecture and reject accidental GNU support DLLs, UCRT leakage into
+MSVCRT profiles, and known post-Win9x imports. Runtime certification on the
+named Windows versions is recorded separately in the support matrix.
+
 ## 32-bit DOS cross-build
 
 The DOS wrapper is built on Linux through Docker; no native Open Watcom

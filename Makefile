@@ -49,6 +49,14 @@ DOS_BUILD_IMAGE ?= wolf3d-portable-build-openwatcom-20261001
 DOS_OPL_DRIVERS ?= dbopl,silent,adlib
 DOS_OPL_DEFAULT ?= adlib
 DOS_SAMPLE_RATE ?= 44100
+WINDOWS_MINGW_BUILD_IMAGE ?= wolf3d-portable-build-windows-mingw-debian12
+WINDOWS_LLVM_MINGW_MSVC_IMAGE ?= wolf3d-portable-build-llvm-mingw-20260908-msvcrt
+WINDOWS_LLVM_MINGW_UCRT_IMAGE ?= wolf3d-portable-build-llvm-mingw-20260908-ucrt
+WINDOWS_LLVM_MINGW_RELEASE ?= 20260908
+WINDOWS_LLVM_MINGW_MSVC_SHA256 ?= 4d905bae713182f1a2b4d33875fe5aa544ce9fc04cc153acb47755a90ca62f16
+WINDOWS_LLVM_MINGW_UCRT_SHA256 ?= 2258c745e3155870c80793f3e8c80b28fbde11b9ff73c4c78783635b3440b092
+WINDOWS_OPENWATCOM_BUILD_DIR ?= build/openwatcom-win9x-x86
+WINDOWS_OPENWATCOM_DIST_DIR ?= dist/wolf3d-portable-$(WOLF3D_VERSION)-win32-x86-openwatcom-win9x
 MUSL_SDL3_CMAKE_ARGS ?= -DW3P_DIST_ROOT=/src/$(MUSL_STAGE_ROOT) \
 	-DWG_LINUX_LIBC=musl -DSDL_KMSDRM=OFF -DSDL_OPENGL=OFF \
 	-DSDL_OPENGLES=OFF -DSDL_RENDER_GPU=OFF -DSDL_VULKAN=OFF \
@@ -70,8 +78,11 @@ PARALLEL_ARG := --parallel $(JOBS)
 	portable portable-sdl3 portable-sdl3-release portable-console \
 	portable-console-release portable-image portable-glibc-audit print-config \
 	musl-sdl3 musl-sdl3-release musl-image musl-audit universal-sdl3 \
-	dos dos-release dos-image clean clean-sdl3 clean-console clean-portable \
-	clean-musl clean-dos
+	dos dos-release dos-image windows-cross windows-win9x windows-xp \
+	windows-win7 windows-llvm-win7 windows-win10 windows-mingw-image \
+	windows-llvm-msvcrt-image windows-llvm-ucrt-image \
+	clean clean-sdl3 clean-console clean-portable clean-musl clean-dos \
+	clean-windows-cross
 
 all: sdl3-release
 
@@ -101,6 +112,14 @@ help:
 		'  make dos                     Build the Open Watcom/DOS32A distribution.' \
 		'  make dos-release             Explicit form of make dos.' \
 		'' \
+		'Linux-hosted Windows cross-builds (Docker):' \
+		'  make windows-win9x          Open Watcom Win9x x86 Win32 package.' \
+		'  make windows-xp             MinGW/MSVCRT XP x86 Win32 package.' \
+		'  make windows-win7           MinGW/MSVCRT Win7 x86/x64 Win32+SDL3.' \
+		'  make windows-llvm-win7      LLVM/MSVCRT Win7 x86/x64 Win32+SDL3.' \
+		'  make windows-win10          LLVM/UCRT Win10 x64 Win32+SDL3.' \
+		'  make windows-cross          Build every Windows cross profile.' \
+		'' \
 		'Useful variables:' \
 		'  CC=gcc|clang                 Compiler (default: gcc).' \
 		'  JOBS=N                       Parallel job limit.' \
@@ -121,7 +140,8 @@ help:
 		'  make clean-console           Remove the console build tree.' \
 		'  make clean-portable          Remove Debian portable trees and builder image.' \
 		'  make clean-musl              Remove musl trees and builder image.' \
-		'  make clean-dos               Remove DOS32 tree and builder image.'
+		'  make clean-dos               Remove DOS32 tree and builder image.' \
+		'  make clean-windows-cross     Remove Windows cross trees/images.'
 
 print-config:
 	@printf '%s\n' \
@@ -246,6 +266,80 @@ dos-release: dos-image
 
 dos: dos-release
 
+windows-mingw-image:
+	$(DOCKER) build --tag "$(WINDOWS_MINGW_BUILD_IMAGE)" \
+		-f lib/wolf3d/packaging/windows-mingw/Dockerfile lib/wolf3d
+
+windows-llvm-msvcrt-image:
+	$(DOCKER) build --tag "$(WINDOWS_LLVM_MINGW_MSVC_IMAGE)" \
+		--build-arg LLVM_MINGW_RELEASE="$(WINDOWS_LLVM_MINGW_RELEASE)" \
+		--build-arg LLVM_MINGW_CRT=msvcrt \
+		--build-arg LLVM_MINGW_SHA256="$(WINDOWS_LLVM_MINGW_MSVC_SHA256)" \
+		-f lib/wolf3d/packaging/windows-llvm-mingw/Dockerfile lib/wolf3d
+
+windows-llvm-ucrt-image:
+	$(DOCKER) build --tag "$(WINDOWS_LLVM_MINGW_UCRT_IMAGE)" \
+		--build-arg LLVM_MINGW_RELEASE="$(WINDOWS_LLVM_MINGW_RELEASE)" \
+		--build-arg LLVM_MINGW_CRT=ucrt \
+		--build-arg LLVM_MINGW_SHA256="$(WINDOWS_LLVM_MINGW_UCRT_SHA256)" \
+		-f lib/wolf3d/packaging/windows-llvm-mingw/Dockerfile lib/wolf3d
+
+windows-win9x: dos-image
+	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
+		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
+		--env W3P_OPENWATCOM_WINDOWS_BUILD_DIR="/src/$(WINDOWS_OPENWATCOM_BUILD_DIR)" \
+		--env W3P_OPENWATCOM_WINDOWS_DIST_DIR="/src/$(WINDOWS_OPENWATCOM_DIST_DIR)" \
+		--env W3P_OPENWATCOM_WINDOWS_OPL_DRIVERS="$(OPL_DRIVERS)" \
+		--env W3P_OPENWATCOM_WINDOWS_DEFAULT_OPL="$(OPL_DEFAULT)" \
+		--env W3P_OPENWATCOM_WINDOWS_SAMPLE_RATE="$(SAMPLE_RATE)" \
+		"$(DOS_BUILD_IMAGE)" sh scripts/linux/openwatcom/build-windows.sh
+
+windows-xp: windows-mingw-image
+	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
+		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
+		--env W3P_WINDOWS_CROSS_PROFILE=mingw-xp-x86 \
+		--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
+		--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(OPL_DRIVERS)" \
+		--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(OPL_DEFAULT)" \
+		--env W3P_WINDOWS_CROSS_SAMPLE_RATE="$(SAMPLE_RATE)" \
+		"$(WINDOWS_MINGW_BUILD_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh
+
+windows-win7: windows-mingw-image
+	@for profile in mingw-win7-x86 mingw-win7-x64; do \
+		$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
+			--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
+			--env W3P_WINDOWS_CROSS_PROFILE="$$profile" \
+			--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
+			--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(OPL_DRIVERS)" \
+			--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(OPL_DEFAULT)" \
+			--env W3P_WINDOWS_CROSS_SAMPLE_RATE="$(SAMPLE_RATE)" \
+			"$(WINDOWS_MINGW_BUILD_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh || exit $$?; \
+	done
+
+windows-llvm-win7: windows-llvm-msvcrt-image
+	@for profile in llvm-mingw-win7-x86 llvm-mingw-win7-x64; do \
+		$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
+			--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
+			--env W3P_WINDOWS_CROSS_PROFILE="$$profile" \
+			--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
+			--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(OPL_DRIVERS)" \
+			--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(OPL_DEFAULT)" \
+			--env W3P_WINDOWS_CROSS_SAMPLE_RATE="$(SAMPLE_RATE)" \
+			"$(WINDOWS_LLVM_MINGW_MSVC_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh || exit $$?; \
+	done
+
+windows-win10: windows-llvm-ucrt-image
+	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
+		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
+		--env W3P_WINDOWS_CROSS_PROFILE=llvm-mingw-win10-x64 \
+		--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
+		--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(OPL_DRIVERS)" \
+		--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(OPL_DEFAULT)" \
+		--env W3P_WINDOWS_CROSS_SAMPLE_RATE="$(SAMPLE_RATE)" \
+		"$(WINDOWS_LLVM_MINGW_UCRT_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh
+
+windows-cross: windows-win9x windows-xp windows-win7 windows-llvm-win7 windows-win10
+
 clean-sdl3:
 	$(CMAKE) -E remove_directory "$(SDL3_BUILD_DIR)"
 clean-console:
@@ -269,4 +363,16 @@ clean-dos:
 	$(CMAKE) -E remove_directory "$(DOS_BUILD_DIR)"
 	@if command -v "$(DOCKER)" >/dev/null 2>&1; then \
 		$(DOCKER) image rm "$(DOS_BUILD_IMAGE)" >/dev/null 2>&1 || true; fi
-clean: clean-sdl3 clean-console clean-portable clean-musl clean-dos
+clean-windows-cross:
+	$(CMAKE) -E remove_directory "$(WINDOWS_OPENWATCOM_BUILD_DIR)"
+	$(CMAKE) -E remove_directory build/windows-cross-mingw-xp-x86
+	$(CMAKE) -E remove_directory build/windows-cross-mingw-win7-x86
+	$(CMAKE) -E remove_directory build/windows-cross-mingw-win7-x64
+	$(CMAKE) -E remove_directory build/windows-cross-llvm-mingw-win7-x86
+	$(CMAKE) -E remove_directory build/windows-cross-llvm-mingw-win7-x64
+	$(CMAKE) -E remove_directory build/windows-cross-llvm-mingw-win10-x64
+	@if command -v "$(DOCKER)" >/dev/null 2>&1; then \
+		$(DOCKER) image rm "$(WINDOWS_MINGW_BUILD_IMAGE)" >/dev/null 2>&1 || true; \
+		$(DOCKER) image rm "$(WINDOWS_LLVM_MINGW_MSVC_IMAGE)" >/dev/null 2>&1 || true; \
+		$(DOCKER) image rm "$(WINDOWS_LLVM_MINGW_UCRT_IMAGE)" >/dev/null 2>&1 || true; fi
+clean: clean-sdl3 clean-console clean-portable clean-musl clean-dos clean-windows-cross

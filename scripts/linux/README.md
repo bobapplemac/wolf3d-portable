@@ -9,3 +9,7 @@ The Open Watcom/DOS wrapper cross-build runs from Linux/Docker and therefore
 belongs under this directory even though it emits a 32-bit DOS application.
 `openwatcom/build-dos.sh` is the deterministic executor used by `make dos`;
 the root Makefile owns image construction and safe cleanup.
+
+`openwatcom/build-windows.sh` emits the Win9x Win32/GDI package, while
+`windows-cross/build-portable.sh` handles the XP, Win7, and Win10 MinGW and
+LLVM-MinGW profiles. All are Linux-hosted native PE builds; none uses Wine.

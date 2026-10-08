@@ -188,6 +188,7 @@ make releases                # both distributions
 make portable                # both in the Debian 10 compatibility container
 make musl-sdl3               # relocatable bundle with its own musl userspace
 make dos                     # Open Watcom/DOS32A x86 distribution
+make windows-cross           # Win9x/XP/Win7/Win10 native PE packages
 make sdl3-release CC=clang   # use Clang
 make sdl3-release USE_SYSTEM_SDL3=ON
 make sdl3-release OPL_DEFAULT=dbopl
@@ -211,6 +212,13 @@ drivers are compiled by default and selected with the same `--opl` option used
 by other wrappers. Native AdLib is the DOS default and sends the original
 register stream to compatible hardware at port 388h; DBOPL is the software
 fallback. Nuked remains available through an explicit `DOS_OPL_DRIVERS` build.
+
+Windows cross-builds are similarly Docker-contained and require no Wine.
+Open Watcom emits the Win9x x86 Win32/GDI package; MinGW-w64/MSVCRT emits the
+XP x86 and Win7 x86/x64 packages; LLVM-MinGW independently covers Win7 with
+MSVCRT and Win10 x64 with UCRT. SDL3 is included only in the Win7+ profiles.
+Use the individual `make windows-*` targets listed by `make help` when the
+complete matrix is unnecessary.
 
 For native IDE development, open `ide/open-watcom/wolf3d-portable.wpj` through
 the adjacent `open-ide.cmd`. That workspace builds the engine and all DOS host

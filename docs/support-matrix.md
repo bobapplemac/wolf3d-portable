@@ -30,6 +30,7 @@ or the local submodule's `lib/wolf3d/docs/support-matrix.md`.
 | Portable glibc Linux wrappers | Linux + Docker | `./build.sh` or `make portable` | SDL3 and console x86-64 folders audited to glibc 2.28 |
 | Bundled-musl Linux SDL3 | Linux + Docker | `./build.sh` or `make musl-sdl3` | Relocatable AppDir-style x86-64 folder |
 | 32-bit protected-mode DOS | Linux + Docker | `./build.sh` or `make dos` | `dist/wolf3d-portable-<version>-dos32-x86/` |
+| Complete Windows cross matrix | Linux + Docker | `./build.sh` or `make windows-cross` | Compiler/OS-labelled Win32 and SDL3 folders under `dist/` |
 
 Run `./build.sh`, `make help`, `.\build.ps1`, or root `build.cmd` without
 arguments for all selectable options. See [building.md](building.md) for exact
@@ -40,6 +41,11 @@ presets, package contents, and dependency setup.
 | Compiler environment | Toolset | Architectures | Win32/GDI | SDL3 | Build entry point | Destination validation |
 | --- | --- | --- | --- | --- | --- | --- |
 | MSYS2 UCRT64 | MinGW-w64 GCC 16.2 | x64 | Validated | Validated | `build.ps1`, CMake presets | Both packaged wrappers validated with WL1 data on Windows 11 x64; dependency audit rejects MSYS2/Cygwin runtime leakage |
+| Linux Docker / Open Watcom | pinned Open Watcom 2 | x86 | Validated | Not supported | `make windows-win9x` | PE/import audit passed for Win9x profile; destination runtime pending |
+| Linux Docker / MinGW-w64 MSVCRT | GCC 12 | x86 | Validated | Not supported | `make windows-xp` | XP profile PE/import audit passed; destination runtime pending |
+| Linux Docker / MinGW-w64 MSVCRT | GCC 12 | x86, x64 | Validated | Validated | `make windows-win7` | Win7 profile PE/import audit passed; destination runtime pending |
+| Linux Docker / LLVM-MinGW MSVCRT | LLVM 23 | x86, x64 | Validated | Validated | `make windows-llvm-win7` | Independent Win7 profile PE/import audit passed; destination runtime pending |
+| Linux Docker / LLVM-MinGW UCRT | LLVM 23 | x64 | Validated | Validated | `make windows-win10` | Win10 profile PE/import audit passed; destination runtime pending |
 | Visual Studio 2026 | v145 | x86, x64 | Validated | Validated | `build.ps1`, native VS2026 solution, CMake presets | Windows 11 compatibility host |
 | Visual Studio 2022 | v143 | x86, x64 | Validated | Validated | `build.ps1`, native VS2022 solution, CMake presets | Current Windows development host |
 | Visual Studio 2019 | v142 | x86, x64 | Validated | Validated | `build.ps1`, native VS2019 solution, CMake presets | Current Windows development host |

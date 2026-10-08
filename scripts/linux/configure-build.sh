@@ -73,8 +73,8 @@ if ready cmake && ready make; then
     labels+=('native SDL3 distribution' 'native console distribution' 'both native distributions' 'clean local build outputs')
 fi
 if ready docker && ready make; then
-    targets+=(portable portable-sdl3 portable-console musl-sdl3 dos-release)
-    labels+=('both portable glibc distributions (Docker)' 'portable glibc SDL3 distribution (Docker)' 'portable glibc console distribution (Docker)' 'relocatable musl SDL3 distribution (Docker)' '32-bit DOS Open Watcom distribution (Docker)')
+    targets+=(portable portable-sdl3 portable-console musl-sdl3 dos-release windows-win9x windows-xp windows-win7 windows-llvm-win7 windows-win10 windows-cross)
+    labels+=('both portable glibc distributions (Docker)' 'portable glibc SDL3 distribution (Docker)' 'portable glibc console distribution (Docker)' 'relocatable musl SDL3 distribution (Docker)' '32-bit DOS Open Watcom distribution (Docker)' 'Windows 95 x86 Open Watcom Win32 package (Docker)' 'Windows XP x86 MinGW/MSVCRT Win32 package (Docker)' 'Windows 7 x86/x64 MinGW/MSVCRT Win32+SDL3 packages (Docker)' 'Windows 7 x86/x64 LLVM/MSVCRT Win32+SDL3 packages (Docker)' 'Windows 10 x64 LLVM/UCRT Win32+SDL3 packages (Docker)' 'all Linux-hosted Windows packages (Docker)')
 fi
 if [ ${#targets[@]} -eq 0 ]; then
     printf '\nNo usable build path was detected. See docs/building.md for prerequisites.\n' >&2; exit 2
@@ -87,7 +87,7 @@ for ((i=0; i<${#labels[@]}; ++i)); do
 done
 
 compiler=gcc
-if [[ $target != portable* && $target != musl-* && $target != dos-* && $target != clean ]]; then
+if [[ $target != portable* && $target != musl-* && $target != dos-* && $target != windows-* && $target != clean ]]; then
     compilers=()
     ready gcc && compilers+=(gcc)
     ready clang && compilers+=(clang)
@@ -120,7 +120,7 @@ fi
 opl_drivers=${drivers//-/,}
 [ "$drivers" = all ] && opl_drivers=nuked,dbopl,silent
 jobs=''
-if [[ $target != dos-* ]]; then
+if [[ $target != dos-* && $target != windows-win9x ]]; then
     read -r -p 'Parallel jobs (blank lets the build tool decide): ' jobs
 fi
 if [[ $target == dos-* ]]; then
@@ -128,6 +128,10 @@ if [[ $target == dos-* ]]; then
     compiler='Open Watcom 2 (2026-10-01)'
     args=("$target" "DOS_OPL_DRIVERS=$opl_drivers" \
           "DOS_OPL_DEFAULT=$default_opl" "DOS_SAMPLE_RATE=$sample_rate")
+elif [[ $target == windows-win9x ]]; then
+    compiler='Open Watcom 2 (2026-10-01)'
+    args=("$target" "OPL_DRIVERS=$opl_drivers" \
+          "OPL_DEFAULT=$default_opl" "SAMPLE_RATE=$sample_rate")
 else
     args=("$target" "CC=$compiler" "USE_SYSTEM_SDL3=$system_sdl" \
           "OPL_DRIVERS=$opl_drivers" "OPL_DEFAULT=$default_opl" \

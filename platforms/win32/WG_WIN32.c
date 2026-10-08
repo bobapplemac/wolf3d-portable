@@ -16,9 +16,10 @@
 #include <stdint.h>
 #endif
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-static const wchar_t wg_window_class[] = L"wolf3d-window";
+static const TCHAR wg_window_class[] = TEXT("wolf3d-window");
 static HWND wg_window;
 static HCURSOR wg_blank_cursor;
 static uint32_t wg_pixels[WOLF3D_SCREEN_WIDTH * WOLF3D_SCREEN_HEIGHT];
@@ -140,7 +141,7 @@ static HANDLE wg_console_output_handle(void)
     if ((output == NULL || output == INVALID_HANDLE_VALUE)
         && wg_attach_parent_console())
     {
-        output = CreateFileW(L"CONOUT$", GENERIC_READ | GENERIC_WRITE,
+        output = CreateFile(TEXT("CONOUT$"), GENERIC_READ | GENERIC_WRITE,
                              FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                              OPEN_EXISTING, 0, NULL);
         if (output != INVALID_HANDLE_VALUE)
@@ -233,15 +234,16 @@ static void wg_queue_mouse_button(uint8_t button, int pressed)
 
 static void wg_load_xinput(void)
 {
-    static const wchar_t *const libraries[] =
+    static const TCHAR *const libraries[] =
     {
-        L"xinput1_4.dll", L"xinput1_3.dll", L"xinput9_1_0.dll"
+        TEXT("xinput1_4.dll"), TEXT("xinput1_3.dll"),
+        TEXT("xinput9_1_0.dll")
     };
     size_t index;
 
     for (index = 0U; index < sizeof(libraries) / sizeof(libraries[0]); ++index)
     {
-        wg_xinput_module = LoadLibraryW(libraries[index]);
+        wg_xinput_module = LoadLibrary(libraries[index]);
         if (wg_xinput_module != NULL)
         {
             FARPROC procedure = GetProcAddress(wg_xinput_module,
@@ -411,7 +413,7 @@ static void WG_Win32ApplyMouseCapture(int capture)
         ClipCursor(NULL);
         if (GetCapture() == wg_window) ReleaseCapture();
         SetCursor(wg_fullscreen ? wg_blank_cursor
-                                : LoadCursorW(NULL, IDC_ARROW));
+                                : LoadCursor(NULL, IDC_ARROW));
     }
 #ifndef WG_LEGACY_WIN32
     wg_raw_mouse_position_valid = 0;
@@ -435,20 +437,20 @@ static int WG_Win32SetFullscreen(int fullscreen)
     if (fullscreen)
     {
 #ifdef WG_LEGACY_WIN32
-        wg_windowed_style = GetWindowLongW(wg_window, GWL_STYLE);
+        wg_windowed_style = GetWindowLong(wg_window, GWL_STYLE);
         wg_windowed_placement.length = sizeof(wg_windowed_placement);
         if (!GetWindowPlacement(wg_window, &wg_windowed_placement))
         {
             return 0;
         }
-        SetWindowLongW(wg_window, GWL_STYLE,
+        SetWindowLong(wg_window, GWL_STYLE,
                        wg_windowed_style & ~(LONG)WS_OVERLAPPEDWINDOW);
         if (!SetWindowPos(wg_window, HWND_TOP, 0, 0,
                           GetSystemMetrics(SM_CXSCREEN),
                           GetSystemMetrics(SM_CYSCREEN),
                           SWP_NOOWNERZORDER | SWP_FRAMECHANGED))
         {
-            SetWindowLongW(wg_window, GWL_STYLE, wg_windowed_style);
+            SetWindowLong(wg_window, GWL_STYLE, wg_windowed_style);
             return 0;
         }
 #else
@@ -481,7 +483,7 @@ static int WG_Win32SetFullscreen(int fullscreen)
     else
     {
 #ifdef WG_LEGACY_WIN32
-        SetWindowLongW(wg_window, GWL_STYLE, wg_windowed_style);
+        SetWindowLong(wg_window, GWL_STYLE, wg_windowed_style);
 #else
         SetWindowLongPtrW(wg_window, GWL_STYLE, wg_windowed_style);
 #endif
@@ -495,7 +497,7 @@ static int WG_Win32SetFullscreen(int fullscreen)
     }
     wg_fullscreen = fullscreen;
     SetCursor((fullscreen || wg_mouse_captured)
-                  ? wg_blank_cursor : LoadCursorW(NULL, IDC_ARROW));
+                  ? wg_blank_cursor : LoadCursor(NULL, IDC_ARROW));
     WG_Win32UpdateMouseClip();
     return 1;
 }
@@ -515,7 +517,7 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
                 SetCursor(wg_blank_cursor);
                 return TRUE;
             }
-            return DefWindowProcW(window, message, wparam, lparam);
+            return DefWindowProc(window, message, wparam, lparam);
 
         case WM_KEYDOWN:
         case WM_SYSKEYDOWN:
@@ -758,12 +760,12 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
 #endif
                 WG_Win32ApplyMouseCapture(0);
             }
-            return DefWindowProcW(window, message, wparam, lparam);
+            return DefWindowProc(window, message, wparam, lparam);
 
         case WM_MOVE:
         case WM_SIZE:
             WG_Win32UpdateMouseClip();
-            return DefWindowProcW(window, message, wparam, lparam);
+            return DefWindowProc(window, message, wparam, lparam);
 
         case WM_CLOSE:
             wg_quit_pending = 1;
@@ -777,7 +779,7 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
             return 0;
 
         default:
-            return DefWindowProcW(window, message, wparam, lparam);
+            return DefWindowProc(window, message, wparam, lparam);
     }
 }
 
@@ -786,7 +788,7 @@ static int WG_Win32Init(void)
 #ifndef WG_LEGACY_WIN32
     RAWINPUTDEVICE mouse;
 #endif
-    WNDCLASSW window_class;
+    WNDCLASS window_class;
     RECT rectangle;
     RECT work_area;
     HINSTANCE instance;
@@ -797,15 +799,15 @@ static int WG_Win32Init(void)
     BYTE cursor_and_mask[32U * 32U / 8U];
     BYTE cursor_xor_mask[32U * 32U / 8U];
 
-    instance = GetModuleHandleW(NULL);
+    instance = GetModuleHandle(NULL);
     ZeroMemory(&window_class, sizeof(window_class));
     window_class.lpfnWndProc = wg_window_proc;
     window_class.hInstance = instance;
-    window_class.hCursor = LoadCursorW(NULL, IDC_ARROW);
+    window_class.hCursor = LoadCursor(NULL, IDC_ARROW);
     window_class.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
     window_class.lpszClassName = wg_window_class;
 
-    if (!RegisterClassW(&window_class) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
+    if (!RegisterClass(&window_class) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
     {
         return 0;
     }
@@ -818,7 +820,7 @@ static int WG_Win32Init(void)
     AdjustWindowRect(&rectangle, WS_OVERLAPPEDWINDOW, FALSE);
     window_width = rectangle.right - rectangle.left;
     window_height = rectangle.bottom - rectangle.top;
-    if (SystemParametersInfoW(SPI_GETWORKAREA, 0, &work_area, 0))
+    if (SystemParametersInfo(SPI_GETWORKAREA, 0, &work_area, 0))
     {
         window_x = work_area.left
                  + (work_area.right - work_area.left - window_width) / 2;
@@ -826,7 +828,7 @@ static int WG_Win32Init(void)
                  + (work_area.bottom - work_area.top - window_height) / 2;
     }
 
-    wg_window = CreateWindowExW(0, wg_window_class, L"wolf3d",
+    wg_window = CreateWindowEx(0, wg_window_class, TEXT("wolf3d"),
                                 WS_OVERLAPPEDWINDOW, window_x, window_y,
                                 window_width, window_height,
                                 NULL, NULL, instance, NULL);
@@ -910,13 +912,13 @@ static void WG_Win32Shutdown(void)
         DestroyWindow(wg_window);
         wg_window = NULL;
     }
-    SetCursor(LoadCursorW(NULL, IDC_ARROW));
+    SetCursor(LoadCursor(NULL, IDC_ARROW));
     if (wg_blank_cursor != NULL)
     {
         DestroyCursor(wg_blank_cursor);
         wg_blank_cursor = NULL;
     }
-    UnregisterClassW(wg_window_class, GetModuleHandleW(NULL));
+    UnregisterClass(wg_window_class, GetModuleHandle(NULL));
     wg_write_text_screen();
 }
 
@@ -1016,7 +1018,7 @@ static int WG_Win32PollEvent(wolf3d_event_t *event)
         return 1;
     }
 
-    while (PeekMessageW(&message, NULL, 0, 0, PM_REMOVE))
+    while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE))
     {
         if (message.message == WM_QUIT)
         {
@@ -1024,7 +1026,7 @@ static int WG_Win32PollEvent(wolf3d_event_t *event)
             return 1;
         }
         TranslateMessage(&message);
-        DispatchMessageW(&message);
+        DispatchMessage(&message);
         if (wg_event_read != wg_event_write)
         {
             *event = wg_event_queue[wg_event_read];
@@ -1080,6 +1082,12 @@ static uint32_t WG_Win32InputDevices(void)
 
 static void WG_Win32SetWindowTitle(const char *title)
 {
+#ifdef WG_WIN9X
+    if (wg_window != NULL)
+    {
+        SetWindowTextA(wg_window, title);
+    }
+#else
     wchar_t wide_title[256];
 
     if (wg_window == NULL)
@@ -1090,6 +1098,7 @@ static void WG_Win32SetWindowTitle(const char *title)
     MultiByteToWideChar(CP_UTF8, 0, title, -1, wide_title,
                         (int)(sizeof(wide_title) / sizeof(wide_title[0])));
     SetWindowTextW(wg_window, wide_title);
+#endif
 }
 
 static void WG_Win32ReportError(const char *message)
@@ -1315,6 +1324,11 @@ static void WG_Win32DiagnosticReport(char *report, size_t report_size)
 {
     unsigned joystick_count = 0U;
     unsigned xinput_count = 0U;
+#ifdef WG_WIN9X
+    int monitor_count = 1;
+#else
+    int monitor_count = GetSystemMetrics(SM_CMONITORS);
+#endif
     UINT joystick;
     JOYINFO info;
 
@@ -1354,19 +1368,26 @@ static void WG_Win32DiagnosticReport(char *report, size_t report_size)
         "  Mouse: %s\n"
         "  Joystick: %u legacy device(s), %u XInput controller(s) connected\n",
         GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
-        GetSystemMetrics(SM_CMONITORS), (unsigned)waveOutGetNumDevs(),
+        monitor_count, (unsigned)waveOutGetNumDevs(),
         GetSystemMetrics(SM_MOUSEPRESENT) ? "present" : "not detected",
         joystick_count, xinput_count);
 }
 
+#ifdef WG_WIN9X
+int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance,
+                   LPSTR command_line, int show_command)
+#else
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
                     LPWSTR command_line, int show_command)
+#endif
 {
     int argc;
+#ifndef WG_WIN9X
     wchar_t **wide_argv;
     wchar_t module_path[32768];
     const wchar_t *wide_argument;
     DWORD module_path_length;
+#endif
     char **argv;
     int launcher_argc;
     char **launcher_argv;
@@ -1387,6 +1408,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
         return 1;
     }
 
+#ifdef WG_WIN9X
+    argc = __argc;
+    argv = __argv;
+#else
     wide_argv = CommandLineToArgvW(GetCommandLineW(), &argc);
     if (wide_argv == NULL)
     {
@@ -1429,6 +1454,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
         WideCharToMultiByte(CP_UTF8, 0, wide_argument, -1,
                             argv[index], bytes, NULL, NULL);
     }
+#endif
 
     if (!WG_LoadLauncherArguments(argc, argv, &launcher_arguments,
                                   launcher_error, sizeof(launcher_error)))
@@ -1515,11 +1541,13 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     WG_FreeLauncherArguments(&launcher_arguments);
 
 cleanup:
+#ifndef WG_WIN9X
     for (index = 0; index < argc; ++index)
     {
         LocalFree(argv[index]);
     }
     LocalFree(argv);
     LocalFree(wide_argv);
+#endif
     return result == WOLF3D_RESULT_PLATFORM_ERROR ? 1 : exit_code;
 }

@@ -303,6 +303,7 @@ static void WG_DOSReportError(const char *message)
 static void WG_DOSPresentText(const uint8_t *cells, uint16_t columns,
                               uint16_t rows)
 {
+    uint16_t content_rows = 0U;
     uint16_t row;
 
     if (cells == NULL || columns > WOLF3D_TEXT_COLUMNS
@@ -316,16 +317,35 @@ static void WG_DOSPresentText(const uint8_t *cells, uint16_t columns,
            * WOLF3D_TEXT_CELL_BYTES);
     for (row = 0U; row < rows; ++row)
     {
+        uint16_t column;
+
         memcpy(WG_DOS_TEXT_MEMORY
                    + (size_t)row * WOLF3D_TEXT_COLUMNS
                      * WOLF3D_TEXT_CELL_BYTES,
                cells + (size_t)row * columns * WOLF3D_TEXT_CELL_BYTES,
                (size_t)columns * WOLF3D_TEXT_CELL_BYTES);
+        for (column = 0U; column < columns; ++column)
+        {
+            uint8_t character =
+                cells[((size_t)row * columns + column)
+                      * WOLF3D_TEXT_CELL_BYTES];
+
+            if (character != 0U && character != ' ')
+            {
+                content_rows = (uint16_t)(row + 1U);
+                break;
+            }
+        }
     }
-    /* Leave COMMAND.COM one complete row in which to print its prompt.
-       Starting on the final row makes the shell's line advance scroll the
-       freshly restored B800 page upward and clips its original top row. */
-    WG_DOSSetCursor((uint8_t)(WOLF3D_TEXT_ROWS - 2U), 0U);
+    /* COMMAND.COM advances once before printing its prompt. Start on the
+       final content row so the prompt follows screens of every height, while
+       reserving the last row to prevent a full-page scroll. */
+    row = content_rows != 0U ? (uint16_t)(content_rows - 1U) : 0U;
+    if (row >= WOLF3D_TEXT_ROWS - 1U)
+    {
+        row = WOLF3D_TEXT_ROWS - 2U;
+    }
+    WG_DOSSetCursor((uint8_t)row, 0U);
     wg_text_presented = 1U;
     wg_graphics_active = 0U;
 }

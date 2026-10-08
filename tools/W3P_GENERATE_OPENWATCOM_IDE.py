@@ -74,12 +74,10 @@ def main():
         ["..\\..\\..\\platforms\\dos\\WG_DOS.c",
          "..\\..\\..\\platforms\\dos\\WG_DOS_SB16.c"],
         ["..\\..\\..\\lib\\wolf3d\\ide\\open-watcom\\engine\\WOLF3D.lib",
-         "..\\wgadlib\\WGADLIB.lib",
-         "..\\..\\..\\lib\\wolf3d\\ide\\open-watcom\\nuked-opl3\\NUKEDOPL.lib"])
+         "..\\wgadlib\\WGADLIB.lib"])
     write_project(
         IDE / "wolf3d-portable.wpj",
         ["..\\..\\lib\\wolf3d\\ide\\open-watcom\\engine\\wolf3d-lib.tgt",
-         "..\\..\\lib\\wolf3d\\ide\\open-watcom\\nuked-opl3\\nuked-opl3.tgt",
          "wgadlib\\wgadlib.tgt", "game\\wolf3d-dos.tgt"])
 
 

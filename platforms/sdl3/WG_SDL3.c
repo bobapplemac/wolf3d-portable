@@ -301,7 +301,8 @@ static int WG_SDLInit(void)
     wg_fullscreen = 0;
     wg_fullscreen_enter_down = 0;
     wg_mouse_capture_requested = 0;
-    wg_window_focused = 1;
+    wg_window_focused = (SDL_GetWindowFlags(wg_window)
+                         & SDL_WINDOW_INPUT_FOCUS) != 0U;
     wg_mouse_enabled = wg_mouse_mode > 0
         || (wg_mouse_mode < 0 && SDL_HasMouse());
     if (wg_start_fullscreen && !WG_SDLSetFullscreen(1))

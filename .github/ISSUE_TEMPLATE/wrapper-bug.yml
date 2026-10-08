@@ -1,0 +1,52 @@
+name: Wrapper or runtime bug
+description: Report a Win32, SDL3, Linux-console, DOS, input, display, or host-audio problem.
+title: "[Wrapper] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing wolf3d-portable. Do not attach copyrighted game-data files.
+  - type: input
+    id: version
+    attributes:
+      label: wolf3d-portable version or commit
+      placeholder: 1.0.0 or a full commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: wrapper
+    attributes:
+      label: Wrapper
+      options:
+        - Win32/GDI
+        - SDL3 on Windows
+        - SDL3 on Linux
+        - Linux direct console
+        - DOS32
+        - Other or new host
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, architecture, compiler/package name, display system, and audio device.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Observed and expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or other evidence
+      render: text

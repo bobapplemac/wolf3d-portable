@@ -21,11 +21,12 @@ The private portable checkpoint recorded wolf3d-lib commit
 available from the library repository's own
 `archive/gitlab-development-history` branch.
 
-Public portable development instead pins curated wolf3d-lib commit
+Public portable development began by pinning curated wolf3d-lib commit
 `593c5a0590ab810fdc84e0196ba49d6f6b63de84`. The engine, tests, build inputs,
-and third-party sources at the two checkpoints are byte-for-byte identical.
-The public checkpoint differs only in reviewed history, licensing, versioning,
-and repository-link documentation.
+and third-party sources at the private and initial public checkpoints were
+byte-for-byte identical. The initial public checkpoint differed only in
+reviewed history, licensing, versioning, and repository-link documentation.
+Subsequent portable commits advance the exact public library gitlink normally.
 
 Historical portable commits may reference earlier library gitlinks. They are
 kept fetchable through the public library archive rather than rewritten, so

@@ -250,7 +250,7 @@ make dos
 
 The guided `./build.sh` configurator also offers **DOS32 / Open Watcom** when
 Docker is usable. The result is staged at
-`dist/wolf3d-portable-1.4.REVISION-dos32-x86/` and contains:
+`dist/wolf3d-portable-VERSION-dos32-x86/` and contains:
 
 - `WOLF3D.EXE`, the 32-bit LE protected-mode game;
 - `DOS4GW.EXE`, which is the bundled DOS/32A drop-in loader rather than the
@@ -310,7 +310,9 @@ make all
 
 This is intentionally convenient for active integration. Commit the resulting
 gitlink to make that engine selection reproducible. Every staged folder
-contains `WOLF3D-LIB.txt` with the resolved `1.4.REVISION` and full commit SHA.
+contains `WOLF3D-LIB.txt` with the portable version plus the resolved engine
+`1.4.REVISION` and full commit SHA. See [`versioning.md`](versioning.md) for
+the independent release policies and explicit latest-library workflow.
 
 ## Linux portability
 
@@ -329,7 +331,7 @@ make musl-sdl3
 `make universal-sdl3` is an equivalent descriptive alias. This target builds
 the executable, wolf3d-lib, Nuked-OPL3, and the pinned SDL3 inside a
 digest-pinned Alpine 3.20 container. It stages an AppDir-style directory named
-`wolf3d-portable-1.4.REVISION-sdl3-linux-musl-x64` containing a top-level
+`wolf3d-portable-VERSION-sdl3-linux-musl-x64` containing a top-level
 `wolf3d` launcher, the application under `bin/`, and a closed set of shared
 objects plus the musl loader under `lib/`.
 

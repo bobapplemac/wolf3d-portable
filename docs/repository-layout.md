@@ -2,6 +2,7 @@
 
 | Path | Purpose |
 | --- | --- |
+| `VERSION` | Independent semantic version of the portable hosts and packages. |
 | `lib/wolf3d/` | Pinned, `main`-tracking `wolf3d-lib` submodule. |
 | `platforms/win32/` | Native GDI/WinMM host. |
 | `platforms/sdl3/` | Cross-platform SDL3 host. |
@@ -12,7 +13,7 @@
 | `cmake/legacy/` | Isolated VC6-through-VS2005 Win32/GDI build definition. |
 | `ide/visual-studio/vsYYYY/` | One native, toolset-pinned solution/project pair per supported Visual Studio IDE generation. |
 | `scripts/windows/` | Human-facing Visual Studio/MinGW and XP-era Windows build dispatchers. |
-| `scripts/linux/` | Linux-hosted helpers, including future Docker cross-build scripts. |
+| `scripts/linux/` | Linux-hosted native, container, musl, and DOS cross-build helpers. |
 | `build/` | Ignored compiler output. |
 | `dist/` | Ignored minimal redistributable folders. |
 

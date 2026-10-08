@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.0 - 2026-10-07 - Independent portable versioning
+
+- Established conventional semantic versioning for the portable hosts,
+  independently of wolf3d-lib's historical `1.4.REVISION` sequence.
+- Changed every modern, legacy, Linux, musl, Windows, and DOS package name to
+  derive from the root portable `VERSION` file.
+- Retained the exact engine version and commit in each package manifest.
+- Documented reproducible pinned builds and the explicit latest-library
+  workflow instead of silently advancing the engine during ordinary builds.
+- Added structured issue forms for wrapper defects and build or platform
+  compatibility reports.
+- Advanced the pinned engine to wolf3d-lib 1.4.54, whose runtime behavior is
+  unchanged from 1.4.53.
+
 ## 2026-10-07 - wolf3d-lib 1.4.53 integration
 
 - Advanced the pinned public engine to wolf3d-lib 1.4.53.

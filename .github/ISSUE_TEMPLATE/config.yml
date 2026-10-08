@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Build and compatibility documentation
+    url: https://github.com/bobapplemac/wolf3d-portable/tree/main/docs
+    about: Review supported wrappers, compilers, targets, and package workflows.

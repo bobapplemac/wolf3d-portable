@@ -1,0 +1,42 @@
+name: Build or platform compatibility
+description: Report a supported build failure or propose another compiler or target.
+title: "[Build] "
+body:
+  - type: input
+    id: version
+    attributes:
+      label: wolf3d-portable version or commit
+    validations:
+      required: true
+  - type: input
+    id: target
+    attributes:
+      label: Host and target environment
+      description: Include build OS, target OS, architecture, runtime or libc, and wrapper.
+    validations:
+      required: true
+  - type: input
+    id: compiler
+    attributes:
+      label: Compiler, IDE, and version
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Build command or IDE configuration
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Failure output
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Note whether this is a documented support target or a proposed expansion.

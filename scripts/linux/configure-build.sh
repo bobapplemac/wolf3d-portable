@@ -104,8 +104,8 @@ drivers=all
 default_opl=nuked
 sample_rate=48000
 if [[ $target == dos-* ]]; then
-    drivers=all
-    default_opl=nuked
+    drivers=dos-default
+    default_opl=adlib
     sample_rate=44100
 elif [[ $target != clean ]]; then
     drivers=$(choose 'Compiled OPL drivers' all nuked-dbopl nuked-silent dbopl-silent nuked dbopl silent)
@@ -124,7 +124,7 @@ if [[ $target != dos-* ]]; then
     read -r -p 'Parallel jobs (blank lets the build tool decide): ' jobs
 fi
 if [[ $target == dos-* ]]; then
-    [ "$drivers" = all ] && opl_drivers=nuked,dbopl,silent,adlib
+    [ "$drivers" = dos-default ] && opl_drivers=dbopl,silent,adlib
     compiler='Open Watcom 2 (2026-10-01)'
     args=("$target" "DOS_OPL_DRIVERS=$opl_drivers" \
           "DOS_OPL_DEFAULT=$default_opl" "DOS_SAMPLE_RATE=$sample_rate")

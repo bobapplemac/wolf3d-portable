@@ -265,23 +265,25 @@ SB16 44.1 kHz 16-bit signed stereo auto-initialize DMA. Sound Blaster settings
 come from the standard `BLASTER` environment variable and require an SB16-
 compatible DSP plus a high-DMA channel. If detection fails, a timed null sink
 keeps audio rendering and completion clocks alive without producing samples.
-The default package compiles Nuked-OPL3, DBOPL, timing-preserving silence, and
-native AdLib hardware output; select them at runtime with `--opl nuked`,
-`--opl dbopl`, `--opl silent`, or `--opl adlib`.
-Nuked is the preservation reference and default. DBOPL is the practical
-lower-CPU choice for period hardware. Native AdLib sends the same engine OPL2
-register writes directly to port 388h and retains SB16 PCM for digitized sound.
+The default package compiles DBOPL, timing-preserving silence, and native AdLib
+hardware output; select them at runtime with `--opl dbopl`, `--opl silent`, or
+`--opl adlib`. Native AdLib is the DOS default, sends the same engine OPL2
+register writes directly to port 388h, and retains SB16 PCM for digitized
+sound. DBOPL is the practical software fallback. Nuked remains the preservation
+reference on modern hosts but is opt-in under DOS because running it inside a
+virtualized DOS CPU is substantially more expensive.
 
 When Nuked is included, the package's `RELINK/` directory carries the host
 objects, engine library, separately replaceable `NUKEDOPL.LIB`, the native
 adapter `WGADLIB.LIB`, response file,
 and plain-text instructions needed to relink with Open Watcom. This is part of
 the DOS package's LGPL compliance and should remain with redistributed builds.
-Constrained custom builds can still set `DOS_OPL_DRIVERS` and
+Custom builds can still set `DOS_OPL_DRIVERS` and
 `DOS_OPL_DEFAULT`, for example:
 
 ```text
 make dos DOS_OPL_DRIVERS=dbopl,silent DOS_OPL_DEFAULT=dbopl
+make dos DOS_OPL_DRIVERS=nuked,dbopl,silent,adlib DOS_OPL_DEFAULT=nuked
 ```
 
 The current package is compile-and-package validated and has completed

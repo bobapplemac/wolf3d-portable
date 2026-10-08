@@ -5,8 +5,8 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
 version=$(sed -n '1p' "$root/lib/wolf3d/VERSION")
 build_dir=${W3P_OPENWATCOM_BUILD_DIR:-$root/build/openwatcom-dos32}
 dist_dir=${W3P_OPENWATCOM_DIST_DIR:-$root/dist/wolf3d-portable-$version-dos32-x86}
-drivers=${W3P_OPENWATCOM_OPL_DRIVERS:-nuked,dbopl,silent,adlib}
-default_driver=${W3P_OPENWATCOM_DEFAULT_OPL:-nuked}
+drivers=${W3P_OPENWATCOM_OPL_DRIVERS:-dbopl,silent,adlib}
+default_driver=${W3P_OPENWATCOM_DEFAULT_OPL:-adlib}
 sample_rate=${W3P_OPENWATCOM_SAMPLE_RATE:-44100}
 library_build="$build_dir/wolf3d-lib"
 library_dist="$build_dir/wolf3d-lib-dist"
@@ -91,12 +91,13 @@ BLASTER environment variable. Without a compatible card it uses a timed null
 sink so the engine's audio clocks continue to advance. A Pentium-class or
 newer x86 system is the supported baseline.
 
-The default build includes Nuked-OPL3, DBOPL, silent, and native AdLib drivers.
-Select one with --opl nuked, --opl dbopl, --opl silent, or --opl adlib. Nuked
-is the reference default; DBOPL is substantially faster on period hardware;
-AdLib writes the original register stream directly to port 388h. Packages
-containing Nuked also include RELINK materials so its LGPL implementation can
-be replaced. WGADLIB.LIB is kept separate in that relink kit.
+The default build includes DBOPL, silent, and native AdLib drivers. Native
+AdLib is selected by default and writes the original register stream directly
+to port 388h. Use --opl dbopl or --opl silent for the built-in fallbacks.
+Nuked-OPL3 remains available as an explicit custom-build option, but running
+that reference emulator inside a DOS virtual machine is computationally
+expensive. Packages containing Nuked also include RELINK materials so its LGPL
+implementation can be replaced. WGADLIB.LIB is kept separate in that kit.
 
 The game and DOS/32A loader must remain together. This checkpoint has not yet
 been validated on physical DOS hardware.

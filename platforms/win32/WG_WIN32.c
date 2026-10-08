@@ -346,6 +346,23 @@ static void WG_Win32UpdateMouseClip(void)
     }
 }
 
+static int WG_Win32GetMouseCenter(POINT *screen_center)
+{
+    RECT client;
+
+    if (wg_window == NULL || !GetClientRect(wg_window, &client))
+    {
+        return 0;
+    }
+    screen_center->x = (client.right - client.left) / 2;
+    screen_center->y = (client.bottom - client.top) / 2;
+    if (!ClientToScreen(wg_window, screen_center))
+    {
+        return 0;
+    }
+    return 1;
+}
+
 static void WG_Win32ApplyMouseCapture(int capture)
 {
     capture = capture && wg_mouse_enabled && wg_window != NULL;
@@ -357,8 +374,14 @@ static void WG_Win32ApplyMouseCapture(int capture)
     wg_mouse_captured = capture;
     if (capture)
     {
+        POINT screen_center;
+
         SetCapture(wg_window);
         WG_Win32UpdateMouseClip();
+        if (WG_Win32GetMouseCenter(&screen_center))
+        {
+            (void)SetCursorPos(screen_center.x, screen_center.y);
+        }
         while (ShowCursor(FALSE) >= 0) { }
     }
     else
@@ -367,6 +390,9 @@ static void WG_Win32ApplyMouseCapture(int capture)
         if (GetCapture() == wg_window) ReleaseCapture();
         while (ShowCursor(TRUE) < 0) { }
     }
+#ifndef WG_LEGACY_WIN32
+    wg_raw_mouse_position_valid = 0;
+#endif
 }
 
 static void WG_Win32RequestMouseCapture(int capture)
@@ -535,7 +561,45 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
                     LONG absolute_x = x;
                     LONG absolute_y = y;
 
-                    if (wg_raw_mouse_position_valid)
+                    if (wg_mouse_captured)
+                    {
+                        POINT center;
+                        int screen_x;
+                        int screen_y;
+                        int screen_left = 0;
+                        int screen_top = 0;
+                        int screen_width = GetSystemMetrics(SM_CXSCREEN);
+                        int screen_height = GetSystemMetrics(SM_CYSCREEN);
+
+                        if ((input.data.mouse.usFlags
+                             & MOUSE_VIRTUAL_DESKTOP) != 0U)
+                        {
+                            screen_left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+                            screen_top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+                            screen_width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+                            screen_height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+                        }
+                        screen_x = screen_left
+                            + MulDiv(absolute_x, screen_width - 1, 65535);
+                        screen_y = screen_top
+                            + MulDiv(absolute_y, screen_height - 1, 65535);
+                        if (WG_Win32GetMouseCenter(&center))
+                        {
+                            x = screen_x - center.x;
+                            y = screen_y - center.y;
+                            if (x != 0 || y != 0)
+                            {
+                                (void)SetCursorPos(center.x, center.y);
+                            }
+                        }
+                        else
+                        {
+                            x = 0;
+                            y = 0;
+                        }
+                        wg_raw_mouse_position_valid = 0;
+                    }
+                    else if (wg_raw_mouse_position_valid)
                     {
                         x = absolute_x - wg_raw_mouse_x;
                         y = absolute_y - wg_raw_mouse_y;
@@ -545,9 +609,12 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
                         x = 0;
                         y = 0;
                     }
-                    wg_raw_mouse_x = absolute_x;
-                    wg_raw_mouse_y = absolute_y;
-                    wg_raw_mouse_position_valid = 1;
+                    if (!wg_mouse_captured)
+                    {
+                        wg_raw_mouse_x = absolute_x;
+                        wg_raw_mouse_y = absolute_y;
+                        wg_raw_mouse_position_valid = 1;
+                    }
                 }
                 else
                 {

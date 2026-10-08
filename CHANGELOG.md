@@ -14,6 +14,8 @@
   re-enabling it restores capture.
 - Correctly converted Win32 absolute raw-mouse coordinates into relative
   motion instead of interpreting their screen-space values as movement deltas.
+- Recentered captured absolute raw-input devices after each displacement so
+  mouse movement remains unbounded instead of stopping at a monitor edge.
 
 ## 2026-10-08 - Unversioned portable source builds
 

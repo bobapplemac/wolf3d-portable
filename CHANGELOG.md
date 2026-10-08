@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-07 - wolf3d-lib 1.4.53 integration
+
+- Advanced the pinned public engine to wolf3d-lib 1.4.53.
+- Picked up the corrected Nuked-OPL3 provenance-note filename and public
+  `wolf3d-lib` identity; runtime code is unchanged.
+
 ## 2026-10-07 - Publish the GitHub repository
 
 - Published the complete portable-host development chronology as public

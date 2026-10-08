@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-10-07 - Publish the GitHub repository
+
+- Published the complete portable-host development chronology as public
+  `main`, with the exact private chronology also named explicitly by the
+  `archive/gitlab-development-history` branch.
+- Replaced active private-repository links with the public GitHub companion
+  repositories.
+- Repinned `wolf3d-lib` from private checkpoint
+  `79cac7556771bb59638ac50183ccb3db3c17371e` to tree-equivalent curated public
+  checkpoint `593c5a0590ab810fdc84e0196ba49d6f6b63de84`.
+
 ## 2026-10-07 - Close the DOS integration baseline
 
 - Advanced the pinned engine to wolf3d-lib 1.4.52, whose public documentation

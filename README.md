@@ -47,7 +47,7 @@ Clone recursively so both `wolf3d-lib` and the pinned SDL3 checkout are
 present:
 
 ```text
-git clone --recursive ssh://git@gitlab.moorenet.xyz:2222/personal/wolf3d-portable.git
+git clone --recursive https://github.com/bobapplemac/wolf3d-portable.git
 cd wolf3d-portable
 ```
 
@@ -61,6 +61,10 @@ The committed `wolf3d-lib` gitlink is the reproducible default. On Linux,
 `make fresh` deliberately advances it to current `main`, initializes nested
 dependencies, and builds the default SDL3 package. Review and commit the new
 gitlink before treating that result as an official release.
+
+The repository's development lineage and its relationship to the companion
+library's reconstructed public history are recorded in
+[`docs/history.md`](docs/history.md).
 
 ## Windows
 

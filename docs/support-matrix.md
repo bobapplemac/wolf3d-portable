@@ -14,7 +14,7 @@ The status language is intentionally precise:
 - **Planned** means there is no supported build command yet.
 
 For the engine-only SDK and its larger compiler matrix, see the companion
-[`wolf3d-lib` support matrix](https://gitlab.moorenet.xyz/personal/wolf3d-lib/-/blob/main/docs/support-matrix.md)
+[`wolf3d-lib` support matrix](https://github.com/bobapplemac/wolf3d-lib/blob/main/docs/support-matrix.md)
 or the local submodule's `lib/wolf3d/docs/support-matrix.md`.
 
 ## Fast paths

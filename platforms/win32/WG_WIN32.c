@@ -15,6 +15,7 @@
 
 static const wchar_t wg_window_class[] = L"wolf3d-window";
 static HWND wg_window;
+static HCURSOR wg_blank_cursor;
 static uint32_t wg_pixels[WOLF3D_SCREEN_WIDTH * WOLF3D_SCREEN_HEIGHT];
 static LARGE_INTEGER wg_counter_frequency;
 static LARGE_INTEGER wg_counter_start;
@@ -31,6 +32,7 @@ static int wg_joystick_mode = -1;
 static LONG wg_raw_mouse_x;
 static LONG wg_raw_mouse_y;
 static int wg_raw_mouse_position_valid;
+static int wg_raw_mouse_wobble;
 #endif
 #ifdef WG_LEGACY_WIN32
 static LONG wg_windowed_style;
@@ -363,6 +365,17 @@ static int WG_Win32GetMouseCenter(POINT *screen_center)
     return 1;
 }
 
+#ifndef WG_LEGACY_WIN32
+static void WG_Win32WarpMouseCursor(int x, int y)
+{
+    /* RDP caches and coalesces cursor warps.  The one-pixel intermediate
+       position makes a repeated center warp observable to the remote host. */
+    (void)SetCursorPos(x, y);
+    (void)SetCursorPos(x + 1, y);
+    (void)SetCursorPos(x, y);
+}
+#endif
+
 static void WG_Win32ApplyMouseCapture(int capture)
 {
     capture = capture && wg_mouse_enabled && wg_window != NULL;
@@ -378,20 +391,26 @@ static void WG_Win32ApplyMouseCapture(int capture)
 
         SetCapture(wg_window);
         WG_Win32UpdateMouseClip();
+        SetCursor(wg_blank_cursor);
         if (WG_Win32GetMouseCenter(&screen_center))
         {
+#ifdef WG_LEGACY_WIN32
             (void)SetCursorPos(screen_center.x, screen_center.y);
+#else
+            WG_Win32WarpMouseCursor(screen_center.x, screen_center.y);
+#endif
         }
-        while (ShowCursor(FALSE) >= 0) { }
     }
     else
     {
         ClipCursor(NULL);
         if (GetCapture() == wg_window) ReleaseCapture();
-        while (ShowCursor(TRUE) < 0) { }
+        SetCursor(wg_fullscreen ? wg_blank_cursor
+                                : LoadCursorW(NULL, IDC_ARROW));
     }
 #ifndef WG_LEGACY_WIN32
     wg_raw_mouse_position_valid = 0;
+    wg_raw_mouse_wobble = 0;
 #endif
 }
 
@@ -471,7 +490,7 @@ static int WG_Win32SetFullscreen(int fullscreen)
     }
     wg_fullscreen = fullscreen;
     SetCursor((fullscreen || wg_mouse_captured)
-                  ? NULL : LoadCursorW(NULL, IDC_ARROW));
+                  ? wg_blank_cursor : LoadCursorW(NULL, IDC_ARROW));
     WG_Win32UpdateMouseClip();
     return 1;
 }
@@ -485,7 +504,10 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
             if ((wg_fullscreen || wg_mouse_captured)
                 && LOWORD(lparam) == HTCLIENT)
             {
-                SetCursor(NULL);
+                /* RDP requires a real cursor object to continue transmitting
+                   motion and to honor SetCursorPos.  Use a transparent cursor
+                   rather than a NULL handle or the ShowCursor counter. */
+                SetCursor(wg_blank_cursor);
                 return TRUE;
             }
             return DefWindowProcW(window, message, wparam, lparam);
@@ -547,78 +569,85 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
             RAWINPUT input;
             UINT size = sizeof(input);
 
-            if (wg_mouse_enabled
+            if (wg_mouse_enabled && wg_mouse_captured
                 && GetRawInputData((HRAWINPUT)lparam, RID_INPUT, &input, &size,
                                 sizeof(RAWINPUTHEADER)) == sizeof(input)
                 && input.header.dwType == RIM_TYPEMOUSE)
             {
                 LONG x = input.data.mouse.lLastX;
                 LONG y = input.data.mouse.lLastY;
-                USHORT buttons = input.data.mouse.usButtonFlags;
 
                 if ((input.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) != 0U)
                 {
-                    LONG absolute_x = x;
-                    LONG absolute_y = y;
+                    const USHORT raw_absolute_coordinates = 0x40U;
+                    int virtual_desktop = (input.data.mouse.usFlags
+                                           & MOUSE_VIRTUAL_DESKTOP) != 0U;
+                    int screen_width = GetSystemMetrics(
+                        virtual_desktop ? SM_CXVIRTUALSCREEN : SM_CXSCREEN);
+                    int screen_height = GetSystemMetrics(
+                        virtual_desktop ? SM_CYVIRTUALSCREEN : SM_CYSCREEN);
+                    LONG absolute_x;
+                    LONG absolute_y;
+                    LONG relative_x = 0;
+                    LONG relative_y = 0;
+                    int at_edge;
 
-                    if (wg_mouse_captured)
+                    if ((input.data.mouse.usFlags
+                         & raw_absolute_coordinates) != 0U)
+                    {
+                        absolute_x = x;
+                        absolute_y = y;
+                    }
+                    else
+                    {
+                        absolute_x = MulDiv(x, screen_width, 65535);
+                        absolute_y = MulDiv(y, screen_height, 65535);
+                    }
+                    if (wg_raw_mouse_position_valid)
+                    {
+                        relative_x = absolute_x - wg_raw_mouse_x;
+                        relative_y = absolute_y - wg_raw_mouse_y;
+                    }
+                    wg_raw_mouse_x = absolute_x;
+                    wg_raw_mouse_y = absolute_y;
+                    wg_raw_mouse_position_valid = 1;
+
+                    at_edge = absolute_x <= screen_width / 100
+                           || absolute_x >= screen_width - screen_width / 100
+                           || absolute_y <= screen_height / 100
+                           || absolute_y >= screen_height
+                                               - screen_height / 100
+                           || absolute_y < 32;
+                    if (at_edge)
                     {
                         POINT center;
-                        int screen_x;
-                        int screen_y;
-                        int screen_left = 0;
-                        int screen_top = 0;
-                        int screen_width = GetSystemMetrics(SM_CXSCREEN);
-                        int screen_height = GetSystemMetrics(SM_CYSCREEN);
 
-                        if ((input.data.mouse.usFlags
-                             & MOUSE_VIRTUAL_DESKTOP) != 0U)
-                        {
-                            screen_left = GetSystemMetrics(SM_XVIRTUALSCREEN);
-                            screen_top = GetSystemMetrics(SM_YVIRTUALSCREEN);
-                            screen_width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-                            screen_height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-                        }
-                        screen_x = screen_left
-                            + MulDiv(absolute_x, screen_width - 1, 65535);
-                        screen_y = screen_top
-                            + MulDiv(absolute_y, screen_height - 1, 65535);
                         if (WG_Win32GetMouseCenter(&center))
                         {
-                            x = screen_x - center.x;
-                            y = screen_y - center.y;
-                            if (x != 0 || y != 0)
+                            WG_Win32WarpMouseCursor(
+                                center.x + wg_raw_mouse_wobble, center.y);
+                            ++wg_raw_mouse_wobble;
+                            if (wg_raw_mouse_wobble > 1)
                             {
-                                (void)SetCursorPos(center.x, center.y);
+                                wg_raw_mouse_wobble = -1;
                             }
                         }
-                        else
-                        {
-                            x = 0;
-                            y = 0;
-                        }
-                        wg_raw_mouse_position_valid = 0;
+                        x = 0;
+                        y = 0;
                     }
-                    else if (wg_raw_mouse_position_valid)
+                    else if (relative_x > -screen_height / 6
+                             && relative_x < screen_height / 6
+                             && relative_y > -screen_height / 6
+                             && relative_y < screen_height / 6)
                     {
-                        x = absolute_x - wg_raw_mouse_x;
-                        y = absolute_y - wg_raw_mouse_y;
+                        x = relative_x;
+                        y = relative_y;
                     }
                     else
                     {
                         x = 0;
                         y = 0;
                     }
-                    if (!wg_mouse_captured)
-                    {
-                        wg_raw_mouse_x = absolute_x;
-                        wg_raw_mouse_y = absolute_y;
-                        wg_raw_mouse_position_valid = 1;
-                    }
-                }
-                else
-                {
-                    wg_raw_mouse_position_valid = 0;
                 }
 
                 if (x != 0 || y != 0)
@@ -635,30 +664,6 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
                     event.button = 0;
                     wg_queue_event(&event);
                 }
-                if ((buttons & RI_MOUSE_LEFT_BUTTON_DOWN) != 0U)
-                {
-                    wg_queue_mouse_button(1U, 1);
-                }
-                if ((buttons & RI_MOUSE_LEFT_BUTTON_UP) != 0U)
-                {
-                    wg_queue_mouse_button(1U, 0);
-                }
-                if ((buttons & RI_MOUSE_RIGHT_BUTTON_DOWN) != 0U)
-                {
-                    wg_queue_mouse_button(2U, 1);
-                }
-                if ((buttons & RI_MOUSE_RIGHT_BUTTON_UP) != 0U)
-                {
-                    wg_queue_mouse_button(2U, 0);
-                }
-                if ((buttons & RI_MOUSE_MIDDLE_BUTTON_DOWN) != 0U)
-                {
-                    wg_queue_mouse_button(3U, 1);
-                }
-                if ((buttons & RI_MOUSE_MIDDLE_BUTTON_UP) != 0U)
-                {
-                    wg_queue_mouse_button(3U, 0);
-                }
             }
             return 0;
         }
@@ -671,7 +676,7 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
 
             position.x = (SHORT)LOWORD(lparam);
             position.y = (SHORT)HIWORD(lparam);
-            if (wg_mouse_enabled)
+            if (wg_mouse_enabled && wg_mouse_captured)
             {
                 RECT client;
                 POINT center;
@@ -705,24 +710,38 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
             return 0;
         }
 
+#endif
+
         case WM_LBUTTONDOWN:
         case WM_LBUTTONUP:
-            if (wg_mouse_enabled)
-                wg_queue_mouse_button(1U, message == WM_LBUTTONDOWN);
-            return 0;
-
         case WM_RBUTTONDOWN:
         case WM_RBUTTONUP:
-            if (wg_mouse_enabled)
-                wg_queue_mouse_button(2U, message == WM_RBUTTONDOWN);
-            return 0;
-
         case WM_MBUTTONDOWN:
         case WM_MBUTTONUP:
-            if (wg_mouse_enabled)
-                wg_queue_mouse_button(3U, message == WM_MBUTTONDOWN);
+        {
+            int pressed = message == WM_LBUTTONDOWN
+                       || message == WM_RBUTTONDOWN
+                       || message == WM_MBUTTONDOWN;
+            uint8_t button = (message == WM_LBUTTONDOWN
+                              || message == WM_LBUTTONUP) ? 1U
+                           : (message == WM_RBUTTONDOWN
+                              || message == WM_RBUTTONUP) ? 2U : 3U;
+
+            if (!wg_mouse_enabled || !wg_mouse_capture_requested)
+            {
+                return 0;
+            }
+            if (!wg_mouse_captured)
+            {
+                if (pressed && GetForegroundWindow() == window)
+                {
+                    WG_Win32ApplyMouseCapture(1);
+                }
+                return 0;
+            }
+            wg_queue_mouse_button(button, pressed);
             return 0;
-#endif
+        }
 
         case WM_ACTIVATE:
             if (LOWORD(wparam) == WA_INACTIVE)
@@ -733,10 +752,6 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
                 wg_raw_mouse_position_valid = 0;
 #endif
                 WG_Win32ApplyMouseCapture(0);
-            }
-            else
-            {
-                WG_Win32ApplyMouseCapture(wg_mouse_capture_requested);
             }
             return DefWindowProcW(window, message, wparam, lparam);
 
@@ -769,6 +784,8 @@ static int WG_Win32Init(void)
     WNDCLASSW window_class;
     RECT rectangle;
     HINSTANCE instance;
+    BYTE cursor_and_mask[32U * 32U / 8U];
+    BYTE cursor_xor_mask[32U * 32U / 8U];
 
     instance = GetModuleHandleW(NULL);
     ZeroMemory(&window_class, sizeof(window_class));
@@ -800,11 +817,23 @@ static int WG_Win32Init(void)
         return 0;
     }
 
+    memset(cursor_and_mask, 0xff, sizeof(cursor_and_mask));
+    memset(cursor_xor_mask, 0, sizeof(cursor_xor_mask));
+    wg_blank_cursor = CreateCursor(instance, 0, 0, 32, 32,
+                                   cursor_and_mask, cursor_xor_mask);
+    if (wg_blank_cursor == NULL)
+    {
+        DestroyWindow(wg_window);
+        wg_window = NULL;
+        return 0;
+    }
+
     wg_mouse_enabled = wg_mouse_mode > 0
         || (wg_mouse_mode < 0 && GetSystemMetrics(SM_MOUSEPRESENT) != 0);
 
 #ifndef WG_LEGACY_WIN32
     wg_raw_mouse_position_valid = 0;
+    wg_raw_mouse_wobble = 0;
     mouse.usUsagePage = 0x01U;
     mouse.usUsage = 0x02U;
     mouse.dwFlags = 0U;
@@ -812,6 +841,8 @@ static int WG_Win32Init(void)
     if (wg_mouse_enabled
         && !RegisterRawInputDevices(&mouse, 1U, sizeof(mouse)))
     {
+        DestroyCursor(wg_blank_cursor);
+        wg_blank_cursor = NULL;
         DestroyWindow(wg_window);
         wg_window = NULL;
         return 0;
@@ -837,6 +868,8 @@ static int WG_Win32Init(void)
     ShowWindow(wg_window, SW_SHOW);
     if (wg_start_fullscreen && !WG_Win32SetFullscreen(1))
     {
+        DestroyCursor(wg_blank_cursor);
+        wg_blank_cursor = NULL;
         DestroyWindow(wg_window);
         wg_window = NULL;
         return 0;
@@ -858,6 +891,12 @@ static void WG_Win32Shutdown(void)
     {
         DestroyWindow(wg_window);
         wg_window = NULL;
+    }
+    SetCursor(LoadCursorW(NULL, IDC_ARROW));
+    if (wg_blank_cursor != NULL)
+    {
+        DestroyCursor(wg_blank_cursor);
+        wg_blank_cursor = NULL;
     }
     UnregisterClassW(wg_window_class, GetModuleHandleW(NULL));
     wg_write_text_screen();

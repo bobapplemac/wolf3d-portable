@@ -16,6 +16,13 @@
   motion instead of interpreting their screen-space values as movement deltas.
 - Recentered captured absolute raw-input devices after each displacement so
   mouse movement remains unbounded instead of stopping at a monitor edge.
+- Added SDL-inspired Remote Desktop handling for absolute raw input: normalized
+  pixel deltas, edge-only jittered warps, and rejection of synthetic warp
+  motion prevent lagging or reversed movement. Mouse buttons are ignored while
+  mouse control is disabled, and only a client-area click recaptures focus.
+- Replaced Win32's `ShowCursor`/NULL-handle hiding with an owned transparent
+  cursor, matching SDL's RDP behavior so remote motion continues and
+  virtual-monitor-edge warps are honored.
 
 ## 2026-10-08 - Unversioned portable source builds
 

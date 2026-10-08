@@ -2,7 +2,6 @@
 
 | Path | Purpose |
 | --- | --- |
-| `VERSION` | Independent semantic version of the portable hosts and packages. |
 | `lib/wolf3d/` | Pinned, `main`-tracking `wolf3d-lib` submodule. |
 | `platforms/win32/` | Native GDI/WinMM host. |
 | `platforms/sdl3/` | Cross-platform SDL3 host. |

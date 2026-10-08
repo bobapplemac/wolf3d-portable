@@ -109,7 +109,7 @@ drivers, device permissions, or a sound server.
 | 32-bit DOS | `WOLF3D.EXE` | DOS/32A loader staged as `DOS4GW.EXE`; SB16 PCM uses `BLASTER`; native AdLib (default), DBOPL, and silent are runtime selectable; Nuked is an opt-in build and its packages include `RELINK/` materials |
 
 Each staged folder also contains plain-text project and third-party licenses
-and `WOLF3D-LIB.txt`, which records the portable version plus the exact engine
+and `WOLF3D-LIB.txt`, which records the exact portable commit plus the engine
 version and commit. Copy
 the whole staged folder rather than selecting individual DLLs/shared objects.
 Original game data is not included.

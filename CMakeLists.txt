@@ -5,13 +5,6 @@ if(POLICY CMP0091)
 endif()
 
 set(W3P_WOLF3D_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/wolf3d")
-if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
-    message(FATAL_ERROR "wolf3d-portable VERSION file is missing")
-endif()
-file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" W3P_VERSION LIMIT_COUNT 1)
-if(NOT W3P_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
-    message(FATAL_ERROR "Invalid wolf3d-portable version '${W3P_VERSION}'")
-endif()
 if(NOT EXISTS "${W3P_WOLF3D_SOURCE_DIR}/VERSION")
     message(FATAL_ERROR
         "wolf3d-lib is not initialized; run git submodule update --init --recursive")
@@ -22,7 +15,7 @@ if(NOT W3P_WOLF3D_VERSION MATCHES "^1\\.4\\.[0-9]+$")
     message(FATAL_ERROR "Invalid wolf3d-lib version '${W3P_WOLF3D_VERSION}'")
 endif()
 
-project(wolf3d-portable VERSION "${W3P_VERSION}" LANGUAGES C)
+project(wolf3d-portable VERSION "${W3P_WOLF3D_VERSION}" LANGUAGES C)
 include(CTest)
 
 option(W3P_BUILD_WIN32 "Build the dependency-free Win32 host" ON)
@@ -59,8 +52,14 @@ set(WG_DIST_ROOT "${CMAKE_BINARY_DIR}/wolf3d-lib-dist" CACHE PATH "" FORCE)
 add_subdirectory(lib/wolf3d wolf3d-lib)
 
 find_package(Git QUIET)
+set(W3P_PORTABLE_COMMIT "unknown")
 set(W3P_WOLF3D_COMMIT "unknown")
 if(Git_FOUND)
+    execute_process(
+        COMMAND "${GIT_EXECUTABLE}" -C "${CMAKE_CURRENT_SOURCE_DIR}"
+            rev-parse HEAD
+        OUTPUT_VARIABLE W3P_PORTABLE_COMMIT
+        OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
     execute_process(
         COMMAND "${GIT_EXECUTABLE}" -C "${W3P_WOLF3D_SOURCE_DIR}"
             rev-parse HEAD
@@ -68,7 +67,7 @@ if(Git_FOUND)
         OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
 endif()
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WOLF3D-LIB.txt"
-    "wolf3d-portable version: ${PROJECT_VERSION}\n"
+    "wolf3d-portable commit: ${W3P_PORTABLE_COMMIT}\n"
     "wolf3d-lib version: ${W3P_WOLF3D_VERSION}\n"
     "wolf3d-lib commit: ${W3P_WOLF3D_COMMIT}\n"
     "OPL drivers: nuked=${WG_ENABLE_OPL_NUKED}, dbopl=${WG_ENABLE_OPL_DBOPL}, silent=${WG_ENABLE_OPL_SILENT}\n"

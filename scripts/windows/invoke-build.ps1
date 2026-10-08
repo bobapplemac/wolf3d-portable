@@ -415,7 +415,7 @@ function Invoke-DisplayedCommand {
 function Assert-MinGWRuntimeImports {
     param([string]$ObjDump)
 
-    $version = (Get-Content -LiteralPath (Join-Path $root 'VERSION') `
+    $version = (Get-Content -LiteralPath (Join-Path $root 'lib\wolf3d\VERSION') `
         -TotalCount 1).Trim()
     $packages = @(Get-ChildItem -LiteralPath (Join-Path $root 'dist') `
         -Directory -ErrorAction SilentlyContinue |

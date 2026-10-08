@@ -28,6 +28,11 @@ byte-for-byte identical. The initial public checkpoint differed only in
 reviewed history, licensing, versioning, and repository-link documentation.
 Subsequent portable commits advance the exact public library gitlink normally.
 
+The portable repository remains an unversioned rolling `main` until public
+binary releases are planned. Existing package-folder numbers identify the
+bundled wolf3d-lib version; full portable and engine commits are recorded
+inside each package.
+
 Historical portable commits may reference earlier library gitlinks. They are
 kept fetchable through the public library archive rather than rewritten, so
 the portable repository's original commit identities and chronology remain

@@ -7,11 +7,9 @@ project(wolf3d_portable_legacy C)
 
 get_filename_component(W3P_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
 set(W3P_WOLF3D_ROOT "${W3P_ROOT}/lib/wolf3d")
-file(READ "${W3P_ROOT}/VERSION" W3P_PROJECT_VERSION)
+file(READ "${W3P_WOLF3D_ROOT}/VERSION" W3P_PROJECT_VERSION)
 string(STRIP "${W3P_PROJECT_VERSION}" W3P_PROJECT_VERSION)
 set(PROJECT_VERSION "${W3P_PROJECT_VERSION}")
-file(READ "${W3P_WOLF3D_ROOT}/VERSION" W3P_WOLF3D_VERSION)
-string(STRIP "${W3P_WOLF3D_VERSION}" W3P_WOLF3D_VERSION)
 
 option(WG_STATIC_MSVC_RUNTIME "Link the legacy MSVC runtime statically" ON)
 set(W3P_DIST_ROOT "${W3P_ROOT}/dist" CACHE PATH
@@ -97,6 +95,13 @@ set(W3P_RELEASE_DIR
     "${W3P_DIST_ROOT}/wolf3d-portable-${W3P_PROJECT_VERSION}-win32-x86-${W3P_COMPILER_LABEL}${W3P_RUNTIME_SUFFIX}${W3P_AUDIO_SUFFIX}")
 
 execute_process(
+    COMMAND git -C "${W3P_ROOT}" rev-parse HEAD
+    OUTPUT_VARIABLE W3P_PORTABLE_COMMIT
+    OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+if(NOT W3P_PORTABLE_COMMIT)
+    set(W3P_PORTABLE_COMMIT unknown)
+endif()
+execute_process(
     COMMAND git -C "${W3P_WOLF3D_ROOT}" rev-parse HEAD
     OUTPUT_VARIABLE W3P_WOLF3D_COMMIT
     OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
@@ -104,8 +109,8 @@ if(NOT W3P_WOLF3D_COMMIT)
     set(W3P_WOLF3D_COMMIT unknown)
 endif()
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WOLF3D-LIB.txt"
-    "wolf3d-portable version: ${W3P_PROJECT_VERSION}\n"
-    "wolf3d-lib version: ${W3P_WOLF3D_VERSION}\n"
+    "wolf3d-portable commit: ${W3P_PORTABLE_COMMIT}\n"
+    "wolf3d-lib version: ${W3P_PROJECT_VERSION}\n"
     "wolf3d-lib commit: ${W3P_WOLF3D_COMMIT}\n"
     "OPL drivers: nuked=${WG_ENABLE_OPL_NUKED}, dbopl=${WG_ENABLE_OPL_DBOPL}, silent=${WG_ENABLE_OPL_SILENT}\n"
     "default OPL driver: ${WG_DEFAULT_OPL_DRIVER}\n"

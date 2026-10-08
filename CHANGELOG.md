@@ -1,12 +1,13 @@
 # Changelog
 
-## 1.0.0 - 2026-10-07 - Independent portable versioning
+## 2026-10-08 - Unversioned portable source builds
 
-- Established conventional semantic versioning for the portable hosts,
-  independently of wolf3d-lib's historical `1.4.REVISION` sequence.
-- Changed every modern, legacy, Linux, musl, Windows, and DOS package name to
-  derive from the root portable `VERSION` file.
-- Retained the exact engine version and commit in each package manifest.
+- Kept `wolf3d-portable` as an unversioned rolling `main` until binary releases
+  and their version policy are deliberately established.
+- Preserved the historical package-folder names, whose numeric component
+  identifies the bundled wolf3d-lib version rather than a portable release.
+- Added the exact portable commit to every package manifest alongside the
+  engine version and commit, without lengthening package-folder names.
 - Documented reproducible pinned builds and the explicit latest-library
   workflow instead of silently advancing the engine during ordinary builds.
 - Added structured issue forms for wrapper defects and build or platform

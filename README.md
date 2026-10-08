@@ -64,8 +64,8 @@ gitlink before treating that result as an official release.
 
 The repository's development lineage and its relationship to the companion
 library's reconstructed public history are recorded in
-[`docs/history.md`](docs/history.md). Portable and engine releases are
-versioned independently as described in [`docs/versioning.md`](docs/versioning.md).
+[`docs/history.md`](docs/history.md). Package naming and exact source identity
+are described in [`docs/build-identity.md`](docs/build-identity.md).
 
 ## Windows
 
@@ -163,8 +163,9 @@ Debug and Release configurations remain development builds under `build/`.
 Use the corresponding `x86` presets for 32-bit builds. Release folders appear
 under `dist/` and include `wolf3d.exe` or `wolf3d-sdl3.exe`, `wolf3d.dll`,
 the replaceable `Nuked-OPL3.dll`, all required host DLLs, notices, and a
-`WOLF3D-LIB.txt` file recording the portable version plus the exact engine
-version and commit.
+`WOLF3D-LIB.txt` file recording the exact portable commit plus the engine
+version and commit. The numeric component in a package-folder name identifies
+the bundled engine version; it is not a portable release version.
 
 ## Linux
 

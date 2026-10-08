@@ -2,7 +2,7 @@
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
-version=$(sed -n '1p' "$root/VERSION")
+version=$(sed -n '1p' "$root/lib/wolf3d/VERSION")
 build_dir=${W3P_OPENWATCOM_BUILD_DIR:-$root/build/openwatcom-dos32}
 dist_dir=${W3P_OPENWATCOM_DIST_DIR:-$root/dist/wolf3d-portable-$version-dos32-x86}
 drivers=${W3P_OPENWATCOM_OPL_DRIVERS:-dbopl,silent,adlib}

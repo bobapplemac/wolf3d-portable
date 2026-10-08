@@ -107,6 +107,8 @@ wrapper-suffixed INI takes priority over the normalized name. Command-line
 arguments override matching defaults. Use --config FILE, --no-config, or
 --diag to select another file, bypass defaults, or print a hardware/data
 report without starting the game. This file is unrelated to CONFIG.WL1/WL6.
+Original CONFIG.<EXT> and SAVEGAMn.<EXT> files are stored beside the selected
+game-data files, keeping nested installations self-contained.
 
 The default build includes DBOPL, silent, and native AdLib drivers. Native
 AdLib is selected by default and writes the original register stream directly

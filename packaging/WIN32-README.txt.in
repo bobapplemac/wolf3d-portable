@@ -63,8 +63,8 @@ explicit file, a clean launch, or a hardware/data report without starting.
 
 @W3P_OPL_KEEP_NOTE@
 
-Configuration and saved games use the process working directory and retain the
-selected game's data extension.
+Original CONFIG.<EXT> and SAVEGAMn.<EXT> files are stored in the selected
+game-data directory and retain that game's data extension.
 
 Run wolf3d.exe --help (also -h or /?) from a terminal to list all game and
 Win32 host options plus the OPL drivers compiled into this package.

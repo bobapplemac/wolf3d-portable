@@ -22,6 +22,9 @@ that binary name is used. Command-line arguments override config defaults.
 Use --config FILE, --no-config, or --diag to select another file, bypass the
 defaults, or print a data/hardware report without launching.
 
+Original CONFIG.<EXT> and SAVEGAMn.<EXT> files are stored beside the selected
+game-data files, keeping nested installations self-contained.
+
 Run it from an active virtual console. The user needs permission to access the
 DRM card, evdev input devices, and ALSA playback device; root normally has all
 three. Typical non-root installations grant this through the distribution's

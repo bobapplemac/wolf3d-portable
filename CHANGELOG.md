@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-08 - Dataset-local configuration and saves
+
+- Advanced the engine to wolf3d-lib 1.4.60.
+- Keep original `CONFIG.<EXT>` and `SAVEGAMn.<EXT>` files beside the selected
+  game dataset, including recursively discovered nested installations.
+
 ## 2026-10-08 - Launcher configuration and diagnostics
 
 - Added optional executable-specific `.ini` files on Windows/DOS and `.conf`

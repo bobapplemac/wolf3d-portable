@@ -261,6 +261,10 @@ all discovered game-data sets, the automatic selection, compiled OPL drivers,
 and the host's available video, audio, mouse, and joystick/controller devices.
 The report exits without starting the game.
 
+The original engine configuration and save files (`CONFIG.<EXT>` and
+`SAVEGAMn.<EXT>`) are stored in the selected game-data directory. This keeps
+each nested WL1, WL6, SDM, SOD, or mission-pack installation self-contained.
+
 Every launcher accepts `--help`, `-h`, or `/?` and exits after listing the
 generic game options, the current host's options, and its compiled OPL
 drivers. The older `--sdl3-help` and `--linux-console-help` spellings remain

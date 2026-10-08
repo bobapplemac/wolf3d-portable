@@ -26,6 +26,9 @@ wolf3d-sdl3.ini/.conf takes priority. Command-line arguments override config
 defaults. Use --config FILE, --no-config, or --diag to select another file,
 bypass defaults, or print a data/hardware report without launching.
 
+Original CONFIG.<EXT> and SAVEGAMn.<EXT> files are stored beside the selected
+game-data files, keeping nested installations self-contained.
+
 Mouse hardware and SDL-compatible game controllers are detected automatically.
 Use --mouse or --joy to force a device present, and --nomouse or --nojoy to
 force it absent. An enabled mouse uses captured relative input and is released

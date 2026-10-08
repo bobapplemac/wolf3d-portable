@@ -27,6 +27,11 @@ static int wg_mouse_enabled;
 static int wg_mouse_captured;
 static int wg_mouse_capture_requested;
 static int wg_joystick_mode = -1;
+#ifndef WG_LEGACY_WIN32
+static LONG wg_raw_mouse_x;
+static LONG wg_raw_mouse_y;
+static int wg_raw_mouse_position_valid;
+#endif
 #ifdef WG_LEGACY_WIN32
 static LONG wg_windowed_style;
 #else
@@ -525,6 +530,30 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
                 LONG y = input.data.mouse.lLastY;
                 USHORT buttons = input.data.mouse.usButtonFlags;
 
+                if ((input.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) != 0U)
+                {
+                    LONG absolute_x = x;
+                    LONG absolute_y = y;
+
+                    if (wg_raw_mouse_position_valid)
+                    {
+                        x = absolute_x - wg_raw_mouse_x;
+                        y = absolute_y - wg_raw_mouse_y;
+                    }
+                    else
+                    {
+                        x = 0;
+                        y = 0;
+                    }
+                    wg_raw_mouse_x = absolute_x;
+                    wg_raw_mouse_y = absolute_y;
+                    wg_raw_mouse_position_valid = 1;
+                }
+                else
+                {
+                    wg_raw_mouse_position_valid = 0;
+                }
+
                 if (x != 0 || y != 0)
                 {
                     wolf3d_event_t event = { 0 };
@@ -633,6 +662,8 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
             {
 #ifdef WG_LEGACY_WIN32
                 wg_legacy_mouse_position_valid = 0;
+#else
+                wg_raw_mouse_position_valid = 0;
 #endif
                 WG_Win32ApplyMouseCapture(0);
             }
@@ -706,6 +737,7 @@ static int WG_Win32Init(void)
         || (wg_mouse_mode < 0 && GetSystemMetrics(SM_MOUSEPRESENT) != 0);
 
 #ifndef WG_LEGACY_WIN32
+    wg_raw_mouse_position_valid = 0;
     mouse.usUsagePage = 0x01U;
     mouse.usUsage = 0x02U;
     mouse.dwFlags = 0U;

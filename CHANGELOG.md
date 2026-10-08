@@ -12,6 +12,8 @@
 - Synchronized capture with the in-game Mouse Enabled setting, so disabling
   mouse control immediately releases and shows the native cursor and
   re-enabling it restores capture.
+- Correctly converted Win32 absolute raw-mouse coordinates into relative
+  motion instead of interpreting their screen-space values as movement deltas.
 
 ## 2026-10-08 - Unversioned portable source builds
 

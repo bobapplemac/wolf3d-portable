@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-07 - Close the DOS integration baseline
+
+- Advanced the pinned engine to wolf3d-lib 1.4.52, whose public documentation
+  now records the completed companion DOS host and confirmed DOSBox validation.
+- Preserved real DOS hardware validation as an optional follow-up rather than a
+  prerequisite for the reproducible Open Watcom release path.
+
 ## 2026-10-07 - Preserve the DOS exit text page
 
 - Derived the BIOS cursor position from the final visibly occupied B800 row,

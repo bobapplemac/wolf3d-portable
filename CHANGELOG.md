@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-08 - Center initial windows
+
+- Centered the native Win32 window in the primary display's usable work area.
+- Requested primary-display centering from SDL3 on Windows and supporting
+  Linux window systems while allowing compositor-managed placement on Wayland.
+
 ## 2026-10-08 - Automatic input discovery and mouse capture
 
 - Advanced the pinned engine to wolf3d-lib 1.4.56 and platform API v6.

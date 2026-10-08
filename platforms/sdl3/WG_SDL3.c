@@ -298,6 +298,9 @@ static int WG_SDLInit(void)
         SDL_Quit();
         return 0;
     }
+    /* Compositors such as Wayland may choose final placement themselves. */
+    (void)SDL_SetWindowPosition(wg_window, SDL_WINDOWPOS_CENTERED,
+                                SDL_WINDOWPOS_CENTERED);
     wg_fullscreen = 0;
     wg_fullscreen_enter_down = 0;
     wg_mouse_capture_requested = 0;

@@ -783,7 +783,12 @@ static int WG_Win32Init(void)
 #endif
     WNDCLASSW window_class;
     RECT rectangle;
+    RECT work_area;
     HINSTANCE instance;
+    int window_width;
+    int window_height;
+    int window_x = CW_USEDEFAULT;
+    int window_y = CW_USEDEFAULT;
     BYTE cursor_and_mask[32U * 32U / 8U];
     BYTE cursor_xor_mask[32U * 32U / 8U];
 
@@ -806,12 +811,20 @@ static int WG_Win32Init(void)
     rectangle.bottom = (WOLF3D_SCREEN_WIDTH * WG_DISPLAY_ASPECT_HEIGHT
                         / WG_DISPLAY_ASPECT_WIDTH) * WG_INITIAL_SCALE;
     AdjustWindowRect(&rectangle, WS_OVERLAPPEDWINDOW, FALSE);
+    window_width = rectangle.right - rectangle.left;
+    window_height = rectangle.bottom - rectangle.top;
+    if (SystemParametersInfoW(SPI_GETWORKAREA, 0, &work_area, 0))
+    {
+        window_x = work_area.left
+                 + (work_area.right - work_area.left - window_width) / 2;
+        window_y = work_area.top
+                 + (work_area.bottom - work_area.top - window_height) / 2;
+    }
 
     wg_window = CreateWindowExW(0, wg_window_class, L"wolf3d",
-                                WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-                                rectangle.right - rectangle.left,
-                                rectangle.bottom - rectangle.top, NULL, NULL,
-                                instance, NULL);
+                                WS_OVERLAPPEDWINDOW, window_x, window_y,
+                                window_width, window_height,
+                                NULL, NULL, instance, NULL);
     if (wg_window == NULL)
     {
         return 0;

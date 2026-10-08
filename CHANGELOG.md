@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-07 - Preserve the DOS exit text page
+
+- Positioned the BIOS text cursor one row above the bottom after restoring the
+  B800 end screen, leaving room for the command interpreter's prompt without
+  scrolling and clipping the original page.
+
 ## 2026-10-07 - DOS audio defaults validated in DOSBox
 
 - Made native port-388h AdLib output the default DOS OPL driver, matching the

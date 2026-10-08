@@ -322,7 +322,10 @@ static void WG_DOSPresentText(const uint8_t *cells, uint16_t columns,
                cells + (size_t)row * columns * WOLF3D_TEXT_CELL_BYTES,
                (size_t)columns * WOLF3D_TEXT_CELL_BYTES);
     }
-    WG_DOSSetCursor((uint8_t)(WOLF3D_TEXT_ROWS - 1U), 0U);
+    /* Leave COMMAND.COM one complete row in which to print its prompt.
+       Starting on the final row makes the shell's line advance scroll the
+       freshly restored B800 page upward and clips its original top row. */
+    WG_DOSSetCursor((uint8_t)(WOLF3D_TEXT_ROWS - 2U), 0U);
     wg_text_presented = 1U;
     wg_graphics_active = 0U;
 }

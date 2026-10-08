@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-10-08 - Launcher configuration and diagnostics
+
+- Added optional executable-specific `.ini` files on Windows/DOS and `.conf`
+  files on Linux, with wrapper-neutral fallback names and no automatic writes.
+- Made real command-line options override config option families, including
+  game selection, input detection, emulated sound hardware, and window mode.
+- Added `--config FILE`, `--no-config`, and `--windowed` launcher controls.
+- Added `--diag` reports for configuration, effective arguments, recursive
+  game-data discovery, OPL drivers, and platform hardware availability without
+  launching the game.
+
 ## 2026-10-08 - Recursive game-data discovery
 
 - Recursively discover complete supported game-data sets below the launcher

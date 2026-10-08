@@ -7,6 +7,7 @@
 #include <dos.h>
 #include <i86.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define WG_DOS_TIMER_HZ 700U
@@ -450,31 +451,81 @@ static int WG_DOSInstallPlatform(void)
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;
 }
 
+static void WG_DOSDiagnosticReport(char *report, size_t report_size)
+{
+    union REGS registers;
+    const char *blaster = getenv("BLASTER");
+    int adlib;
+
+    memset(&registers, 0, sizeof(registers));
+    registers.w.ax = 0U;
+    (void)int386(0x33, &registers, &registers);
+    adlib = WG_DOSAdLibInit();
+    if (adlib)
+    {
+        WG_DOSAdLibShutdown();
+    }
+    (void)sprintf(report,
+        "  Video: VGA BIOS mode 13h output\n"
+        "  AdLib: %s\n"
+        "  Sound Blaster: %s\n"
+        "  Mouse driver: %s\n"
+        "  Joystick: not implemented by the DOS host\n",
+        adlib ? "detected" : "not detected",
+        blaster != NULL && blaster[0] != '\0' ? blaster
+                                               : "BLASTER is not configured",
+        registers.w.ax != 0U ? "present" : "not detected");
+    (void)report_size;
+}
+
 int main(int argc, char **argv)
 {
     char launcher_error[2048];
+    wg_launcher_arguments_t launcher_arguments;
     wg_game_arguments_t game_arguments;
     wolf3d_result_t result;
 
+    if (!WG_LoadLauncherArguments(argc, argv, &launcher_arguments,
+                                  launcher_error, sizeof(launcher_error)))
+    {
+        WG_PrintLauncherError(launcher_error);
+        return 1;
+    }
+    argc = launcher_arguments.argc;
+    argv = launcher_arguments.argv;
     if (WG_CommandLineHelpRequested(argc, argv))
     {
         WG_PrintCommandLineHelp(
             argc > 0 ? argv[0] : "WOLF3D.EXE", NULL,
             "The DOS host defaults to native AdLib OPL and SB16 PCM output.\n");
+        WG_FreeLauncherArguments(&launcher_arguments);
+        return 0;
+    }
+    if (WG_CommandLineDiagnosticsRequested(argc, argv))
+    {
+        char report[1024];
+
+        WG_DOSDiagnosticReport(report, sizeof(report));
+        WG_PrintDiagnostics(argc, argv, launcher_arguments.config_path,
+                            report);
+        WG_FreeLauncherArguments(&launcher_arguments);
         return 0;
     }
     if (!WG_DOSInstallPlatform())
     {
+        WG_FreeLauncherArguments(&launcher_arguments);
         return 1;
     }
     if (!WG_PrepareGameArguments(argc, argv, &game_arguments,
                                  launcher_error, sizeof(launcher_error)))
     {
         WG_PrintLauncherError(launcher_error);
+        WG_FreeLauncherArguments(&launcher_arguments);
         return 1;
     }
     result = wolf3d_Create(game_arguments.argc, game_arguments.argv);
     WG_FreeGameArguments(&game_arguments);
+    WG_FreeLauncherArguments(&launcher_arguments);
     if (result == WOLF3D_RESULT_OK)
     {
         result = wolf3d_Run();

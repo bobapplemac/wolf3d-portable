@@ -7,6 +7,7 @@
 int main(int argc, char **argv)
 {
     wg_game_arguments_t prepared;
+    wg_launcher_arguments_t launcher;
     char error[4096];
     char **game_argv;
     char *program;
@@ -41,10 +42,19 @@ int main(int argc, char **argv)
     }
     game_argv[game_argc] = NULL;
 
-    if (!WG_PrepareGameArguments(game_argc, game_argv, &prepared,
+    if (!WG_LoadLauncherArguments(game_argc, game_argv, &launcher,
+                                  error, sizeof(error)))
+    {
+        (void)fputs(error, stderr);
+        free(game_argv);
+        free(program);
+        return 2;
+    }
+    if (!WG_PrepareGameArguments(launcher.argc, launcher.argv, &prepared,
                                  error, sizeof(error)))
     {
         (void)fputs(error, stderr);
+        WG_FreeLauncherArguments(&launcher);
         free(game_argv);
         free(program);
         return 2;
@@ -56,9 +66,31 @@ int main(int argc, char **argv)
     }
     else
     {
-        (void)puts("NONE");
+        const char *data = NULL;
+        const char *game = NULL;
+
+        for (index = 1; index + 1 < prepared.argc; ++index)
+        {
+            if (strcmp(prepared.argv[index], "--data") == 0)
+            {
+                data = prepared.argv[index + 1];
+            }
+            else if (strcmp(prepared.argv[index], "--game") == 0)
+            {
+                game = prepared.argv[index + 1];
+            }
+        }
+        if (data != NULL && game != NULL)
+        {
+            (void)printf("%s\n%s\n", data, game);
+        }
+        else
+        {
+            (void)puts("NONE");
+        }
     }
     WG_FreeGameArguments(&prepared);
+    WG_FreeLauncherArguments(&launcher);
     free(game_argv);
     free(program);
     return 0;

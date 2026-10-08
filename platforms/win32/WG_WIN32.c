@@ -1,3 +1,7 @@
+#if defined(_MSC_VER)
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "WOLF3D.h"
 #include "../WG_HELP.h"
 #include "../WG_HOST.h"
@@ -1307,6 +1311,54 @@ int WG_InstallPlatform(void)
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;
 }
 
+static void WG_Win32DiagnosticReport(char *report, size_t report_size)
+{
+    unsigned joystick_count = 0U;
+    unsigned xinput_count = 0U;
+    UINT joystick;
+    JOYINFO info;
+
+    for (joystick = 0U; joystick < joyGetNumDevs(); ++joystick)
+    {
+        if (joyGetPos(joystick, &info) == JOYERR_NOERROR)
+        {
+            ++joystick_count;
+        }
+    }
+    wg_load_xinput();
+    if (wg_xinput_get_state != NULL)
+    {
+        DWORD slot;
+
+        for (slot = 0U; slot < WOLF3D_MAX_JOYSTICKS; ++slot)
+        {
+            wg_xinput_state_t state;
+
+            memset(&state, 0, sizeof(state));
+            if (wg_xinput_get_state(slot, &state) == ERROR_SUCCESS)
+            {
+                ++xinput_count;
+            }
+        }
+    }
+    if (wg_xinput_module != NULL)
+    {
+        FreeLibrary(wg_xinput_module);
+        wg_xinput_module = NULL;
+        wg_xinput_get_state = NULL;
+    }
+    (void)report_size;
+    (void)sprintf(report,
+        "  Video: %d x %d desktop, %d monitor(s)\n"
+        "  Audio: %u waveOut device(s)\n"
+        "  Mouse: %s\n"
+        "  Joystick: %u legacy device(s), %u XInput controller(s) connected\n",
+        GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
+        GetSystemMetrics(SM_CMONITORS), (unsigned)waveOutGetNumDevs(),
+        GetSystemMetrics(SM_MOUSEPRESENT) ? "present" : "not detected",
+        joystick_count, xinput_count);
+}
+
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
                     LPWSTR command_line, int show_command)
 {
@@ -1316,9 +1368,12 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     const wchar_t *wide_argument;
     DWORD module_path_length;
     char **argv;
+    int launcher_argc;
+    char **launcher_argv;
     int index;
-    int exit_code;
+    int exit_code = 1;
     char launcher_error[2048];
+    wg_launcher_arguments_t launcher_arguments;
     wg_game_arguments_t game_arguments;
     wolf3d_result_t result;
 
@@ -1373,40 +1428,69 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
         }
         WideCharToMultiByte(CP_UTF8, 0, wide_argument, -1,
                             argv[index], bytes, NULL, NULL);
-        if (index > 0 && strcmp(argv[index], "--fullscreen") == 0)
+    }
+
+    if (!WG_LoadLauncherArguments(argc, argv, &launcher_arguments,
+                                  launcher_error, sizeof(launcher_error)))
+    {
+        WG_PrintLauncherError(launcher_error);
+        result = WOLF3D_RESULT_PLATFORM_ERROR;
+        goto cleanup;
+    }
+    launcher_argc = launcher_arguments.argc;
+    launcher_argv = launcher_arguments.argv;
+    for (index = 1; index < launcher_argc; ++index)
+    {
+        if (strcmp(launcher_argv[index], "--fullscreen") == 0)
         {
             wg_start_fullscreen = 1;
         }
-        else if (index > 0 && strcmp(argv[index], "--mouse") == 0)
+        else if (strcmp(launcher_argv[index], "--windowed") == 0)
+        {
+            wg_start_fullscreen = 0;
+        }
+        else if (strcmp(launcher_argv[index], "--mouse") == 0)
         {
             wg_mouse_mode = 1;
         }
-        else if (index > 0 && strcmp(argv[index], "--nomouse") == 0)
+        else if (strcmp(launcher_argv[index], "--nomouse") == 0)
         {
             wg_mouse_mode = 0;
         }
-        else if (index > 0 && strcmp(argv[index], "--joy") == 0)
+        else if (strcmp(launcher_argv[index], "--joy") == 0)
         {
             wg_joystick_mode = 1;
         }
-        else if (index > 0 && strcmp(argv[index], "--nojoy") == 0)
+        else if (strcmp(launcher_argv[index], "--nojoy") == 0)
         {
             wg_joystick_mode = 0;
         }
     }
 
-    if (WG_CommandLineHelpRequested(argc, argv))
+    if (WG_CommandLineHelpRequested(launcher_argc, launcher_argv))
     {
         WG_PrintCommandLineHelp(
-            argc > 0 ? argv[0] : "wolf3d.exe",
+            launcher_argc > 0 ? launcher_argv[0] : "wolf3d.exe",
             "Win32 host options:\n"
-            "  --fullscreen         Start in borderless fullscreen mode\n",
+            "  --fullscreen         Start in borderless fullscreen mode\n"
+            "  --windowed           Start in windowed mode\n",
             "Press F11 or Alt+Enter to toggle windowed/fullscreen mode.\n");
+        result = WOLF3D_RESULT_QUIT;
+    }
+    else if (WG_CommandLineDiagnosticsRequested(launcher_argc,
+                                                launcher_argv))
+    {
+        char report[1024];
+
+        WG_Win32DiagnosticReport(report, sizeof(report));
+        WG_PrintDiagnostics(launcher_argc, launcher_argv,
+                            launcher_arguments.config_path, report);
         result = WOLF3D_RESULT_QUIT;
     }
     else
     {
-        if (!WG_PrepareGameArguments(argc, argv, &game_arguments,
+        if (!WG_PrepareGameArguments(launcher_argc, launcher_argv,
+                                     &game_arguments,
                                      launcher_error,
                                      sizeof(launcher_error)))
         {
@@ -1428,11 +1512,14 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     exit_code = result == WOLF3D_RESULT_NOT_IMPLEMENTED || result == WOLF3D_RESULT_QUIT
                     ? 0 : 1;
 
+    WG_FreeLauncherArguments(&launcher_arguments);
+
+cleanup:
     for (index = 0; index < argc; ++index)
     {
         LocalFree(argv[index]);
     }
     LocalFree(argv);
     LocalFree(wide_argv);
-    return exit_code;
+    return result == WOLF3D_RESULT_PLATFORM_ERROR ? 1 : exit_code;
 }

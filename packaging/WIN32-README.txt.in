@@ -55,6 +55,12 @@ prefers SOD then SDM. Either falls back to the other family if needed. Mission
 packs SD1/SD2/SD3 are selected only by --game or -SD1/-SD2/-SD3. You
 may instead keep game files elsewhere and pass --data "C:\path\to\game".
 
+Optional defaults may be placed in wolf3d.ini beside the executable, one
+command-line option per line. A wrapper-specific file such as
+wolf3d-sdl3.ini takes priority when applicable. Real command-line arguments
+override matching defaults. Use --config FILE, --no-config, or --diag for an
+explicit file, a clean launch, or a hardware/data report without starting.
+
 @W3P_OPL_KEEP_NOTE@
 
 Configuration and saved games use the process working directory and retain the

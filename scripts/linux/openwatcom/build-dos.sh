@@ -101,6 +101,13 @@ BLASTER environment variable. Without a compatible card it uses a timed null
 sink so the engine's audio clocks continue to advance. A Pentium-class or
 newer x86 system is the supported baseline.
 
+Optional defaults may be stored in WOLF3D.ini (or SPEAR.ini when renamed)
+beside the executable, one command-line option per line. An exact
+wrapper-suffixed INI takes priority over the normalized name. Command-line
+arguments override matching defaults. Use --config FILE, --no-config, or
+--diag to select another file, bypass defaults, or print a hardware/data
+report without starting the game. This file is unrelated to CONFIG.WL1/WL6.
+
 The default build includes DBOPL, silent, and native AdLib drivers. Native
 AdLib is selected by default and writes the original register stream directly
 to port 388h. Use --opl dbopl or --opl silent for the built-in fallbacks.

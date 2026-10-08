@@ -714,16 +714,71 @@ static void WG_SDLPrintHelp(const char *program)
         program != NULL ? program : "wolf3d-sdl3",
         "SDL3 host options:\n"
         "  --fullscreen         Start in borderless fullscreen mode\n"
+        "  --windowed           Start in windowed mode\n"
         "  --sdl3-help          Alias for --help\n",
         "Press F11 or Alt+Enter to toggle windowed/fullscreen mode.\n");
+}
+
+static void WG_SDLDiagnosticReport(char *report, size_t report_size)
+{
+    SDL_DisplayID *displays = NULL;
+    SDL_AudioDeviceID *audio_devices = NULL;
+    SDL_JoystickID *gamepads = NULL;
+    const char *video_driver = NULL;
+    const char *audio_driver = NULL;
+    int display_count = 0;
+    int audio_count = 0;
+    int gamepad_count = 0;
+    int mouse_present = 0;
+
+    (void)SDL_Init(0);
+    if (SDL_InitSubSystem(SDL_INIT_VIDEO))
+    {
+        video_driver = SDL_GetCurrentVideoDriver();
+        displays = SDL_GetDisplays(&display_count);
+        mouse_present = SDL_HasMouse() ? 1 : 0;
+    }
+    if (SDL_InitSubSystem(SDL_INIT_AUDIO))
+    {
+        audio_driver = SDL_GetCurrentAudioDriver();
+        audio_devices = SDL_GetAudioPlaybackDevices(&audio_count);
+    }
+    if (SDL_InitSubSystem(SDL_INIT_GAMEPAD))
+    {
+        gamepads = SDL_GetGamepads(&gamepad_count);
+    }
+    (void)SDL_snprintf(report, report_size,
+        "  SDL video: %s, %d display(s); %d compiled driver(s)\n"
+        "  SDL audio: %s, %d playback device(s); %d compiled driver(s)\n"
+        "  Mouse: %s\n"
+        "  Gamepads: %d connected\n",
+        video_driver != NULL ? video_driver : "unavailable", display_count,
+        SDL_GetNumVideoDrivers(),
+        audio_driver != NULL ? audio_driver : "unavailable", audio_count,
+        SDL_GetNumAudioDrivers(), mouse_present ? "present" : "not detected",
+        gamepad_count);
+    SDL_free(displays);
+    SDL_free(audio_devices);
+    SDL_free(gamepads);
+    SDL_Quit();
 }
 
 int main(int argc, char **argv)
 {
     int index;
     char launcher_error[2048];
+    wg_launcher_arguments_t launcher_arguments;
     wg_game_arguments_t game_arguments;
     wolf3d_result_t result;
+
+    if (!WG_LoadLauncherArguments(argc, argv, &launcher_arguments,
+                                  launcher_error, sizeof(launcher_error)))
+    {
+        WG_PrintLauncherError(launcher_error);
+        return 1;
+    }
+    argc = launcher_arguments.argc;
+    argv = launcher_arguments.argv;
 
     for (index = 1; index < argc; ++index)
     {
@@ -731,15 +786,18 @@ int main(int argc, char **argv)
             || WG_CommandLineHelpRequested(argc, argv))
         {
             WG_SDLPrintHelp(argv[0]);
+            WG_FreeLauncherArguments(&launcher_arguments);
             return 0;
         }
         if (strcmp(argv[index], "--sdl3-video-smoke") == 0)
         {
             if (!WG_SDLInit())
             {
+                WG_FreeLauncherArguments(&launcher_arguments);
                 return 1;
             }
             WG_SDLShutdown();
+            WG_FreeLauncherArguments(&launcher_arguments);
             return 0;
         }
         if (strcmp(argv[index], "--mouse") == 0)
@@ -762,19 +820,36 @@ int main(int argc, char **argv)
         {
             wg_start_fullscreen = 1;
         }
+        if (strcmp(argv[index], "--windowed") == 0)
+        {
+            wg_start_fullscreen = 0;
+        }
+    }
+    if (WG_CommandLineDiagnosticsRequested(argc, argv))
+    {
+        char report[1024];
+
+        WG_SDLDiagnosticReport(report, sizeof(report));
+        WG_PrintDiagnostics(argc, argv, launcher_arguments.config_path,
+                            report);
+        WG_FreeLauncherArguments(&launcher_arguments);
+        return 0;
     }
     if (!WG_InstallPlatform())
     {
+        WG_FreeLauncherArguments(&launcher_arguments);
         return 1;
     }
     if (!WG_PrepareGameArguments(argc, argv, &game_arguments,
                                  launcher_error, sizeof(launcher_error)))
     {
         WG_PrintLauncherError(launcher_error);
+        WG_FreeLauncherArguments(&launcher_arguments);
         return 1;
     }
     result = wolf3d_Create(game_arguments.argc, game_arguments.argv);
     WG_FreeGameArguments(&game_arguments);
+    WG_FreeLauncherArguments(&launcher_arguments);
     if (result == WOLF3D_RESULT_OK)
     {
         result = wolf3d_Run();

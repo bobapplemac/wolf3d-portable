@@ -1,3 +1,7 @@
+#if defined(_MSC_VER)
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "WG_HELP.h"
 
 #include "WOLF3D.h"
@@ -147,6 +151,24 @@ int WG_CommandLineHelpRequested(int argc, char **argv)
     return 0;
 }
 
+int WG_CommandLineDiagnosticsRequested(int argc, char **argv)
+{
+    int index;
+
+    if (argc <= 0 || argv == NULL)
+    {
+        return 0;
+    }
+    for (index = 1; index < argc; ++index)
+    {
+        if (argv[index] != NULL && strcmp(argv[index], "--diag") == 0)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void WG_PrintCommandLineHelp(const char *program,
                              const char *host_options,
                              const char *runtime_notes)
@@ -162,6 +184,12 @@ void WG_PrintCommandLineHelp(const char *program,
     WG_HelpWrite(&stream, "Usage: ");
     WG_HelpWrite(&stream, program != NULL ? program : "wolf3d");
     WG_HelpWrite(&stream, " [options]\n\n");
+    WG_HelpWrite(&stream,
+        "Launcher:\n"
+        "  --config FILE        Load defaults from a specific argument file\n"
+        "  --no-config          Do not load an automatic config file\n"
+        "  --diag               Print diagnostics and exit without starting the game\n"
+        "  --help, -h, /?       Print this help and exit\n\n");
     WG_HelpWrite(&stream, wolf3d_GetCommandLineHelp());
     if (host_options != NULL && host_options[0] != '\0')
     {
@@ -212,6 +240,10 @@ typedef struct wg_discovery_results
     size_t capacity;
     int failed;
 } wg_discovery_results_t;
+
+static void WG_ErrorAppend(char *error, size_t error_size,
+                           const char *text);
+static int WG_ProfileFromText(const char *text, unsigned *profile);
 
 static const wg_discovery_profile_t WG_DiscoveryProfiles[] =
 {
@@ -571,6 +603,510 @@ static char *WG_ExecutableDirectory(const char *argument_zero)
     return directory;
 }
 
+static int WG_IsAbsolutePath(const char *path)
+{
+    if (path == NULL || path[0] == '\0')
+    {
+        return 0;
+    }
+    if (path[0] == '/' || path[0] == '\\')
+    {
+        return 1;
+    }
+    return path[0] != '\0' && path[1] == ':';
+}
+
+static int WG_EndsWithASCII(const char *text, const char *suffix)
+{
+    size_t text_length;
+    size_t suffix_length;
+
+    if (text == NULL || suffix == NULL)
+    {
+        return 0;
+    }
+    text_length = strlen(text);
+    suffix_length = strlen(suffix);
+    return text_length >= suffix_length
+        && WG_ASCIIEqual(text + text_length - suffix_length, suffix);
+}
+
+static char *WG_ConfigPath(const char *argument_zero, int normalized)
+{
+    static const char *suffixes[] = { "-sdl3", "-win32", "-console" };
+#if defined(_WIN32) || defined(__DOS__)
+    static const char extension[] = ".ini";
+#else
+    static const char extension[] = ".conf";
+#endif
+    const char *base;
+    const char *cursor;
+    const char *dot;
+    char *directory;
+    char *stem;
+    char *name;
+    char *path;
+    size_t stem_length;
+    size_t index;
+
+    if (argument_zero == NULL)
+    {
+        return NULL;
+    }
+    base = argument_zero;
+    for (cursor = argument_zero; *cursor != '\0'; ++cursor)
+    {
+        if (*cursor == '/' || *cursor == '\\')
+        {
+            base = cursor + 1;
+        }
+    }
+    dot = strrchr(base, '.');
+    stem_length = dot != NULL ? (size_t)(dot - base) : strlen(base);
+    stem = (char *)malloc(stem_length + 1U);
+    if (stem == NULL)
+    {
+        return NULL;
+    }
+    memcpy(stem, base, stem_length);
+    stem[stem_length] = '\0';
+    if (normalized)
+    {
+        for (index = 0U; index < sizeof(suffixes) / sizeof(suffixes[0]);
+             ++index)
+        {
+            if (WG_EndsWithASCII(stem, suffixes[index]))
+            {
+                stem[strlen(stem) - strlen(suffixes[index])] = '\0';
+                break;
+            }
+        }
+    }
+    name = (char *)malloc(strlen(stem) + sizeof(extension));
+    if (name == NULL)
+    {
+        free(stem);
+        return NULL;
+    }
+    strcpy(name, stem);
+    strcat(name, extension);
+    directory = WG_ExecutableDirectory(argument_zero);
+    path = directory != NULL ? WG_JoinPath(directory, name) : NULL;
+    free(directory);
+    free(name);
+    free(stem);
+    return path;
+}
+
+static const char *WG_OptionGroup(const char *option)
+{
+    unsigned profile;
+
+    if (option == NULL)
+    {
+        return "";
+    }
+    if (strcmp(option, "--game") == 0
+        || (option[0] == '-' && option[1] != '-'
+            && WG_ProfileFromText(option + 1, &profile)))
+    {
+        return "game";
+    }
+    if (strcmp(option, "--mouse") == 0 || strcmp(option, "--nomouse") == 0)
+    {
+        return "mouse";
+    }
+    if (strcmp(option, "--joy") == 0 || strcmp(option, "--nojoy") == 0)
+    {
+        return "joystick";
+    }
+    if (strcmp(option, "--fullscreen") == 0
+        || strcmp(option, "--windowed") == 0)
+    {
+        return "display-mode";
+    }
+    if (strcmp(option, "--adlib") == 0
+        || strcmp(option, "--pc-speaker") == 0
+        || strcmp(option, "--no-sound") == 0
+        || WG_ASCIIEqual(option, "-noal")
+        || WG_ASCIIEqual(option, "-nosb"))
+    {
+        return "sound-hardware";
+    }
+    return option;
+}
+
+static int WG_CommandOverrides(int argc, char **argv, const char *option)
+{
+    const char *group = WG_OptionGroup(option);
+    int index;
+
+    for (index = 1; index < argc; ++index)
+    {
+        if (strcmp(WG_OptionGroup(argv[index]), group) == 0)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void WG_FreeTokens(char **tokens, size_t count)
+{
+    size_t index;
+
+    for (index = 0U; index < count; ++index)
+    {
+        free(tokens[index]);
+    }
+    free(tokens);
+}
+
+static int WG_AddToken(char ***tokens, size_t *count, size_t *capacity,
+                       const char *text, size_t length)
+{
+    char *copy;
+    char **grown;
+    size_t new_capacity;
+
+    if (*count == *capacity)
+    {
+        new_capacity = *capacity == 0U ? 16U : *capacity * 2U;
+        grown = (char **)realloc(*tokens, new_capacity * sizeof(*grown));
+        if (grown == NULL)
+        {
+            return 0;
+        }
+        *tokens = grown;
+        *capacity = new_capacity;
+    }
+    copy = (char *)malloc(length + 1U);
+    if (copy == NULL)
+    {
+        return 0;
+    }
+    memcpy(copy, text, length);
+    copy[length] = '\0';
+    (*tokens)[(*count)++] = copy;
+    return 1;
+}
+
+static int WG_ParseConfigLine(const char *line, char ***tokens,
+                              size_t *count, size_t *capacity,
+                              size_t *line_start)
+{
+    const char *cursor = line;
+
+    *line_start = *count;
+    while (*cursor == ' ' || *cursor == '\t')
+    {
+        ++cursor;
+    }
+    if (*cursor == '\0' || *cursor == '\r' || *cursor == '\n'
+        || *cursor == '#' || *cursor == ';')
+    {
+        return 1;
+    }
+    while (*cursor != '\0' && *cursor != '\r' && *cursor != '\n')
+    {
+        char value[4096];
+        size_t length = 0U;
+        int quoted = 0;
+
+        while (*cursor == ' ' || *cursor == '\t')
+        {
+            ++cursor;
+        }
+        if (*cursor == '\0' || *cursor == '\r' || *cursor == '\n')
+        {
+            break;
+        }
+        if (*cursor == '"')
+        {
+            quoted = 1;
+            ++cursor;
+        }
+        while (*cursor != '\0' && *cursor != '\r' && *cursor != '\n'
+               && (quoted || (*cursor != ' ' && *cursor != '\t')))
+        {
+            if (quoted && *cursor == '"')
+            {
+                ++cursor;
+                quoted = 0;
+                break;
+            }
+            if (quoted && *cursor == '\\'
+                && (cursor[1] == '"' || cursor[1] == '\\'))
+            {
+                ++cursor;
+            }
+            if (length + 1U >= sizeof(value))
+            {
+                return 0;
+            }
+            value[length++] = *cursor++;
+        }
+        if (quoted || !WG_AddToken(tokens, count, capacity, value, length))
+        {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int WG_PathOption(const char *option)
+{
+    return strcmp(option, "--data") == 0
+        || strcmp(option, "--drm-device") == 0
+        || strcmp(option, "--fb-device") == 0
+        || strcmp(option, "--input-device") == 0;
+}
+
+int WG_LoadLauncherArguments(int argc, char **argv,
+                             wg_launcher_arguments_t *prepared,
+                             char *error, size_t error_size)
+{
+    char *exact_path = NULL;
+    char *normal_path = NULL;
+    char *selected_path = NULL;
+    char *config_directory = NULL;
+    char **tokens = NULL;
+    size_t token_count = 0U;
+    size_t token_capacity = 0U;
+    FILE *file = NULL;
+    const char *explicit_path = NULL;
+    int no_config = 0;
+    int index;
+    unsigned long line_number = 0UL;
+    char line[4096];
+
+    if (prepared == NULL || argc <= 0 || argv == NULL)
+    {
+        return 0;
+    }
+    prepared->argc = argc;
+    prepared->argv = argv;
+    prepared->config_argc = 0;
+    prepared->config_path = NULL;
+    if (error != NULL && error_size != 0U)
+    {
+        error[0] = '\0';
+    }
+    for (index = 1; index < argc; ++index)
+    {
+        if (strcmp(argv[index], "--no-config") == 0)
+        {
+            no_config = 1;
+        }
+        else if (strcmp(argv[index], "--config") == 0)
+        {
+            if (++index >= argc)
+            {
+                WG_ErrorAppend(error, error_size,
+                               "--config requires a file path.\n");
+                return 0;
+            }
+            explicit_path = argv[index];
+        }
+    }
+    if (no_config)
+    {
+        return 1;
+    }
+    if (explicit_path != NULL)
+    {
+        selected_path = WG_CopyString(explicit_path);
+        if (selected_path != NULL)
+        {
+            file = fopen(selected_path, "r");
+        }
+        if (file == NULL)
+        {
+            WG_ErrorAppend(error, error_size, "Unable to open config file: ");
+            WG_ErrorAppend(error, error_size, explicit_path);
+            WG_ErrorAppend(error, error_size, "\n");
+            free(selected_path);
+            return 0;
+        }
+    }
+    else
+    {
+        exact_path = WG_ConfigPath(argv[0], 0);
+        normal_path = WG_ConfigPath(argv[0], 1);
+        if (exact_path == NULL || normal_path == NULL)
+        {
+            free(exact_path);
+            free(normal_path);
+            WG_ErrorAppend(error, error_size,
+                           "Unable to allocate the config-file path.\n");
+            return 0;
+        }
+        file = fopen(exact_path, "r");
+        if (file != NULL)
+        {
+            selected_path = exact_path;
+            exact_path = NULL;
+        }
+        else if (!WG_ASCIIEqual(exact_path, normal_path))
+        {
+            file = fopen(normal_path, "r");
+            if (file != NULL)
+            {
+                selected_path = normal_path;
+                normal_path = NULL;
+            }
+        }
+        free(exact_path);
+        free(normal_path);
+        if (file == NULL)
+        {
+            return 1;
+        }
+    }
+    config_directory = WG_ExecutableDirectory(selected_path);
+    if (config_directory == NULL)
+    {
+        WG_ErrorAppend(error, error_size,
+                       "Unable to allocate the config-file directory.\n");
+        goto failure;
+    }
+    while (fgets(line, sizeof(line), file) != NULL)
+    {
+        size_t line_start;
+        size_t line_end;
+
+        ++line_number;
+        if (strchr(line, '\n') == NULL && !feof(file))
+        {
+            WG_ErrorAppend(error, error_size, "Config line is too long in ");
+            WG_ErrorAppend(error, error_size, selected_path);
+            WG_ErrorAppend(error, error_size, "\n");
+            goto failure;
+        }
+        if (!WG_ParseConfigLine(line, &tokens, &token_count,
+                                &token_capacity, &line_start))
+        {
+            char number[32];
+            (void)sprintf(number, "%lu", line_number);
+            WG_ErrorAppend(error, error_size, "Malformed config line ");
+            WG_ErrorAppend(error, error_size, number);
+            WG_ErrorAppend(error, error_size, " in ");
+            WG_ErrorAppend(error, error_size, selected_path);
+            WG_ErrorAppend(error, error_size, "\n");
+            goto failure;
+        }
+        line_end = token_count;
+        if (line_end == line_start)
+        {
+            continue;
+        }
+        if (tokens[line_start][0] != '-')
+        {
+            WG_ErrorAppend(error, error_size,
+                           "Each config line must begin with an option in ");
+            WG_ErrorAppend(error, error_size, selected_path);
+            WG_ErrorAppend(error, error_size, "\n");
+            goto failure;
+        }
+        if (strcmp(tokens[line_start], "--config") == 0
+            || strcmp(tokens[line_start], "--no-config") == 0)
+        {
+            WG_ErrorAppend(error, error_size,
+                           "Config files cannot load or disable config files.\n");
+            goto failure;
+        }
+        if (WG_CommandOverrides(argc, argv, tokens[line_start]))
+        {
+            while (token_count > line_start)
+            {
+                free(tokens[--token_count]);
+            }
+            continue;
+        }
+        if (WG_PathOption(tokens[line_start])
+            && line_end == line_start + 2U
+            && !WG_IsAbsolutePath(tokens[line_start + 1U]))
+        {
+            char *resolved = WG_JoinPath(config_directory,
+                                         tokens[line_start + 1U]);
+            if (resolved == NULL)
+            {
+                WG_ErrorAppend(error, error_size,
+                               "Unable to resolve a config-file path.\n");
+                goto failure;
+            }
+            free(tokens[line_start + 1U]);
+            tokens[line_start + 1U] = resolved;
+        }
+    }
+    if (ferror(file))
+    {
+        WG_ErrorAppend(error, error_size, "Unable to read config file: ");
+        WG_ErrorAppend(error, error_size, selected_path);
+        WG_ErrorAppend(error, error_size, "\n");
+        goto failure;
+    }
+    (void)fclose(file);
+    file = NULL;
+    prepared->argv = (char **)malloc(
+        ((size_t)argc + token_count + 1U) * sizeof(*prepared->argv));
+    if (prepared->argv == NULL)
+    {
+        WG_ErrorAppend(error, error_size,
+                       "Unable to allocate configured arguments.\n");
+        goto failure;
+    }
+    prepared->argv[0] = argv[0];
+    for (index = 0; index < (int)token_count; ++index)
+    {
+        prepared->argv[index + 1] = tokens[index];
+    }
+    for (index = 1; index < argc; ++index)
+    {
+        prepared->argv[(int)token_count + index] = argv[index];
+    }
+    prepared->argc = argc + (int)token_count;
+    prepared->argv[prepared->argc] = NULL;
+    prepared->config_argc = (int)token_count;
+    prepared->config_path = selected_path;
+    free(tokens);
+    free(config_directory);
+    return 1;
+
+failure:
+    if (file != NULL)
+    {
+        (void)fclose(file);
+    }
+    WG_FreeTokens(tokens, token_count);
+    free(config_directory);
+    free(selected_path);
+    return 0;
+}
+
+void WG_FreeLauncherArguments(wg_launcher_arguments_t *prepared)
+{
+    int index;
+
+    if (prepared == NULL)
+    {
+        return;
+    }
+    if (prepared->config_path != NULL)
+    {
+        for (index = 1; index <= prepared->config_argc; ++index)
+        {
+            free(prepared->argv[index]);
+        }
+        free(prepared->argv);
+    }
+    free(prepared->config_path);
+    prepared->argc = 0;
+    prepared->argv = NULL;
+    prepared->config_argc = 0;
+    prepared->config_path = NULL;
+}
+
 static int WG_ProfileFromText(const char *text, unsigned *profile)
 {
     unsigned index;
@@ -883,6 +1419,110 @@ void WG_FreeGameArguments(wg_game_arguments_t *prepared)
         prepared->argc = 0;
         prepared->allocated = 0;
     }
+}
+
+void WG_PrintDiagnostics(int argc, char **argv,
+                         const char *config_path,
+                         const char *host_report)
+{
+    wg_help_stream_t stream = WG_OpenHelpStream();
+    wg_discovery_results_t results;
+    wg_game_arguments_t selected;
+    char error[2048];
+    char number[32];
+    char *root;
+    size_t index;
+
+    if (!WG_HelpStreamValid(&stream))
+    {
+        return;
+    }
+    WG_HelpWrite(&stream, "wolf3d portable diagnostics\n\nExecutable: ");
+    WG_HelpWrite(&stream, argc > 0 ? argv[0] : "(unknown)");
+    WG_HelpWrite(&stream, "\nConfig:     ");
+    WG_HelpWrite(&stream, config_path != NULL ? config_path : "(none)");
+    WG_HelpWrite(&stream, "\nArguments:");
+    for (index = 1U; index < (size_t)argc; ++index)
+    {
+        WG_HelpWrite(&stream, " ");
+        WG_HelpWrite(&stream, argv[index]);
+    }
+    WG_HelpWrite(&stream, "\n\nGame data scan\n");
+    root = WG_ExecutableDirectory(argc > 0 ? argv[0] : NULL);
+    if (root == NULL)
+    {
+        WG_HelpWrite(&stream, "  Unable to allocate scan path.\n");
+    }
+    else
+    {
+        WG_HelpWrite(&stream, "  Root: ");
+        WG_HelpWrite(&stream, root);
+        WG_HelpWrite(&stream, "\n");
+        memset(&results, 0, sizeof(results));
+        WG_ScanDirectory(root, &results);
+        if (results.failed)
+        {
+            WG_HelpWrite(&stream, "  Scan failed.\n");
+        }
+        else if (results.count == 0U)
+        {
+            WG_HelpWrite(&stream, "  No complete data sets found.\n");
+        }
+        else
+        {
+            for (index = 0U; index < results.count; ++index)
+            {
+                WG_HelpWrite(&stream, "  ");
+                WG_HelpWrite(&stream,
+                    WG_DiscoveryProfiles[results.items[index].profile].extension);
+                WG_HelpWrite(&stream, ": ");
+                WG_HelpWrite(&stream, results.items[index].path);
+                WG_HelpWrite(&stream, "\n");
+            }
+        }
+        WG_FreeDiscoveryResults(&results);
+        free(root);
+    }
+    if (WG_PrepareGameArguments(argc, argv, &selected,
+                                error, sizeof(error)))
+    {
+        WG_HelpWrite(&stream, "  Selection: ");
+        if (selected.allocated)
+        {
+            WG_HelpWrite(&stream, selected.argv[selected.argc - 1]);
+            WG_HelpWrite(&stream, " at ");
+            WG_HelpWrite(&stream, selected.argv[selected.argc - 3]);
+        }
+        else
+        {
+            WG_HelpWrite(&stream,
+                "explicit --data selection or no automatic match");
+        }
+        WG_HelpWrite(&stream, "\n");
+        WG_FreeGameArguments(&selected);
+    }
+    else
+    {
+        WG_HelpWrite(&stream, "  Selection error: ");
+        WG_HelpWrite(&stream, error);
+    }
+    WG_HelpWrite(&stream, "\nHost hardware\n");
+    WG_HelpWrite(&stream, host_report != NULL ? host_report
+                                               : "  No host report available.\n");
+    (void)sprintf(number, "%lu", (unsigned long)wolf3d_GetOPLDriverCount());
+    WG_HelpWrite(&stream, "\nAudio emulation\n  Compiled OPL drivers: ");
+    WG_HelpWrite(&stream, number);
+    WG_HelpWrite(&stream, " (");
+    for (index = 0U; index < wolf3d_GetOPLDriverCount(); ++index)
+    {
+        if (index != 0U)
+        {
+            WG_HelpWrite(&stream, ", ");
+        }
+        WG_HelpWrite(&stream, wolf3d_GetOPLDriverName(index));
+    }
+    WG_HelpWrite(&stream, ")\n");
+    WG_CloseHelpStream(&stream);
 }
 
 void WG_PrintLauncherError(const char *message)

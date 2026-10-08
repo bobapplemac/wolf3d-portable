@@ -234,6 +234,33 @@ beside the executable. Symbolic links, junctions, and other reparse points are
 not followed. If more than one directory contains the selected extension, the
 launcher lists the conflicting paths and requires an explicit `--data PATH`.
 
+Optional launcher defaults can be stored beside the user-facing executable.
+Windows and DOS use `.ini`; Linux uses `.conf`. The exact executable name is
+checked first (`wolf3d-sdl3.ini`), followed by a wrapper-neutral name with a
+known `-sdl3`, `-win32`, or `-console` suffix removed (`wolf3d.ini`). Only the
+first existing file is loaded. Put one command-line option on each line:
+
+```ini
+# wolf3d launcher defaults
+--fullscreen
+--mouse
+--game WL6
+--opl dbopl
+--data "Game Data/Wolf3D"
+```
+
+Blank lines and lines beginning with `#` or `;` are ignored. Quoted values are
+supported, and relative data/device paths are resolved from the config file's
+directory. Real command-line options override the corresponding config option
+family. Use `--config FILE` to select another file or `--no-config` to bypass
+configuration entirely. Config files are never created automatically and are
+unrelated to the original game's `CONFIG.WL1`, `CONFIG.WL6`, and similar files.
+
+Run any launcher with `--diag` to print the loaded config, effective arguments,
+all discovered game-data sets, the automatic selection, compiled OPL drivers,
+and the host's available video, audio, mouse, and joystick/controller devices.
+The report exits without starting the game.
+
 Every launcher accepts `--help`, `-h`, or `/?` and exits after listing the
 generic game options, the current host's options, and its compiled OPL
 drivers. The older `--sdl3-help` and `--linux-console-help` spellings remain
@@ -261,7 +288,8 @@ Use `--mouse` or `--joy` to force a device present, and `--nomouse` or
 `--nojoy` to force it absent. Win32 and SDL3 capture an enabled mouse inside
 the game window and release it while the window lacks focus. Use
 `--fullscreen` to start fullscreen, and F11 or Alt+Enter to toggle fullscreen
-without acknowledging an engine "any key" wait.
+without acknowledging an engine "any key" wait. `--windowed` overrides a
+fullscreen default stored in a config file.
 
 See the [build and compatibility matrix](docs/support-matrix.md) for every
 supported compiler, wrapper, build entry point, artifact, and validated

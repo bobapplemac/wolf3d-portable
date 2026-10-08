@@ -1,5 +1,5 @@
-if(NOT DEFINED PROBE OR NOT DEFINED ROOT)
-    message(FATAL_ERROR "PROBE and ROOT are required")
+if(NOT DEFINED PROBE OR NOT DEFINED ROOT OR NOT DEFINED CONFIG_EXTENSION)
+    message(FATAL_ERROR "PROBE, ROOT, and CONFIG_EXTENSION are required")
 endif()
 
 file(REMOVE_RECURSE "${ROOT}")
@@ -69,6 +69,33 @@ set(mission_root "${ROOT}/mission")
 make_profile("${mission_root}/packs/SD2" SD2 SOD)
 expect_selection("mission requires explicit selection" "${mission_root}" SPEAR.EXE
     "${mission_root}/packs/SD2" SD2 -SD2)
+
+set(config_root "${ROOT}/config")
+make_profile("${config_root}/data/WL1" WL1 WL1)
+make_profile("${config_root}/data/WL6" WL6 WL6)
+make_profile("${config_root}/data/SOD" SOD SOD)
+file(WRITE "${config_root}/wolf.${CONFIG_EXTENSION}"
+    "# Shared defaults\n--game WL1\n--fullscreen\n")
+expect_selection("normalized config fallback" "${config_root}" wolf-sdl3.exe
+    "${config_root}/data/WL1" WL1)
+file(WRITE "${config_root}/wolf-sdl3.${CONFIG_EXTENSION}"
+    "; Wrapper-specific defaults\n--game SOD\n")
+expect_selection("exact config takes priority" "${config_root}" wolf-sdl3.exe
+    "${config_root}/data/SOD" SOD)
+expect_selection("command line overrides config family" "${config_root}"
+    wolf-sdl3.exe "${config_root}/data/WL6" WL6 -WL6)
+expect_selection("no-config bypasses defaults" "${config_root}" wolf-sdl3.exe
+    "${config_root}/data/WL6" WL6 --no-config)
+file(WRITE "${config_root}/custom.args" "--game WL1\n")
+expect_selection("explicit config path" "${config_root}" wolf-sdl3.exe
+    "${config_root}/data/WL1" WL1 --config "${config_root}/custom.args")
+
+set(relative_root "${ROOT}/relative-config")
+make_profile("${relative_root}/Game Data/WL1" WL1 WL1)
+file(WRITE "${relative_root}/wolf.${CONFIG_EXTENSION}"
+    "--data \"Game Data/WL1\"\n--game WL1\n")
+expect_selection("config paths are relative to the config file"
+    "${relative_root}" wolf.exe "${relative_root}/Game Data/WL1" WL1)
 
 set(ambiguous_root "${ROOT}/ambiguous")
 make_profile("${ambiguous_root}/one" WL6 WL6)

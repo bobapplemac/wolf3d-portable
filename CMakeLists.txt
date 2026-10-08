@@ -428,5 +428,6 @@ if(BUILD_TESTING)
         COMMAND ${CMAKE_COMMAND}
             "-DPROBE=$<TARGET_FILE:wg-discovery-probe>"
             "-DROOT=${CMAKE_CURRENT_BINARY_DIR}/discovery-fixture"
+            "-DCONFIG_EXTENSION=$<IF:$<BOOL:${WIN32}>,ini,conf>"
             -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/WG_DISCOVERY_TEST.cmake")
 endif()

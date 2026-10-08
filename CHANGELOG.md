@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-08 - Emulated sound hardware profiles
+
+- Advanced the engine to wolf3d-lib 1.4.58.
+- Added Sound Blaster, AdLib-only, PC-speaker-only, and no-sound hardware
+  profiles whose SIGNON markers and Sound-menu choices match the emulated PC.
+- Preserved both modern names and original DOS switches: `--adlib`/`-nosb`
+  and `--pc-speaker`/`-noal` intentionally form equivalent pairs.
+- Kept emulated hardware independent of `--opl` selection and host audio
+  output, so silent operation retains the engine's exact audio timing.
+
 ## 2026-10-08 - Unified launcher help
 
 - Added `--help`, `-h`, and `/?` to Win32, SDL3, Linux console, and DOS

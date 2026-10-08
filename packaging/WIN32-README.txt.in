@@ -31,8 +31,10 @@ activision, or spear to override that choice. Its memory and hardware markers
 are filled at runtime using the original screen coordinates and color ramps.
 Wolf3D displays the original Press a key/Working prompts; Spear holds SIGNON
 for three seconds automatically.
-Use --adlib to retain OPL music and AdLib effects while disabling digitized
-Sound Blaster effects; SIGNON then marks AdLib instead of Sound Blaster.
+Use --adlib or original -nosb for an AdLib-only machine. Use --pc-speaker or
+original -noal for no detected sound card with PC-speaker effects, or
+--no-sound for no detected sound card with all in-game sound initially off.
+SIGNON and the Sound menu reflect the selected emulated hardware.
 Use --opl nuked, --opl dbopl, or --opl silent to select a driver recorded in
 WOLF3D-LIB.txt. Use --sample-rate HZ to change the preferred PCM rate.
 Mouse and XInput joystick hardware are detected automatically. Use --mouse or

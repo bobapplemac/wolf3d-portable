@@ -35,7 +35,8 @@ only by the host and will not dismiss an in-game "Press a key" prompt.
 Run with --help for complete game and host options (--sdl3-help remains an
 alias). Use --opl
 nuked|dbopl|silent to select an included audio driver and --sample-rate HZ to
-change the preferred PCM rate.
+change the preferred PCM rate. Emulated hardware is selected independently:
+--adlib/-nosb, --pc-speaker/-noal, or --no-sound.
 
 SDL3 is distributed under the zlib license. When included, Nuked-OPL3 is
 independently replaceable and distributed under LGPL-2.1-or-later. See the included

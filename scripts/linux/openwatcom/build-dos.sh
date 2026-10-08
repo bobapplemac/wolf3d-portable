@@ -106,6 +106,11 @@ that reference emulator inside a DOS virtual machine is computationally
 expensive. Packages containing Nuked also include RELINK materials so its LGPL
 implementation can be replaced. WGADLIB.LIB is kept separate in that kit.
 
+Emulated hardware is independent of the OPL driver. Use --adlib or original
+-nosb for AdLib-only hardware, --pc-speaker or original -noal for no detected
+sound card with PC-speaker effects, or --no-sound for no detected sound card
+with all in-game sound initially off. Every profile retains audio timing.
+
 The game and DOS/32A loader must remain together. Native AdLib, DBOPL, and
 silent operation have been confirmed through interactive DOSBox gameplay;
 physical DOS hardware remains untested.

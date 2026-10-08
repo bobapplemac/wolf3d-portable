@@ -26,7 +26,9 @@ Host-specific options:
   --help                              (also -h or /?)
 
 Game audio options are --opl nuked|dbopl|silent and --sample-rate HZ. Only
-drivers recorded in WOLF3D-LIB.txt are available.
+drivers recorded in WOLF3D-LIB.txt are available. Emulated hardware is selected
+independently with --adlib/-nosb, --pc-speaker/-noal, or --no-sound. Host-only
+--no-audio suppresses ALSA output without changing detected game hardware.
 
 Without explicit device options, the host selects the first connected DRM
 display, falls back to $FRAMEBUFFER or /dev/fb0, opens usable evdev devices,

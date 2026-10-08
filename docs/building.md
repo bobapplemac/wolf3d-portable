@@ -233,9 +233,11 @@ name. Any reduced driver set, non-Nuked default, or non-48 kHz preferred rate
 is encoded as a deterministic directory suffix so multiple configurations can
 coexist under `dist/`.
 
-The console host requires libdrm and ALSA development packages. SDL3 builds do
-not require those packages directly. The pinned build dynamically discovers
-available X11, Wayland, KMS/DRM, and audio backends.
+The console host requires libdrm and ALSA development packages. At runtime it
+prefers a connected DRM/KMS display and falls back to the kernel framebuffer
+interface (`$FRAMEBUFFER` or `/dev/fb0`); both paths retain evdev input and ALSA
+audio. SDL3 builds do not require those packages directly. The pinned build
+dynamically discovers available X11, Wayland, KMS/DRM, and audio backends.
 
 ## 32-bit DOS cross-build
 
@@ -359,4 +361,4 @@ KMSDRM are deliberately disabled: wolf3d-portable already renders its
 framebuffer in software, and excluding those paths avoids graphics-stack ABI
 dependencies. The audit opens an SDL software-rendered window under Xvfb so a
 help-only launch can no longer conceal a missing video backend. The separate
-direct-console host remains available for a DRM/KMS-only system.
+direct-console host remains available for DRM/KMS and fbdev systems.

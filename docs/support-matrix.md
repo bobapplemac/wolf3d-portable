@@ -87,9 +87,9 @@ default; dynamic CRT packages require the matching Microsoft redistributable.
 | --- | --- | --- | --- | --- | --- |
 | Native SDL3, pinned | GCC, Clang | SDL3 | Build-host glibc; bundled pinned SDL3 | Validated | Compatible x86-64 Linux with same/newer glibc and an SDL-supported display/audio stack |
 | Native SDL3, system | GCC, Clang | SDL3 | Build-host glibc and system SDL 3.2+ | Validated | Distribution-integrated deployment with compatible system SDL |
-| Native console | GCC, Clang | DRM/KMS + evdev + ALSA | Build-host glibc; system `libdrm` and ALSA | Validated | Linux virtual console with suitable devices, drivers, and permissions; no X11/Wayland required |
+| Native console | GCC, Clang | DRM/KMS or fbdev + evdev + ALSA | Build-host glibc; system `libdrm` and ALSA | Validated | Linux virtual console with DRM preferred and `/dev/fb0` fallback; no X11/Wayland required |
 | Portable glibc SDL3 | GCC | SDL3 | Debian 10 baseline, pinned SDL3, audited maximum `GLIBC_2.28` | Validated | x86-64 Linux with glibc 2.28+, X11 or Wayland, and supported audio service |
-| Portable glibc console | GCC | DRM/KMS + evdev + ALSA | Debian 10 baseline, audited maximum `GLIBC_2.28` | Validated | x86-64 glibc 2.28+ virtual-console system with required device access |
+| Portable glibc console | GCC | DRM/KMS or fbdev + evdev + ALSA | Debian 10 baseline, audited maximum `GLIBC_2.28` | Validated | x86-64 glibc 2.28+ virtual-console system with DRM or `/dev/fb0` access |
 | Bundled musl SDL3 | GCC, Clang | SDL3 | Private musl loader and closed shared-library set | Validated with an X11 window smoke test | x86-64 Linux; no destination glibc dependency; bundled X11/Wayland/eudev/ALSA/PulseAudio clients connect to destination services |
 
 The portable glibc artifacts intentionally build against an older userspace:

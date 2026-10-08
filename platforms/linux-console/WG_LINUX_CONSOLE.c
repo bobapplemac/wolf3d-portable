@@ -6,6 +6,7 @@
 #include <alsa/asoundlib.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <linux/fb.h>
 #include <linux/input.h>
 #include <linux/kd.h>
 #include <limits.h>
@@ -58,15 +59,37 @@ typedef struct wg_drm_state
     uint32_t pitch;
     uint64_t size;
     uint32_t *pixels;
+} wg_drm_state_t;
+
+typedef struct wg_fbdev_state
+{
+    int descriptor;
+    struct fb_fix_screeninfo fixed;
+    struct fb_var_screeninfo variable;
+    uint8_t *pixels;
+    size_t size;
+    unsigned bytes_per_pixel;
+} wg_fbdev_state_t;
+
+typedef struct wg_presentation_state
+{
     int presentation_left;
     int presentation_top;
     int presentation_width;
     int presentation_height;
     uint16_t *source_x;
     uint16_t *source_y;
-} wg_drm_state_t;
+} wg_presentation_state_t;
+
+enum
+{
+    WG_VIDEO_AUTO,
+    WG_VIDEO_DRM,
+    WG_VIDEO_FBDEV
+};
 
 static char wg_drm_device[WG_PATH_CAPACITY];
+static char wg_fb_device[WG_PATH_CAPACITY];
 static char wg_alsa_device[WG_PATH_CAPACITY] = "default";
 static char wg_requested_inputs[WG_INPUT_CAPACITY][WG_PATH_CAPACITY];
 static size_t wg_requested_input_count;
@@ -77,6 +100,15 @@ static wg_drm_state_t wg_drm =
     .descriptor = -1,
     .pixels = MAP_FAILED
 };
+static wg_fbdev_state_t wg_fbdev =
+{
+    .descriptor = -1,
+    .pixels = MAP_FAILED
+};
+static wg_presentation_state_t wg_presentation;
+static int wg_requested_video = WG_VIDEO_AUTO;
+static int wg_active_video = WG_VIDEO_AUTO;
+static int wg_video_needs_clear;
 static wg_input_device_t wg_inputs[WG_INPUT_CAPACITY];
 static size_t wg_input_count;
 static int wg_console_descriptor = -1;
@@ -99,6 +131,7 @@ static size_t wg_event_read;
 static size_t wg_event_write;
 
 static void WG_CloseDRM(void);
+static void WG_CloseFBDev(void);
 
 static int WG_CopyOption(char *destination, const char *source)
 {
@@ -120,6 +153,31 @@ static int WG_CopyOption(char *destination, const char *source)
 int WG_LinuxConsoleSetDRMDevice(const char *path)
 {
     return WG_CopyOption(wg_drm_device, path);
+}
+
+int WG_LinuxConsoleSetFramebufferDevice(const char *path)
+{
+    return WG_CopyOption(wg_fb_device, path);
+}
+
+int WG_LinuxConsoleSetVideoBackend(const char *name)
+{
+    if (name != NULL && strcmp(name, "auto") == 0)
+    {
+        wg_requested_video = WG_VIDEO_AUTO;
+        return 1;
+    }
+    if (name != NULL && strcmp(name, "drm") == 0)
+    {
+        wg_requested_video = WG_VIDEO_DRM;
+        return 1;
+    }
+    if (name != NULL && strcmp(name, "fbdev") == 0)
+    {
+        wg_requested_video = WG_VIDEO_FBDEV;
+        return 1;
+    }
+    return 0;
 }
 
 int WG_LinuxConsoleAddInputDevice(const char *path)
@@ -511,6 +569,61 @@ static void WG_CloseInputs(void)
     wg_input_count = 0U;
 }
 
+static void WG_ClosePresentation(void)
+{
+    free(wg_presentation.source_x);
+    free(wg_presentation.source_y);
+    memset(&wg_presentation, 0, sizeof(wg_presentation));
+}
+
+static int WG_SetupPresentation(int width, int height)
+{
+    int coordinate;
+
+    WG_ClosePresentation();
+    if ((int64_t)width * 3 > (int64_t)height * 4)
+    {
+        wg_presentation.presentation_height = height;
+        wg_presentation.presentation_width = height * 4 / 3;
+    }
+    else
+    {
+        wg_presentation.presentation_width = width;
+        wg_presentation.presentation_height = width * 3 / 4;
+    }
+    wg_presentation.presentation_left =
+        (width - wg_presentation.presentation_width) / 2;
+    wg_presentation.presentation_top =
+        (height - wg_presentation.presentation_height) / 2;
+    wg_presentation.source_x = (uint16_t *)malloc(
+        (size_t)wg_presentation.presentation_width
+            * sizeof(*wg_presentation.source_x));
+    wg_presentation.source_y = (uint16_t *)malloc(
+        (size_t)wg_presentation.presentation_height
+            * sizeof(*wg_presentation.source_y));
+    if (wg_presentation.source_x == NULL
+        || wg_presentation.source_y == NULL)
+    {
+        WG_ClosePresentation();
+        return 0;
+    }
+    for (coordinate = 0;
+         coordinate < wg_presentation.presentation_width; ++coordinate)
+    {
+        wg_presentation.source_x[coordinate] = (uint16_t)(
+            coordinate * WOLF3D_SCREEN_WIDTH
+                / wg_presentation.presentation_width);
+    }
+    for (coordinate = 0;
+         coordinate < wg_presentation.presentation_height; ++coordinate)
+    {
+        wg_presentation.source_y[coordinate] = (uint16_t)(
+            coordinate * WOLF3D_SCREEN_HEIGHT
+                / wg_presentation.presentation_height);
+    }
+    return 1;
+}
+
 static int WG_SelectCRTC(int descriptor, drmModeRes *resources,
                          drmModeConnector *connector, uint32_t *crtc_id)
 {
@@ -642,39 +755,11 @@ static int WG_OpenDRMCard(const char *path)
         return 0;
     }
     memset(wg_drm.pixels, 0, (size_t)wg_drm.size);
-    if ((int64_t)create_request.width * 3
-        > (int64_t)create_request.height * 4)
-    {
-        wg_drm.presentation_height = (int)create_request.height;
-        wg_drm.presentation_width = wg_drm.presentation_height * 4 / 3;
-    }
-    else
-    {
-        wg_drm.presentation_width = (int)create_request.width;
-        wg_drm.presentation_height = wg_drm.presentation_width * 3 / 4;
-    }
-    wg_drm.presentation_left = ((int)create_request.width
-                                - wg_drm.presentation_width) / 2;
-    wg_drm.presentation_top = ((int)create_request.height
-                               - wg_drm.presentation_height) / 2;
-    wg_drm.source_x = (uint16_t *)malloc(
-        (size_t)wg_drm.presentation_width * sizeof(*wg_drm.source_x));
-    wg_drm.source_y = (uint16_t *)malloc(
-        (size_t)wg_drm.presentation_height * sizeof(*wg_drm.source_y));
-    if (wg_drm.source_x == NULL || wg_drm.source_y == NULL)
+    if (!WG_SetupPresentation((int)create_request.width,
+                              (int)create_request.height))
     {
         WG_CloseDRM();
         return 0;
-    }
-    for (mode_index = 0; mode_index < wg_drm.presentation_width; ++mode_index)
-    {
-        wg_drm.source_x[mode_index] = (uint16_t)(
-            mode_index * WOLF3D_SCREEN_WIDTH / wg_drm.presentation_width);
-    }
-    for (mode_index = 0; mode_index < wg_drm.presentation_height; ++mode_index)
-    {
-        wg_drm.source_y[mode_index] = (uint16_t)(
-            mode_index * WOLF3D_SCREEN_HEIGHT / wg_drm.presentation_height);
     }
     if (drmModeSetCrtc(wg_drm.descriptor, wg_drm.crtc_id,
                        wg_drm.framebuffer_id, 0, 0, &wg_drm.connector_id, 1,
@@ -704,7 +789,6 @@ static int WG_OpenDRM(void)
         (void)snprintf(path, sizeof(path), "/dev/dri/card%u", card);
         if (WG_OpenDRMCard(path)) return 1;
     }
-    fprintf(stderr, "wolf3d: no connected DRM/KMS display found.\n");
     return 0;
 }
 
@@ -726,10 +810,7 @@ static void WG_CloseDRM(void)
         (void)munmap(wg_drm.pixels, (size_t)wg_drm.size);
         wg_drm.pixels = MAP_FAILED;
     }
-    free(wg_drm.source_x);
-    free(wg_drm.source_y);
-    wg_drm.source_x = NULL;
-    wg_drm.source_y = NULL;
+    WG_ClosePresentation();
     if (wg_drm.framebuffer_id != 0U)
     {
         (void)drmModeRmFB(wg_drm.descriptor, wg_drm.framebuffer_id);
@@ -752,6 +833,147 @@ static void WG_CloseDRM(void)
     wg_drm.pixels = MAP_FAILED;
 }
 
+static int WG_OpenFBDevPath(const char *path)
+{
+    uint64_t visible_end;
+
+    wg_fbdev.descriptor = open(path, O_RDWR | O_CLOEXEC);
+    if (wg_fbdev.descriptor < 0)
+    {
+        return 0;
+    }
+    if (ioctl(wg_fbdev.descriptor, FBIOGET_FSCREENINFO,
+              &wg_fbdev.fixed) < 0
+        || ioctl(wg_fbdev.descriptor, FBIOGET_VSCREENINFO,
+                 &wg_fbdev.variable) < 0
+        || wg_fbdev.fixed.type != FB_TYPE_PACKED_PIXELS
+        || wg_fbdev.fixed.visual != FB_VISUAL_TRUECOLOR
+        || (wg_fbdev.variable.bits_per_pixel != 16U
+            && wg_fbdev.variable.bits_per_pixel != 24U
+            && wg_fbdev.variable.bits_per_pixel != 32U)
+        || wg_fbdev.variable.red.msb_right != 0U
+        || wg_fbdev.variable.green.msb_right != 0U
+        || wg_fbdev.variable.blue.msb_right != 0U
+        || wg_fbdev.variable.transp.msb_right != 0U)
+    {
+        WG_CloseFBDev();
+        errno = ENOTSUP;
+        return 0;
+    }
+    wg_fbdev.bytes_per_pixel = wg_fbdev.variable.bits_per_pixel / 8U;
+    wg_fbdev.size = (size_t)wg_fbdev.fixed.smem_len;
+    visible_end = ((uint64_t)wg_fbdev.variable.yoffset
+                   + wg_fbdev.variable.yres - 1U)
+                    * wg_fbdev.fixed.line_length
+                + ((uint64_t)wg_fbdev.variable.xoffset
+                   + wg_fbdev.variable.xres)
+                    * wg_fbdev.bytes_per_pixel;
+    if (wg_fbdev.variable.xres == 0U || wg_fbdev.variable.yres == 0U
+        || wg_fbdev.size == 0U || visible_end > wg_fbdev.size)
+    {
+        WG_CloseFBDev();
+        errno = EINVAL;
+        return 0;
+    }
+    wg_fbdev.pixels = (uint8_t *)mmap(NULL, wg_fbdev.size,
+                                     PROT_READ | PROT_WRITE, MAP_SHARED,
+                                     wg_fbdev.descriptor, 0);
+    if (wg_fbdev.pixels == MAP_FAILED)
+    {
+        WG_CloseFBDev();
+        return 0;
+    }
+    if (!WG_SetupPresentation((int)wg_fbdev.variable.xres,
+                              (int)wg_fbdev.variable.yres))
+    {
+        WG_CloseFBDev();
+        return 0;
+    }
+    wg_video_needs_clear = 1;
+    fprintf(stderr, "wolf3d: using framebuffer %s (%ux%u, %u bpp).\n",
+            path, wg_fbdev.variable.xres, wg_fbdev.variable.yres,
+            wg_fbdev.variable.bits_per_pixel);
+    return 1;
+}
+
+static int WG_OpenFBDev(void)
+{
+    const char *path = wg_fb_device;
+
+    if (path[0] == '\0')
+    {
+        path = getenv("FRAMEBUFFER");
+        if (path == NULL || path[0] == '\0') path = "/dev/fb0";
+    }
+    if (WG_OpenFBDevPath(path)) return 1;
+    if (wg_fb_device[0] != '\0')
+    {
+        fprintf(stderr,
+                "wolf3d: unable to initialize framebuffer %s: %s\n",
+                path, strerror(errno));
+    }
+    return 0;
+}
+
+static void WG_CloseFBDev(void)
+{
+    if (wg_fbdev.pixels != MAP_FAILED)
+    {
+        (void)munmap(wg_fbdev.pixels, wg_fbdev.size);
+    }
+    if (wg_fbdev.descriptor >= 0)
+    {
+        close(wg_fbdev.descriptor);
+    }
+    memset(&wg_fbdev, 0, sizeof(wg_fbdev));
+    wg_fbdev.descriptor = -1;
+    wg_fbdev.pixels = MAP_FAILED;
+    WG_ClosePresentation();
+}
+
+static int WG_OpenVideo(void)
+{
+    if (wg_requested_video != WG_VIDEO_FBDEV && WG_OpenDRM())
+    {
+        wg_active_video = WG_VIDEO_DRM;
+        return 1;
+    }
+    if (wg_requested_video == WG_VIDEO_DRM)
+    {
+        fprintf(stderr, "wolf3d: no connected DRM/KMS display found.\n");
+        return 0;
+    }
+    if (WG_OpenFBDev())
+    {
+        wg_active_video = WG_VIDEO_FBDEV;
+        return 1;
+    }
+    if (wg_requested_video == WG_VIDEO_FBDEV)
+    {
+        fprintf(stderr, "wolf3d: no usable framebuffer device found.\n");
+    }
+    else
+    {
+        fprintf(stderr,
+                "wolf3d: no connected DRM/KMS display or usable framebuffer found.\n");
+    }
+    return 0;
+}
+
+static void WG_CloseVideo(void)
+{
+    if (wg_active_video == WG_VIDEO_DRM)
+    {
+        WG_CloseDRM();
+    }
+    else if (wg_active_video == WG_VIDEO_FBDEV)
+    {
+        WG_CloseFBDev();
+    }
+    wg_active_video = WG_VIDEO_AUTO;
+    wg_video_needs_clear = 0;
+}
+
 static void WG_SignalHandler(int signal_number)
 {
     (void)signal_number;
@@ -768,10 +990,10 @@ static int WG_LinuxConsoleInit(void)
     (void)sigaction(SIGINT, &action, NULL);
     (void)sigaction(SIGTERM, &action, NULL);
     if (clock_gettime(CLOCK_MONOTONIC, &wg_clock_start) != 0
-        || !WG_OpenDRM() || !WG_OpenInputs())
+        || !WG_OpenVideo() || !WG_OpenInputs())
     {
         WG_CloseInputs();
-        WG_CloseDRM();
+        WG_CloseVideo();
         return 0;
     }
     wg_previous_frame_valid = 0;
@@ -797,7 +1019,7 @@ static void WG_LinuxConsoleShutdown(void)
 {
     WG_LinuxConsolePCMShutdown();
     WG_CloseInputs();
-    WG_CloseDRM();
+    WG_CloseVideo();
     if (wg_console_descriptor >= 0)
     {
         if (wg_console_graphics)
@@ -818,6 +1040,78 @@ static void WG_LinuxConsoleShutdown(void)
     }
 }
 
+static uint32_t WG_ScaleFramebufferChannel(
+    uint8_t value, const struct fb_bitfield *field)
+{
+    uint32_t maximum;
+
+    if (field->length == 0U) return 0U;
+    maximum = field->length >= 32U
+        ? UINT32_MAX : (1U << field->length) - 1U;
+    return (((uint32_t)value * maximum + 127U) / 255U) << field->offset;
+}
+
+static uint32_t WG_PackFramebufferColor(const uint8_t *rgb)
+{
+    uint32_t color = WG_ScaleFramebufferChannel(
+        rgb[0], &wg_fbdev.variable.red)
+        | WG_ScaleFramebufferChannel(rgb[1], &wg_fbdev.variable.green)
+        | WG_ScaleFramebufferChannel(rgb[2], &wg_fbdev.variable.blue);
+
+    if (wg_fbdev.variable.transp.length != 0U)
+    {
+        color |= WG_ScaleFramebufferChannel(
+            255U, &wg_fbdev.variable.transp);
+    }
+    return color;
+}
+
+static void WG_WriteFramebufferPixel(uint8_t *destination, uint32_t color)
+{
+    switch (wg_fbdev.bytes_per_pixel)
+    {
+        case 2U:
+        {
+            uint16_t value = (uint16_t)color;
+            memcpy(destination, &value, sizeof(value));
+            break;
+        }
+        case 3U:
+#if defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) \
+    && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+            destination[0] = (uint8_t)(color >> 16);
+            destination[1] = (uint8_t)(color >> 8);
+            destination[2] = (uint8_t)color;
+#else
+            destination[0] = (uint8_t)color;
+            destination[1] = (uint8_t)(color >> 8);
+            destination[2] = (uint8_t)(color >> 16);
+#endif
+            break;
+        default:
+            memcpy(destination, &color, sizeof(color));
+            break;
+    }
+}
+
+static void WG_ClearFramebuffer(void)
+{
+    unsigned row;
+
+    for (row = 0U; row < wg_fbdev.variable.yres; ++row)
+    {
+        uint8_t *destination = wg_fbdev.pixels
+            + ((size_t)wg_fbdev.variable.yoffset + row)
+                * wg_fbdev.fixed.line_length
+            + (size_t)wg_fbdev.variable.xoffset
+                * wg_fbdev.bytes_per_pixel;
+
+        memset(destination, 0, (size_t)wg_fbdev.variable.xres
+                                  * wg_fbdev.bytes_per_pixel);
+    }
+    wg_video_needs_clear = 0;
+}
+
 static void WG_LinuxConsolePresent(const uint8_t *pixels,
                                    const uint8_t *palette)
 {
@@ -825,9 +1119,17 @@ static void WG_LinuxConsolePresent(const uint8_t *pixels,
     unsigned color;
     int y;
 
-    if (wg_drm.pixels == MAP_FAILED || pixels == NULL || palette == NULL)
+    if ((wg_active_video == WG_VIDEO_DRM && wg_drm.pixels == MAP_FAILED)
+        || (wg_active_video == WG_VIDEO_FBDEV
+            && wg_fbdev.pixels == MAP_FAILED)
+        || wg_active_video == WG_VIDEO_AUTO
+        || pixels == NULL || palette == NULL)
     {
         return;
+    }
+    if (wg_active_video == WG_VIDEO_FBDEV && wg_video_needs_clear)
+    {
+        WG_ClearFramebuffer();
     }
     if (wg_previous_frame_valid
         && memcmp(wg_previous_pixels, pixels,
@@ -844,21 +1146,45 @@ static void WG_LinuxConsolePresent(const uint8_t *pixels,
     {
         const uint8_t *rgb = palette + (size_t)color * 3U;
 
-        colors[color] = ((uint32_t)rgb[0] << 16)
-                      | ((uint32_t)rgb[1] << 8) | rgb[2];
+        colors[color] = wg_active_video == WG_VIDEO_FBDEV
+            ? WG_PackFramebufferColor(rgb)
+            : ((uint32_t)rgb[0] << 16)
+                | ((uint32_t)rgb[1] << 8) | rgb[2];
     }
-    for (y = 0; y < wg_drm.presentation_height; ++y)
+    for (y = 0; y < wg_presentation.presentation_height; ++y)
     {
-        uint32_t *row = (uint32_t *)((uint8_t *)wg_drm.pixels
-            + (size_t)(wg_drm.presentation_top + y) * wg_drm.pitch);
         const uint8_t *source = pixels
-            + (size_t)wg_drm.source_y[y] * WOLF3D_SCREEN_WIDTH;
+            + (size_t)wg_presentation.source_y[y] * WOLF3D_SCREEN_WIDTH;
         int x;
 
-        for (x = 0; x < wg_drm.presentation_width; ++x)
+        if (wg_active_video == WG_VIDEO_DRM)
         {
-            row[wg_drm.presentation_left + x]
-                = colors[source[wg_drm.source_x[x]]];
+            uint32_t *row = (uint32_t *)((uint8_t *)wg_drm.pixels
+                + (size_t)(wg_presentation.presentation_top + y)
+                    * wg_drm.pitch);
+
+            for (x = 0; x < wg_presentation.presentation_width; ++x)
+            {
+                row[wg_presentation.presentation_left + x]
+                    = colors[source[wg_presentation.source_x[x]]];
+            }
+        }
+        else
+        {
+            uint8_t *row = wg_fbdev.pixels
+                + ((size_t)wg_fbdev.variable.yoffset
+                   + (size_t)wg_presentation.presentation_top + (size_t)y)
+                    * wg_fbdev.fixed.line_length
+                + ((size_t)wg_fbdev.variable.xoffset
+                   + (size_t)wg_presentation.presentation_left)
+                    * wg_fbdev.bytes_per_pixel;
+
+            for (x = 0; x < wg_presentation.presentation_width; ++x)
+            {
+                WG_WriteFramebufferPixel(
+                    row + (size_t)x * wg_fbdev.bytes_per_pixel,
+                    colors[source[wg_presentation.source_x[x]]]);
+            }
         }
     }
 }

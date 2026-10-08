@@ -2,6 +2,8 @@
 #define WG_LINUX_CONSOLE_H
 
 int WG_LinuxConsoleSetDRMDevice(const char *path);
+int WG_LinuxConsoleSetFramebufferDevice(const char *path);
+int WG_LinuxConsoleSetVideoBackend(const char *name);
 int WG_LinuxConsoleAddInputDevice(const char *path);
 int WG_LinuxConsoleSetALSADevice(const char *name);
 void WG_LinuxConsoleDisableAudio(void);

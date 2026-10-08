@@ -9,7 +9,7 @@ The repository currently contains:
 
 - a dependency-free Win32/GDI host;
 - a cross-platform SDL3 host for Windows, X11, Wayland, and other SDL targets;
-- a Linux virtual-console host using DRM/KMS, evdev, and ALSA;
+- a Linux virtual-console host using DRM/KMS or fbdev, evdev, and ALSA;
 - an initial 32-bit protected-mode DOS host using VGA, the keyboard controller,
   PIT timing, Open Watcom, and DOS/32A.
 
@@ -175,7 +175,7 @@ remains the complete command and variable reference; the usual paths are:
 
 ```text
 make                         # pinned-SDL3 distribution
-make console-release         # DRM/evdev/ALSA distribution
+make console-release         # DRM/fbdev/evdev/ALSA distribution
 make releases                # both distributions
 make portable                # both in the Debian 10 compatibility container
 make musl-sdl3               # relocatable bundle with its own musl userspace
@@ -218,6 +218,11 @@ its location explicitly:
 wolf3d-sdl3 --data /path/to/WL1
 wolf3d --data /path/to/WL6 --game WL6
 ```
+
+The Linux console host needs no X11 or Wayland. Its default `--video auto`
+mode prefers a connected DRM/KMS display and falls back to `$FRAMEBUFFER` or
+`/dev/fb0`. Use `--video drm` or `--video fbdev` to require one backend, with
+`--drm-device PATH` or `--fb-device PATH` to select a device explicitly.
 
 For DOS, copy a data set into the distribution directory and run:
 

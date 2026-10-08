@@ -82,7 +82,7 @@ help:
 		'Common targets:' \
 		'  make | make all              Build the SDL3 distribution (default).' \
 		'  make sdl3-release            Build the SDL3 distribution.' \
-		'  make console-release         Build the DRM/evdev/ALSA distribution.' \
+		'  make console-release         Build the DRM/fbdev/evdev/ALSA distribution.' \
 		'  make releases                Build both Linux distributions.' \
 		'  make fresh                   Update wolf3d-lib main, initialize dependencies, and build.' \
 		'  make dependencies            Initialize the recorded submodule revisions.' \

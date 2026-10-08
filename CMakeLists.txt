@@ -20,7 +20,7 @@ include(CTest)
 
 option(W3P_BUILD_WIN32 "Build the dependency-free Win32 host" ON)
 option(W3P_BUILD_LINUX_CONSOLE
-    "Build the direct DRM/evdev/ALSA Linux console host" OFF)
+    "Build the direct DRM/fbdev/evdev/ALSA Linux console host" OFF)
 option(W3P_BUILD_SDL3 "Build the cross-platform SDL3 GUI host" OFF)
 option(W3P_USE_SYSTEM_SDL3
     "Use an installed SDL3 package instead of the pinned submodule" OFF)

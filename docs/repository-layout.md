@@ -5,7 +5,7 @@
 | `lib/wolf3d/` | Pinned, `main`-tracking `wolf3d-lib` submodule. |
 | `platforms/win32/` | Native GDI/WinMM host. |
 | `platforms/sdl3/` | Cross-platform SDL3 host. |
-| `platforms/linux-console/` | DRM/KMS, evdev, and ALSA host. |
+| `platforms/linux-console/` | Direct DRM/KMS-or-fbdev, evdev, and ALSA host. |
 | `platforms/WG_*` | Host-shared text-output and command-line support. |
 | `third_party/SDL3/` | Pinned SDL3 submodule. |
 | `packaging/` | Runtime instructions and portable Linux builder. |

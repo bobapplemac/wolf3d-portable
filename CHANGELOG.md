@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-08 - Linux framebuffer console fallback
+
+- Kept DRM/KMS dumb buffers as the preferred modern direct-console display
+  path and added automatic fallback to `$FRAMEBUFFER` or `/dev/fb0`.
+- Added packed true-color fbdev output for 16-, 24-, and 32-bit framebuffers,
+  using reported channel bitfields, stride, offsets, and current resolution.
+- Added `--video auto|drm|fbdev` and `--fb-device PATH` console options while
+  retaining explicit DRM selection, evdev input, and ALSA audio.
+- Shared software scaling and 4:3 letterboxing between both console backends.
+
 ## 2026-10-08 - Center initial windows
 
 - Centered the native Win32 window in the primary display's usable work area.

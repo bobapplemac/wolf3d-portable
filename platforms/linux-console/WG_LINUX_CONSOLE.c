@@ -1101,7 +1101,8 @@ int WG_InstallPlatform(void)
         NULL,
         NULL,
         NULL,
-        WG_LinuxConsoleInputDevices
+        WG_LinuxConsoleInputDevices,
+        NULL
     };
 
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;

@@ -33,6 +33,8 @@ static uint16_t wg_text_columns;
 static uint16_t wg_text_rows;
 static int wg_mouse_enabled;
 static int wg_mouse_mode = -1;
+static int wg_mouse_capture_requested;
+static int wg_window_focused = 1;
 static int wg_joystick_mode = -1;
 static int wg_start_fullscreen;
 static int wg_fullscreen;
@@ -78,6 +80,16 @@ static int WG_SDLSetMouseCapture(int capture)
                 SDL_GetError());
     }
     return 1;
+}
+
+static void WG_SDLRequestMouseCapture(int capture)
+{
+    wg_mouse_capture_requested = capture != 0;
+    if (wg_window != NULL)
+    {
+        (void)WG_SDLSetMouseCapture(wg_mouse_capture_requested
+                                   && wg_window_focused);
+    }
 }
 
 static int16_t WG_SDLClampMotion(float value)
@@ -288,6 +300,8 @@ static int WG_SDLInit(void)
     }
     wg_fullscreen = 0;
     wg_fullscreen_enter_down = 0;
+    wg_mouse_capture_requested = 0;
+    wg_window_focused = 1;
     wg_mouse_enabled = wg_mouse_mode > 0
         || (wg_mouse_mode < 0 && SDL_HasMouse());
     if (wg_start_fullscreen && !WG_SDLSetFullscreen(1))
@@ -328,7 +342,7 @@ static int WG_SDLInit(void)
         SDL_Quit();
         return 0;
     }
-    if (!WG_SDLSetMouseCapture(1))
+    if (!WG_SDLSetMouseCapture(0))
     {
         SDL_DestroyTexture(wg_texture);
         SDL_DestroyRenderer(wg_renderer);
@@ -470,9 +484,11 @@ static int WG_SDLPollEvent(wolf3d_event_t *event)
                 }
                 break;
             case SDL_EVENT_WINDOW_FOCUS_GAINED:
-                (void)WG_SDLSetMouseCapture(1);
+                wg_window_focused = 1;
+                (void)WG_SDLSetMouseCapture(wg_mouse_capture_requested);
                 break;
             case SDL_EVENT_WINDOW_FOCUS_LOST:
+                wg_window_focused = 0;
                 (void)WG_SDLSetMouseCapture(0);
                 break;
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
@@ -681,7 +697,8 @@ int WG_InstallPlatform(void)
         NULL,
         NULL,
         NULL,
-        WG_SDLInputDevices
+        WG_SDLInputDevices,
+        WG_SDLRequestMouseCapture
     };
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;
 }

@@ -2,13 +2,16 @@
 
 ## 2026-10-08 - Automatic input discovery and mouse capture
 
-- Advanced the pinned engine to wolf3d-lib 1.4.55 and platform API v5.
+- Advanced the pinned engine to wolf3d-lib 1.4.56 and platform API v6.
 - Made Win32, SDL3, and Linux-console hosts report detected mouse and joystick
   hardware automatically.
 - Added symmetric `--mouse`/`--nomouse` and `--joy`/`--nojoy` detection
   overrides.
 - Captured relative mouse input inside Win32 and SDL3 windows while focused,
   preventing gameplay clicks from escaping to another application.
+- Synchronized capture with the in-game Mouse Enabled setting, so disabling
+  mouse control immediately releases and shows the native cursor and
+  re-enabling it restores capture.
 
 ## 2026-10-08 - Unversioned portable source builds
 

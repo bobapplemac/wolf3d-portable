@@ -25,6 +25,7 @@ static int wg_fullscreen_enter_down;
 static int wg_mouse_mode = -1;
 static int wg_mouse_enabled;
 static int wg_mouse_captured;
+static int wg_mouse_capture_requested;
 static int wg_joystick_mode = -1;
 #ifdef WG_LEGACY_WIN32
 static LONG wg_windowed_style;
@@ -340,7 +341,7 @@ static void WG_Win32UpdateMouseClip(void)
     }
 }
 
-static void WG_Win32SetMouseCapture(int capture)
+static void WG_Win32ApplyMouseCapture(int capture)
 {
     capture = capture && wg_mouse_enabled && wg_window != NULL;
     if (capture == wg_mouse_captured)
@@ -361,6 +362,13 @@ static void WG_Win32SetMouseCapture(int capture)
         if (GetCapture() == wg_window) ReleaseCapture();
         while (ShowCursor(TRUE) < 0) { }
     }
+}
+
+static void WG_Win32RequestMouseCapture(int capture)
+{
+    wg_mouse_capture_requested = capture != 0;
+    WG_Win32ApplyMouseCapture(wg_mouse_capture_requested
+                              && GetForegroundWindow() == wg_window);
 }
 
 static int WG_Win32SetFullscreen(int fullscreen)
@@ -626,11 +634,11 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
 #ifdef WG_LEGACY_WIN32
                 wg_legacy_mouse_position_valid = 0;
 #endif
-                WG_Win32SetMouseCapture(0);
+                WG_Win32ApplyMouseCapture(0);
             }
             else
             {
-                WG_Win32SetMouseCapture(1);
+                WG_Win32ApplyMouseCapture(wg_mouse_capture_requested);
             }
             return DefWindowProcW(window, message, wparam, lparam);
 
@@ -721,13 +729,13 @@ static int WG_Win32Init(void)
     wg_fullscreen = 0;
     wg_fullscreen_enter_down = 0;
     wg_mouse_captured = 0;
+    wg_mouse_capture_requested = 0;
     ZeroMemory(wg_joystick_x, sizeof(wg_joystick_x));
     ZeroMemory(wg_joystick_y, sizeof(wg_joystick_y));
     ZeroMemory(wg_joystick_buttons, sizeof(wg_joystick_buttons));
     ZeroMemory(wg_joystick_connected, sizeof(wg_joystick_connected));
     wg_load_xinput();
     ShowWindow(wg_window, SW_SHOW);
-    WG_Win32SetMouseCapture(1);
     if (wg_start_fullscreen && !WG_Win32SetFullscreen(1))
     {
         DestroyWindow(wg_window);
@@ -740,7 +748,7 @@ static int WG_Win32Init(void)
 static void WG_Win32Shutdown(void)
 {
     WG_Win32PCMShutdown();
-    WG_Win32SetMouseCapture(0);
+    WG_Win32RequestMouseCapture(0);
     wg_xinput_get_state = NULL;
     if (wg_xinput_module != NULL)
     {
@@ -1140,7 +1148,8 @@ int WG_InstallPlatform(void)
         NULL,
         NULL,
         NULL,
-        WG_Win32InputDevices
+        WG_Win32InputDevices,
+        WG_Win32RequestMouseCapture
     };
 
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;

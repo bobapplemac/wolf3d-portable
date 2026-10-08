@@ -1,4 +1,5 @@
 #include "WOLF3D.h"
+#include "../WG_HELP.h"
 #include "WG_DOS_ADLIB.h"
 #include "WG_DOS_SB16.h"
 
@@ -453,6 +454,13 @@ int main(int argc, char **argv)
 {
     wolf3d_result_t result;
 
+    if (WG_CommandLineHelpRequested(argc, argv))
+    {
+        WG_PrintCommandLineHelp(
+            argc > 0 ? argv[0] : "WOLF3D.EXE", NULL,
+            "The DOS host defaults to native AdLib OPL and SB16 PCM output.\n");
+        return 0;
+    }
     if (!WG_DOSInstallPlatform())
     {
         return 1;

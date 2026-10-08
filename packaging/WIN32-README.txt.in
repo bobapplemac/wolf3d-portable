@@ -54,3 +54,6 @@ may instead keep game files elsewhere and pass --data "C:\path\to\game".
 
 Configuration and saved games use the process working directory and retain the
 selected game's data extension.
+
+Run wolf3d.exe --help (also -h or /?) from a terminal to list all game and
+Win32 host options plus the OPL drivers compiled into this package.

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-08 - Unified launcher help
+
+- Added `--help`, `-h`, and `/?` to Win32, SDL3, Linux console, and DOS
+  launchers without initializing video, input, audio, or game data.
+- Combined the authoritative options supplied by wolf3d-lib with each
+  wrapper's host-only switches and the package's compiled OPL driver list.
+- Retained `--sdl3-help` and `--linux-console-help` as compatibility aliases.
+
 ## 2026-10-08 - Linux framebuffer console fallback
 
 - Kept DRM/KMS dumb buffers as the preferred modern direct-console display

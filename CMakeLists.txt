@@ -210,7 +210,8 @@ endfunction()
 
 if(W3P_BUILD_WIN32)
     add_executable(wolf3d-win32 WIN32
-        platforms/WG_TEXT_OUTPUT.c platforms/win32/WG_WIN32.c)
+        platforms/WG_HELP.c platforms/WG_TEXT_OUTPUT.c
+        platforms/win32/WG_WIN32.c)
     w3p_configure_host(wolf3d-win32)
     target_compile_definitions(wolf3d-win32 PRIVATE
         WIN32_LEAN_AND_MEAN UNICODE _UNICODE)
@@ -269,10 +270,12 @@ endif()
 if(W3P_BUILD_SDL3)
     if(WIN32)
         add_executable(wolf3d-sdl3 WIN32
-            platforms/WG_TEXT_OUTPUT.c platforms/sdl3/WG_SDL3.c)
+            platforms/WG_HELP.c platforms/WG_TEXT_OUTPUT.c
+            platforms/sdl3/WG_SDL3.c)
     else()
         add_executable(wolf3d-sdl3
-            platforms/WG_TEXT_OUTPUT.c platforms/sdl3/WG_SDL3.c)
+            platforms/WG_HELP.c platforms/WG_TEXT_OUTPUT.c
+            platforms/sdl3/WG_SDL3.c)
     endif()
     w3p_configure_host(wolf3d-sdl3)
     target_link_libraries(wolf3d-sdl3 PRIVATE SDL3::SDL3-shared)
@@ -350,7 +353,7 @@ if(W3P_BUILD_SDL3)
         DEPENDS ${W3P_SDL3_RELEASE_DEPENDS}
         COMMENT "Staging ${W3P_RELEASE_ARCH} SDL3 release" VERBATIM)
     if(BUILD_TESTING)
-        add_test(NAME sdl3-help COMMAND wolf3d-sdl3 --sdl3-help)
+        add_test(NAME sdl3-help COMMAND wolf3d-sdl3 --help)
     endif()
 endif()
 
@@ -358,7 +361,7 @@ if(W3P_BUILD_LINUX_CONSOLE)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(LIBDRM REQUIRED IMPORTED_TARGET libdrm)
     pkg_check_modules(ALSA REQUIRED IMPORTED_TARGET alsa)
-    add_executable(wolf3d-console platforms/WG_TEXT_OUTPUT.c
+    add_executable(wolf3d-console platforms/WG_HELP.c platforms/WG_TEXT_OUTPUT.c
         platforms/linux-console/MAIN.c platforms/linux-console/WG_LINUX_CONSOLE.c)
     w3p_configure_host(wolf3d-console)
     target_link_libraries(wolf3d-console PRIVATE PkgConfig::LIBDRM PkgConfig::ALSA)
@@ -413,6 +416,6 @@ if(W3P_BUILD_LINUX_CONSOLE)
         DEPENDS ${W3P_CONSOLE_RELEASE_DEPENDS}
         COMMENT "Staging ${W3P_RELEASE_ARCH} console release" VERBATIM)
     if(BUILD_TESTING)
-        add_test(NAME console-help COMMAND wolf3d-console --linux-console-help)
+        add_test(NAME console-help COMMAND wolf3d-console --help)
     endif()
 endif()

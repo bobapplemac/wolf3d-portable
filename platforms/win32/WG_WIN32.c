@@ -1,4 +1,5 @@
 #include "WOLF3D.h"
+#include "../WG_HELP.h"
 #include "../WG_HOST.h"
 #include "../WG_TEXT_OUTPUT.h"
 
@@ -1392,7 +1393,19 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
         }
     }
 
-    result = wolf3d_Create(argc, argv);
+    if (WG_CommandLineHelpRequested(argc, argv))
+    {
+        WG_PrintCommandLineHelp(
+            argc > 0 ? argv[0] : "wolf3d.exe",
+            "Win32 host options:\n"
+            "  --fullscreen         Start in borderless fullscreen mode\n",
+            "Press F11 or Alt+Enter to toggle windowed/fullscreen mode.\n");
+        result = WOLF3D_RESULT_QUIT;
+    }
+    else
+    {
+        result = wolf3d_Create(argc, argv);
+    }
     if (result == WOLF3D_RESULT_OK)
     {
         result = wolf3d_Run();

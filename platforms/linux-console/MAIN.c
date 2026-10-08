@@ -1,6 +1,7 @@
 #include "WOLF3D.h"
 #include "../WG_HOST.h"
 #include "WG_LINUX_CONSOLE.h"
+#include "../WG_HELP.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,21 +9,18 @@
 
 static void WG_PrintHelp(const char *program)
 {
-    printf("Usage: %s [Linux console options] [game options]\n\n",
-           program != NULL ? program : "wolf3d-linux-console");
-    printf("Linux console options:\n");
-    printf("  --video MODE         Video backend: auto, drm, or fbdev (default: auto)\n");
-    printf("  --drm-device PATH    DRM card to use (default: first usable card)\n");
-    printf("  --fb-device PATH     Framebuffer to use (default: $FRAMEBUFFER or /dev/fb0)\n");
-    printf("  --input-device PATH  evdev device to use (repeatable; default: auto)\n");
-    printf("  --alsa-device NAME   ALSA PCM device (default: default)\n");
-    printf("  --no-audio           Run without opening an ALSA device\n");
-    printf("  --linux-console-help Show this help and exit\n\n");
-    printf("Run from an active Linux virtual console with permission to access\n");
-    printf("/dev/dri/card* or /dev/fb*, /dev/input/event*, and the selected\n");
-    printf("ALSA device. DRM/KMS is preferred; fbdev is the automatic fallback.\n");
-    printf("Game audio options: --opl nuked|dbopl|silent and ");
-    printf("--sample-rate HZ.\n");
+    WG_PrintCommandLineHelp(
+        program != NULL ? program : "wolf3d",
+        "Linux console host options:\n"
+        "  --video MODE         Video backend: auto, drm, or fbdev (default: auto)\n"
+        "  --drm-device PATH    DRM card to use (default: first usable card)\n"
+        "  --fb-device PATH     Framebuffer (default: $FRAMEBUFFER or /dev/fb0)\n"
+        "  --input-device PATH  evdev device (repeatable; default: auto)\n"
+        "  --alsa-device NAME   ALSA PCM device (default: default)\n"
+        "  --no-audio           Run without opening an ALSA device\n"
+        "  --linux-console-help Alias for --help\n",
+        "Run from an active virtual console with access to the selected video,\n"
+        "evdev input, and ALSA devices. DRM/KMS is preferred over fbdev.\n");
 }
 
 int main(int argc, char **argv)
@@ -42,7 +40,8 @@ int main(int argc, char **argv)
     game_argv[game_argc++] = argv[0];
     for (index = 1; index < argc; ++index)
     {
-        if (strcmp(argv[index], "--linux-console-help") == 0)
+        if (strcmp(argv[index], "--linux-console-help") == 0
+            || WG_CommandLineHelpRequested(argc, argv))
         {
             WG_PrintHelp(argv[0]);
             free(game_argv);

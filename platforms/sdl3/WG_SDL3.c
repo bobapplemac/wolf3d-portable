@@ -1,4 +1,5 @@
 #include "WOLF3D.h"
+#include "../WG_HELP.h"
 #include "../WG_HOST.h"
 #include "../WG_TEXT_OUTPUT.h"
 
@@ -709,16 +710,12 @@ int WG_InstallPlatform(void)
 
 static void WG_SDLPrintHelp(const char *program)
 {
-    printf("Usage: %s [game options]\n\n", program != NULL ? program
-           : "wolf3d-sdl3");
-    printf("SDL3 host options:\n");
-    printf("  --fullscreen  Start in borderless fullscreen mode\n");
-    printf("  --sdl3-help   Show this help and exit\n\n");
-    printf("Press F11 or Alt+Enter to toggle windowed/fullscreen mode.\n");
-    printf("Mouse and game-controller hardware are detected automatically.\n");
-    printf("Use --mouse/--nomouse or --joy/--nojoy to override detection.\n");
-    printf("Pass --opl nuked|dbopl|silent to select a compiled audio driver.\n");
-    printf("Pass --sample-rate HZ to request 8000--192000 Hz PCM.\n");
+    WG_PrintCommandLineHelp(
+        program != NULL ? program : "wolf3d-sdl3",
+        "SDL3 host options:\n"
+        "  --fullscreen         Start in borderless fullscreen mode\n"
+        "  --sdl3-help          Alias for --help\n",
+        "Press F11 or Alt+Enter to toggle windowed/fullscreen mode.\n");
 }
 
 int main(int argc, char **argv)
@@ -728,7 +725,8 @@ int main(int argc, char **argv)
 
     for (index = 1; index < argc; ++index)
     {
-        if (strcmp(argv[index], "--sdl3-help") == 0)
+        if (strcmp(argv[index], "--sdl3-help") == 0
+            || WG_CommandLineHelpRequested(argc, argv))
         {
             WG_SDLPrintHelp(argv[0]);
             return 0;

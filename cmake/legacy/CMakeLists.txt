@@ -27,6 +27,7 @@ set(WG_DIST_ROOT "${CMAKE_BINARY_DIR}/wolf3d-lib-dist" CACHE PATH "" FORCE)
 add_subdirectory("${W3P_WOLF3D_ROOT}/cmake/legacy" wolf3d-lib)
 
 add_executable(wolf3d-win32 WIN32
+    "${W3P_ROOT}/platforms/WG_HELP.c"
     "${W3P_ROOT}/platforms/WG_TEXT_OUTPUT.c"
     "${W3P_ROOT}/platforms/win32/WG_WIN32.c")
 target_link_libraries(wolf3d-win32 wolf3d user32 gdi32 winmm shell32)

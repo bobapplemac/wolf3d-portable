@@ -1,5 +1,5 @@
 system dos4g
 option quiet
 name WOLF3D.EXE
-file WG_DOS.obj,WG_DOS_SB16.obj
+file WG_HELP.obj,WG_DOS.obj,WG_DOS_SB16.obj
 library WOLF3D.LIB,WGADLIB.LIB,NUKEDOPL.LIB

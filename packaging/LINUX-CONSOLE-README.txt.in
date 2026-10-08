@@ -2,8 +2,9 @@ wolf3d-portable @PROJECT_VERSION@ - Linux direct-console host
 =========================================================
 
 This package runs directly on a Linux virtual console. It does not require
-X11, Wayland, SDL, or a desktop environment. Video uses DRM/KMS dumb buffers,
-input uses evdev, and audio uses ALSA.
+X11, Wayland, SDL, or a desktop environment. Video prefers DRM/KMS dumb
+buffers and falls back to the Linux framebuffer, input uses evdev, and audio
+uses ALSA.
 
 Copy the original game data files beside the executable, or point to them:
 
@@ -16,18 +17,22 @@ video, input, and audio groups or through seat/session device ACLs.
 
 Host-specific options:
 
+  --video auto|drm|fbdev
   --drm-device /dev/dri/card0
+  --fb-device /dev/fb0
   --input-device /dev/input/event3    (repeatable)
   --alsa-device default
   --no-audio
-  --linux-console-help
+  --help                              (also -h or /?)
 
 Game audio options are --opl nuked|dbopl|silent and --sample-rate HZ. Only
 drivers recorded in WOLF3D-LIB.txt are available.
 
 Without explicit device options, the host selects the first connected DRM
-display, opens usable evdev devices, and uses the ALSA "default" PCM. Missing
-or unavailable audio produces a warning and the game continues silently.
+display, falls back to $FRAMEBUFFER or /dev/fb0, opens usable evdev devices,
+and uses the ALSA "default" PCM. Missing or unavailable audio produces a
+warning and the game continues silently. --linux-console-help remains an
+alias for --help.
 
 The host preserves the engine's 320x200 indexed framebuffer and displays it
 at the original monitor-intended 4:3 aspect ratio with letterboxing as needed.

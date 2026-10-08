@@ -21,9 +21,15 @@ WG_OPENWATCOM_DEFAULT_OPL="$default_driver" \
 WG_OPENWATCOM_SAMPLE_RATE="$sample_rate" \
 sh "$root/lib/wolf3d/scripts/linux/openwatcom/build-library.sh"
 
+echo "Open Watcom C: platforms/WG_HELP.c"
+wcc386 -zq -bt=dos -mf -5r -ox -fr -w4 -we \
+    -dWOLF3D_STATIC -i="$root/lib/wolf3d/include" -i="$root/platforms" \
+    -fo="$build_dir/objects/WG_HELP.obj" \
+    "$root/platforms/WG_HELP.c"
 echo "Open Watcom C: platforms/dos/WG_DOS.c"
 wcc386 -zq -bt=dos -mf -5r -ox -fr -w4 -we \
-    -dWOLF3D_STATIC -i="$root/lib/wolf3d/include" -i="$root/platforms/dos" \
+    -dWOLF3D_STATIC -i="$root/lib/wolf3d/include" -i="$root/platforms" \
+    -i="$root/platforms/dos" \
     -fo="$build_dir/objects/WG_DOS.obj" \
     "$root/platforms/dos/WG_DOS.c"
 echo "Open Watcom C: platforms/dos/WG_DOS_SB16.c"
@@ -48,7 +54,7 @@ fi
 echo "Open Watcom Link: WOLF3D.EXE"
 wlink system dos4g option quiet \
     name "$dist_dir/WOLF3D.EXE" \
-    file "$build_dir/objects/WG_DOS.obj,$build_dir/objects/WG_DOS_SB16.obj" \
+    file "$build_dir/objects/WG_HELP.obj,$build_dir/objects/WG_DOS.obj,$build_dir/objects/WG_DOS_SB16.obj" \
     library "$link_libraries"
 
 # WLINK's DOS/4G system target requests DOS4GW.EXE by name. DOS/32A is a
@@ -62,6 +68,7 @@ if [ -f "$library_dist/licenses/NUKED-OPL3-LGPL-2.1.txt" ]; then
     cp "$library_dist/licenses/NUKED-OPL3-LGPL-2.1.txt" \
        "$dist_dir/LICENSES/Nuked-OPL3-LGPL-2.1.txt"
     mkdir -p "$dist_dir/RELINK"
+    cp "$build_dir/objects/WG_HELP.obj" "$dist_dir/RELINK/WG_HELP.obj"
     cp "$build_dir/objects/WG_DOS.obj" "$dist_dir/RELINK/WG_DOS.obj"
     cp "$build_dir/objects/WG_DOS_SB16.obj" \
        "$dist_dir/RELINK/WG_DOS_SB16.obj"

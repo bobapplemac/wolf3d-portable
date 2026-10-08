@@ -32,7 +32,8 @@ game behavior remains in the separate Wolf3D library.
 Press F11 or Alt+Enter to toggle borderless desktop fullscreen. F11 is handled
 only by the host and will not dismiss an in-game "Press a key" prompt.
 
-Run with --sdl3-help for host-specific help. Use --opl
+Run with --help for complete game and host options (--sdl3-help remains an
+alias). Use --opl
 nuked|dbopl|silent to select an included audio driver and --sample-rate HZ to
 change the preferred PCM rate.
 

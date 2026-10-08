@@ -219,6 +219,11 @@ wolf3d-sdl3 --data /path/to/WL1
 wolf3d --data /path/to/WL6 --game WL6
 ```
 
+Every launcher accepts `--help`, `-h`, or `/?` and exits after listing the
+generic game options, the current host's options, and its compiled OPL
+drivers. The older `--sdl3-help` and `--linux-console-help` spellings remain
+available as compatibility aliases.
+
 The Linux console host needs no X11 or Wayland. Its default `--video auto`
 mode prefers a connected DRM/KMS display and falls back to `$FRAMEBUFFER` or
 `/dev/fb0`. Use `--video drm` or `--video fbdev` to require one backend, with

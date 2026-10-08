@@ -441,7 +441,8 @@ static int WG_DOSInstallPlatform(void)
         WG_DOSPCMInitEx,
         WG_DOSAdLibInit,
         WG_DOSAdLibShutdown,
-        WG_DOSAdLibWrite
+        WG_DOSAdLibWrite,
+        NULL
     };
 
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;

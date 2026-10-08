@@ -32,6 +32,8 @@ static uint8_t wg_text_screen[WOLF3D_TEXT_COLUMNS * WOLF3D_TEXT_ROWS
 static uint16_t wg_text_columns;
 static uint16_t wg_text_rows;
 static int wg_mouse_enabled;
+static int wg_mouse_mode = -1;
+static int wg_joystick_mode = -1;
 static int wg_start_fullscreen;
 static int wg_fullscreen;
 static int wg_fullscreen_enter_down;
@@ -49,7 +51,28 @@ static int WG_SDLSetFullscreen(int fullscreen)
         return 0;
     }
     wg_fullscreen = fullscreen;
-    if (!(fullscreen ? SDL_HideCursor() : SDL_ShowCursor()))
+    if (!((fullscreen || wg_mouse_enabled)
+              ? SDL_HideCursor() : SDL_ShowCursor()))
+    {
+        fprintf(stderr, "wolf3d: could not change cursor visibility: %s\n",
+                SDL_GetError());
+    }
+    return 1;
+}
+
+static int WG_SDLSetMouseCapture(int capture)
+{
+    int enabled = capture && wg_mouse_enabled;
+
+    if (!SDL_SetWindowRelativeMouseMode(wg_window, enabled != 0)
+        || !SDL_SetWindowMouseGrab(wg_window, enabled != 0))
+    {
+        fprintf(stderr, "wolf3d: SDL mouse capture failed: %s\n",
+                SDL_GetError());
+        return 0;
+    }
+    if (!(enabled ? SDL_HideCursor()
+                  : wg_fullscreen ? SDL_HideCursor() : SDL_ShowCursor()))
     {
         fprintf(stderr, "wolf3d: could not change cursor visibility: %s\n",
                 SDL_GetError());
@@ -172,6 +195,10 @@ static void WG_SDLRefreshGamepads(void)
     unsigned int slot;
 
     WG_SDLCloseGamepads();
+    if (wg_joystick_mode == 0)
+    {
+        return;
+    }
     identifiers = SDL_GetGamepads(&count);
     for (slot = 0U; slot < WOLF3D_MAX_JOYSTICKS; ++slot)
     {
@@ -261,6 +288,8 @@ static int WG_SDLInit(void)
     }
     wg_fullscreen = 0;
     wg_fullscreen_enter_down = 0;
+    wg_mouse_enabled = wg_mouse_mode > 0
+        || (wg_mouse_mode < 0 && SDL_HasMouse());
     if (wg_start_fullscreen && !WG_SDLSetFullscreen(1))
     {
         SDL_DestroyWindow(wg_window);
@@ -299,11 +328,8 @@ static int WG_SDLInit(void)
         SDL_Quit();
         return 0;
     }
-    if (wg_mouse_enabled
-        && !SDL_SetWindowRelativeMouseMode(wg_window, true))
+    if (!WG_SDLSetMouseCapture(1))
     {
-        fprintf(stderr, "wolf3d: SDL relative mouse mode failed: %s\n",
-                SDL_GetError());
         SDL_DestroyTexture(wg_texture);
         SDL_DestroyRenderer(wg_renderer);
         SDL_DestroyWindow(wg_window);
@@ -443,6 +469,12 @@ static int WG_SDLPollEvent(wolf3d_event_t *event)
                     return 1;
                 }
                 break;
+            case SDL_EVENT_WINDOW_FOCUS_GAINED:
+                (void)WG_SDLSetMouseCapture(1);
+                break;
+            case SDL_EVENT_WINDOW_FOCUS_LOST:
+                (void)WG_SDLSetMouseCapture(0);
+                break;
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
             case SDL_EVENT_MOUSE_BUTTON_UP:
                 if (wg_mouse_enabled && sdl_event.button.button <= 3U)
@@ -473,6 +505,30 @@ static int WG_SDLPollEvent(wolf3d_event_t *event)
 static int WG_SDLIsInteractive(void)
 {
     return 1;
+}
+
+static uint32_t WG_SDLInputDevices(void)
+{
+    uint32_t devices = wg_mouse_enabled
+        ? WOLF3D_INPUT_DEVICE_MOUSE : 0U;
+    unsigned int slot;
+
+    if (wg_joystick_mode > 0)
+    {
+        devices |= WOLF3D_INPUT_DEVICE_JOYSTICK;
+    }
+    else if (wg_joystick_mode < 0)
+    {
+        for (slot = 0U; slot < WOLF3D_MAX_JOYSTICKS; ++slot)
+        {
+            if (wg_gamepads[slot] != NULL)
+            {
+                devices |= WOLF3D_INPUT_DEVICE_JOYSTICK;
+                break;
+            }
+        }
+    }
+    return devices;
 }
 
 static void WG_SDLSetWindowTitle(const char *title)
@@ -624,7 +680,8 @@ int WG_InstallPlatform(void)
         WG_SDLPCMInitEx,
         NULL,
         NULL,
-        NULL
+        NULL,
+        WG_SDLInputDevices
     };
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;
 }
@@ -637,7 +694,8 @@ static void WG_SDLPrintHelp(const char *program)
     printf("  --fullscreen  Start in borderless fullscreen mode\n");
     printf("  --sdl3-help   Show this help and exit\n\n");
     printf("Press F11 or Alt+Enter to toggle windowed/fullscreen mode.\n");
-    printf("Pass --mouse to expose relative mouse input to the game.\n");
+    printf("Mouse and game-controller hardware are detected automatically.\n");
+    printf("Use --mouse/--nomouse or --joy/--nojoy to override detection.\n");
     printf("Pass --opl nuked|dbopl|silent to select a compiled audio driver.\n");
     printf("Pass --sample-rate HZ to request 8000--192000 Hz PCM.\n");
 }
@@ -665,7 +723,19 @@ int main(int argc, char **argv)
         }
         if (strcmp(argv[index], "--mouse") == 0)
         {
-            wg_mouse_enabled = 1;
+            wg_mouse_mode = 1;
+        }
+        if (strcmp(argv[index], "--nomouse") == 0)
+        {
+            wg_mouse_mode = 0;
+        }
+        if (strcmp(argv[index], "--joy") == 0)
+        {
+            wg_joystick_mode = 1;
+        }
+        if (strcmp(argv[index], "--nojoy") == 0)
+        {
+            wg_joystick_mode = 0;
         }
         if (strcmp(argv[index], "--fullscreen") == 0)
         {

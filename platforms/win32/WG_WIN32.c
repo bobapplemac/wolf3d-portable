@@ -22,6 +22,10 @@ static int wg_quit_pending;
 static int wg_start_fullscreen;
 static int wg_fullscreen;
 static int wg_fullscreen_enter_down;
+static int wg_mouse_mode = -1;
+static int wg_mouse_enabled;
+static int wg_mouse_captured;
+static int wg_joystick_mode = -1;
 #ifdef WG_LEGACY_WIN32
 static LONG wg_windowed_style;
 #else
@@ -36,7 +40,6 @@ static HANDLE wg_console_output;
 #ifdef WG_LEGACY_WIN32
 static POINT wg_legacy_mouse_position;
 static int wg_legacy_mouse_position_valid;
-static int wg_legacy_mouse_requested;
 #endif
 
 /* XInput is loaded at run time, so carry its small public ABI here instead of
@@ -247,7 +250,7 @@ static void wg_poll_joysticks(void)
 {
     DWORD joystick;
 
-    if (wg_xinput_get_state == NULL)
+    if (wg_joystick_mode == 0 || wg_xinput_get_state == NULL)
     {
         return;
     }
@@ -308,6 +311,55 @@ static void wg_poll_joysticks(void)
             event.buttons = buttons;
             wg_queue_event(&event);
         }
+    }
+}
+
+static void WG_Win32UpdateMouseClip(void)
+{
+    RECT rectangle;
+    POINT upper_left;
+    POINT lower_right;
+
+    if (!wg_mouse_captured || wg_window == NULL
+        || !GetClientRect(wg_window, &rectangle))
+    {
+        return;
+    }
+    upper_left.x = rectangle.left;
+    upper_left.y = rectangle.top;
+    lower_right.x = rectangle.right;
+    lower_right.y = rectangle.bottom;
+    if (ClientToScreen(wg_window, &upper_left)
+        && ClientToScreen(wg_window, &lower_right))
+    {
+        rectangle.left = upper_left.x;
+        rectangle.top = upper_left.y;
+        rectangle.right = lower_right.x;
+        rectangle.bottom = lower_right.y;
+        (void)ClipCursor(&rectangle);
+    }
+}
+
+static void WG_Win32SetMouseCapture(int capture)
+{
+    capture = capture && wg_mouse_enabled && wg_window != NULL;
+    if (capture == wg_mouse_captured)
+    {
+        if (capture) WG_Win32UpdateMouseClip();
+        return;
+    }
+    wg_mouse_captured = capture;
+    if (capture)
+    {
+        SetCapture(wg_window);
+        WG_Win32UpdateMouseClip();
+        while (ShowCursor(FALSE) >= 0) { }
+    }
+    else
+    {
+        ClipCursor(NULL);
+        if (GetCapture() == wg_window) ReleaseCapture();
+        while (ShowCursor(TRUE) < 0) { }
     }
 }
 
@@ -379,7 +431,9 @@ static int WG_Win32SetFullscreen(int fullscreen)
         }
     }
     wg_fullscreen = fullscreen;
-    SetCursor(fullscreen ? NULL : LoadCursorW(NULL, IDC_ARROW));
+    SetCursor((fullscreen || wg_mouse_captured)
+                  ? NULL : LoadCursorW(NULL, IDC_ARROW));
+    WG_Win32UpdateMouseClip();
     return 1;
 }
 
@@ -389,7 +443,8 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
     switch (message)
     {
         case WM_SETCURSOR:
-            if (wg_fullscreen && LOWORD(lparam) == HTCLIENT)
+            if ((wg_fullscreen || wg_mouse_captured)
+                && LOWORD(lparam) == HTCLIENT)
             {
                 SetCursor(NULL);
                 return TRUE;
@@ -453,7 +508,8 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
             RAWINPUT input;
             UINT size = sizeof(input);
 
-            if (GetRawInputData((HRAWINPUT)lparam, RID_INPUT, &input, &size,
+            if (wg_mouse_enabled
+                && GetRawInputData((HRAWINPUT)lparam, RID_INPUT, &input, &size,
                                 sizeof(RAWINPUTHEADER)) == sizeof(input)
                 && input.header.dwType == RIM_TYPEMOUSE)
             {
@@ -511,7 +567,7 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
 
             position.x = (SHORT)LOWORD(lparam);
             position.y = (SHORT)HIWORD(lparam);
-            if (wg_legacy_mouse_requested)
+            if (wg_mouse_enabled)
             {
                 RECT client;
                 POINT center;
@@ -540,23 +596,6 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
                     }
                 }
             }
-            else if (wg_legacy_mouse_position_valid)
-            {
-                LONG x = position.x - wg_legacy_mouse_position.x;
-                LONG y = position.y - wg_legacy_mouse_position.y;
-
-                if (x != 0 || y != 0)
-                {
-                    wolf3d_event_t event = { 0 };
-
-                    event.type = WOLF3D_EVENT_MOUSE_MOTION;
-                    event.x = (int16_t)(x > INT16_MAX ? INT16_MAX
-                                         : x < INT16_MIN ? INT16_MIN : x);
-                    event.y = (int16_t)(y > INT16_MAX ? INT16_MAX
-                                         : y < INT16_MIN ? INT16_MIN : y);
-                    wg_queue_event(&event);
-                }
-            }
             wg_legacy_mouse_position = position;
             wg_legacy_mouse_position_valid = 1;
             return 0;
@@ -564,26 +603,41 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
 
         case WM_LBUTTONDOWN:
         case WM_LBUTTONUP:
-            wg_queue_mouse_button(1U, message == WM_LBUTTONDOWN);
+            if (wg_mouse_enabled)
+                wg_queue_mouse_button(1U, message == WM_LBUTTONDOWN);
             return 0;
 
         case WM_RBUTTONDOWN:
         case WM_RBUTTONUP:
-            wg_queue_mouse_button(2U, message == WM_RBUTTONDOWN);
+            if (wg_mouse_enabled)
+                wg_queue_mouse_button(2U, message == WM_RBUTTONDOWN);
             return 0;
 
         case WM_MBUTTONDOWN:
         case WM_MBUTTONUP:
-            wg_queue_mouse_button(3U, message == WM_MBUTTONDOWN);
+            if (wg_mouse_enabled)
+                wg_queue_mouse_button(3U, message == WM_MBUTTONDOWN);
             return 0;
+#endif
 
         case WM_ACTIVATE:
             if (LOWORD(wparam) == WA_INACTIVE)
             {
+#ifdef WG_LEGACY_WIN32
                 wg_legacy_mouse_position_valid = 0;
+#endif
+                WG_Win32SetMouseCapture(0);
+            }
+            else
+            {
+                WG_Win32SetMouseCapture(1);
             }
             return DefWindowProcW(window, message, wparam, lparam);
-#endif
+
+        case WM_MOVE:
+        case WM_SIZE:
+            WG_Win32UpdateMouseClip();
+            return DefWindowProcW(window, message, wparam, lparam);
 
         case WM_CLOSE:
             wg_quit_pending = 1;
@@ -640,12 +694,16 @@ static int WG_Win32Init(void)
         return 0;
     }
 
+    wg_mouse_enabled = wg_mouse_mode > 0
+        || (wg_mouse_mode < 0 && GetSystemMetrics(SM_MOUSEPRESENT) != 0);
+
 #ifndef WG_LEGACY_WIN32
     mouse.usUsagePage = 0x01U;
     mouse.usUsage = 0x02U;
     mouse.dwFlags = 0U;
     mouse.hwndTarget = wg_window;
-    if (!RegisterRawInputDevices(&mouse, 1U, sizeof(mouse)))
+    if (wg_mouse_enabled
+        && !RegisterRawInputDevices(&mouse, 1U, sizeof(mouse)))
     {
         DestroyWindow(wg_window);
         wg_window = NULL;
@@ -662,12 +720,14 @@ static int WG_Win32Init(void)
     wg_quit_pending = 0;
     wg_fullscreen = 0;
     wg_fullscreen_enter_down = 0;
+    wg_mouse_captured = 0;
     ZeroMemory(wg_joystick_x, sizeof(wg_joystick_x));
     ZeroMemory(wg_joystick_y, sizeof(wg_joystick_y));
     ZeroMemory(wg_joystick_buttons, sizeof(wg_joystick_buttons));
     ZeroMemory(wg_joystick_connected, sizeof(wg_joystick_connected));
     wg_load_xinput();
     ShowWindow(wg_window, SW_SHOW);
+    WG_Win32SetMouseCapture(1);
     if (wg_start_fullscreen && !WG_Win32SetFullscreen(1))
     {
         DestroyWindow(wg_window);
@@ -680,6 +740,7 @@ static int WG_Win32Init(void)
 static void WG_Win32Shutdown(void)
 {
     WG_Win32PCMShutdown();
+    WG_Win32SetMouseCapture(0);
     wg_xinput_get_state = NULL;
     if (wg_xinput_module != NULL)
     {
@@ -824,6 +885,33 @@ static int WG_Win32PollEvent(wolf3d_event_t *event)
 static int WG_Win32IsInteractive(void)
 {
     return 1;
+}
+
+static uint32_t WG_Win32InputDevices(void)
+{
+    uint32_t devices = wg_mouse_enabled
+        ? WOLF3D_INPUT_DEVICE_MOUSE : 0U;
+    DWORD joystick;
+
+    if (wg_joystick_mode > 0)
+    {
+        devices |= WOLF3D_INPUT_DEVICE_JOYSTICK;
+    }
+    else if (wg_joystick_mode < 0 && wg_xinput_get_state != NULL)
+    {
+        for (joystick = 0U; joystick < WOLF3D_MAX_JOYSTICKS; ++joystick)
+        {
+            wg_xinput_state_t state;
+
+            ZeroMemory(&state, sizeof(state));
+            if (wg_xinput_get_state(joystick, &state) == ERROR_SUCCESS)
+            {
+                devices |= WOLF3D_INPUT_DEVICE_JOYSTICK;
+                break;
+            }
+        }
+    }
+    return devices;
 }
 
 static void WG_Win32SetWindowTitle(const char *title)
@@ -1051,7 +1139,8 @@ int WG_InstallPlatform(void)
         WG_Win32PCMInitEx,
         NULL,
         NULL,
-        NULL
+        NULL,
+        WG_Win32InputDevices
     };
 
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;
@@ -1125,12 +1214,22 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
         {
             wg_start_fullscreen = 1;
         }
-#ifdef WG_LEGACY_WIN32
         else if (index > 0 && strcmp(argv[index], "--mouse") == 0)
         {
-            wg_legacy_mouse_requested = 1;
+            wg_mouse_mode = 1;
         }
-#endif
+        else if (index > 0 && strcmp(argv[index], "--nomouse") == 0)
+        {
+            wg_mouse_mode = 0;
+        }
+        else if (index > 0 && strcmp(argv[index], "--joy") == 0)
+        {
+            wg_joystick_mode = 1;
+        }
+        else if (index > 0 && strcmp(argv[index], "--nojoy") == 0)
+        {
+            wg_joystick_mode = 0;
+        }
     }
 
     result = wolf3d_Create(argc, argv);

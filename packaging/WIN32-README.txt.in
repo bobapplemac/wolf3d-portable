@@ -35,8 +35,10 @@ Use --adlib to retain OPL music and AdLib effects while disabling digitized
 Sound Blaster effects; SIGNON then marks AdLib instead of Sound Blaster.
 Use --opl nuked, --opl dbopl, or --opl silent to select a driver recorded in
 WOLF3D-LIB.txt. Use --sample-rate HZ to change the preferred PCM rate.
-Mouse hardware is absent unless --mouse is supplied. Without it, SIGNON leaves
-Mouse unmarked, mouse events are ignored, and mouse menu entries are disabled.
+Mouse and XInput joystick hardware are detected automatically. Use --mouse or
+--joy to force a device present, and --nomouse or --nojoy to force it absent.
+An enabled mouse is captured inside the window and released when the game
+loses focus.
 
 If this folder contains more than one game, open a terminal here and select the
 desired extension explicitly:

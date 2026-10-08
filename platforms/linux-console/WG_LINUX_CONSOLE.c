@@ -942,6 +942,21 @@ static int WG_LinuxConsoleIsInteractive(void)
     return 1;
 }
 
+static uint32_t WG_LinuxConsoleInputDevices(void)
+{
+    uint32_t devices = 0U;
+    size_t index;
+
+    for (index = 0U; index < wg_input_count; ++index)
+    {
+        if (wg_inputs[index].mouse)
+            devices |= WOLF3D_INPUT_DEVICE_MOUSE;
+        if (wg_inputs[index].joystick)
+            devices |= WOLF3D_INPUT_DEVICE_JOYSTICK;
+    }
+    return devices;
+}
+
 static void WG_LinuxConsoleSetWindowTitle(const char *title)
 {
     (void)title;
@@ -1085,7 +1100,8 @@ int WG_InstallPlatform(void)
         WG_LinuxConsolePCMInitEx,
         NULL,
         NULL,
-        NULL
+        NULL,
+        WG_LinuxConsoleInputDevices
     };
 
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;

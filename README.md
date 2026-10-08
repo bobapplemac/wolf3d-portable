@@ -228,9 +228,12 @@ WOLF3D.EXE --game WL1 --opl dbopl
 
 Executable names beginning with `wolf` prefer WL1/WL6 data. Names beginning
 with `spear` or `sod` prefer Spear data. `--game` accepts the exact data-file
-extension. Use `--mouse` to expose mouse hardware, `--fullscreen` to start
-fullscreen, and F11 or Alt+Enter to toggle fullscreen without acknowledging an
-engine "any key" wait.
+extension. Interactive hosts detect mouse and joystick hardware by default.
+Use `--mouse` or `--joy` to force a device present, and `--nomouse` or
+`--nojoy` to force it absent. Win32 and SDL3 capture an enabled mouse inside
+the game window and release it while the window lacks focus. Use
+`--fullscreen` to start fullscreen, and F11 or Alt+Enter to toggle fullscreen
+without acknowledging an engine "any key" wait.
 
 See the [build and compatibility matrix](docs/support-matrix.md) for every
 supported compiler, wrapper, build entry point, artifact, and validated

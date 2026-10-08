@@ -19,9 +19,10 @@ executable, then run wolf3d-sdl3. Alternatively, leave the data
 elsewhere and pass --data PATH. Use --game WL1, WL6, SDM, SOD, SD1, SD2,
 or SD3 when automatic selection is ambiguous.
 
-Mouse hardware is deliberately hidden from the game by default. Pass
---mouse to enable relative mouse input. SDL-compatible game controllers
-are detected automatically.
+Mouse hardware and SDL-compatible game controllers are detected automatically.
+Use --mouse or --joy to force a device present, and --nomouse or --nojoy to
+force it absent. An enabled mouse uses captured relative input and is released
+when the game loses focus.
 
 The host displays the original 320x200 framebuffer at the intended 4:3
 display aspect ratio with nearest-neighbor scaling. SDL3 provides the

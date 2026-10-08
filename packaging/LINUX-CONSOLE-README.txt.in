@@ -6,9 +6,15 @@ X11, Wayland, SDL, or a desktop environment. Video prefers DRM/KMS dumb
 buffers and falls back to the Linux framebuffer, input uses evdev, and audio
 uses ALSA.
 
-Copy the original game data files beside the executable, or point to them:
+Place original game data beside the executable or in nested subdirectories;
+the launcher recursively finds complete sets without following symbolic links.
+Alternatively, point to one exact directory:
 
   ./wolf3d --data /path/to/WL1
+
+Names beginning with wolf prefer WL6 then WL1; the exact basename spear
+prefers SOD then SDM, with cross-family fallback. Use -WL1/-WL6/-SDM/-SOD or
+--game EXT for an exact set. SD1/SD2/SD3 always require explicit selection.
 
 Run it from an active virtual console. The user needs permission to access the
 DRM card, evdev input devices, and ALSA playback device; root normally has all

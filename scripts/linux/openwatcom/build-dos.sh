@@ -90,8 +90,11 @@ wolf3d-portable $version for 32-bit protected-mode DOS
 This package uses DOS/32 Advanced DOS Extender technology. DOS4GW.EXE is the
 DOS/32A drop-in loader, not the original DOS/4GW binary.
 
-Copy legally obtained Wolfenstein 3D or Spear of Destiny data files beside
-WOLF3D.EXE, then run WOLF3D. The initial DOS host provides VGA mode 13h,
+Place legally obtained Wolfenstein 3D or Spear of Destiny data beside
+WOLF3D.EXE or in nested subdirectories, then run WOLF3D. The launcher scans
+recursively; WOLF* prefers WL6/WL1 and exact SPEAR prefers SOD/SDM, with
+cross-family fallback. Use -WL1/-WL6/-SDM/-SOD for an exact set; mission packs
+require -SD1/-SD2/-SD3. The DOS host provides VGA mode 13h,
 keyboard input, original-style 700 Hz PIT timing, and SB16 44.1 kHz 16-bit
 stereo PCM output. It reads the base port, IRQ, and high-DMA channel from the
 BLASTER environment variable. Without a compatible card it uses a timed null

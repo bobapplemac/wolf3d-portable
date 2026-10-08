@@ -419,3 +419,14 @@ if(W3P_BUILD_LINUX_CONSOLE)
         add_test(NAME console-help COMMAND wolf3d-console --help)
     endif()
 endif()
+
+if(BUILD_TESTING)
+    add_executable(wg-discovery-probe
+        tests/WG_DISCOVERY_PROBE.c platforms/WG_HELP.c)
+    w3p_configure_host(wg-discovery-probe)
+    add_test(NAME portable-data-discovery
+        COMMAND ${CMAKE_COMMAND}
+            "-DPROBE=$<TARGET_FILE:wg-discovery-probe>"
+            "-DROOT=${CMAKE_CURRENT_BINARY_DIR}/discovery-fixture"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/WG_DISCOVERY_TEST.cmake")
+endif()

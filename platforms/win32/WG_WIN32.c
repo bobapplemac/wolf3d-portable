@@ -1318,6 +1318,8 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     char **argv;
     int index;
     int exit_code;
+    char launcher_error[2048];
+    wg_game_arguments_t game_arguments;
     wolf3d_result_t result;
 
     (void)instance;
@@ -1404,7 +1406,19 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     }
     else
     {
-        result = wolf3d_Create(argc, argv);
+        if (!WG_PrepareGameArguments(argc, argv, &game_arguments,
+                                     launcher_error,
+                                     sizeof(launcher_error)))
+        {
+            WG_PrintLauncherError(launcher_error);
+            result = WOLF3D_RESULT_PLATFORM_ERROR;
+        }
+        else
+        {
+            result = wolf3d_Create(game_arguments.argc,
+                                   game_arguments.argv);
+            WG_FreeGameArguments(&game_arguments);
+        }
     }
     if (result == WOLF3D_RESULT_OK)
     {

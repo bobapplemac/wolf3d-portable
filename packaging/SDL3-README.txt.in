@@ -14,10 +14,11 @@ package may additionally require the matching X11, Wayland, audio, or graphics
 runtime libraries; the default pinned-SDL build minimizes those direct
 dependencies and is recommended for redistribution.
 
-Copy the files from one supported original game installation beside the
-executable, then run wolf3d-sdl3. Alternatively, leave the data
-elsewhere and pass --data PATH. Use --game WL1, WL6, SDM, SOD, SD1, SD2,
-or SD3 when automatic selection is ambiguous.
+Place original game data in this directory or any ordinary subdirectory, then
+run wolf3d-sdl3. The launcher recursively finds complete WL1, WL6, SDM, and SOD
+sets; symbolic links are not followed. Use --data PATH to resolve duplicate
+installations. Use --game EXT or -WL1/-WL6/-SDM/-SOD for an exact set;
+SD1/SD2/SD3 mission packs always require their explicit selector.
 
 Mouse hardware and SDL-compatible game controllers are detected automatically.
 Use --mouse or --joy to force a device present, and --nomouse or --nojoy to

@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-08 - Recursive game-data discovery
+
+- Recursively discover complete supported game-data sets below the launcher
+  directory, including installations grouped under nested `GAMEDATA` folders.
+- Prefer `WL6` then `WL1` for `wolf*` launchers and `SOD` then `SDM` for an
+  exact `spear` launcher, falling back to the other family when necessary.
+- Added `-WL1`, `-WL6`, `-SDM`, `-SOD`, `-SD1`, `-SD2`, and `-SD3` selectors;
+  mission packs remain explicit-only.
+- Reject multiple directories for the selected extension with a path list and
+  require `--data PATH` rather than choosing an installation arbitrarily.
+- Skip Windows reparse points and POSIX symbolic links during traversal.
+
 ## 2026-10-08 - Emulated sound hardware profiles
 
 - Advanced the engine to wolf3d-lib 1.4.58.

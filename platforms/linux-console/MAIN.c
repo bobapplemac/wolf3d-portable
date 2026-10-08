@@ -29,6 +29,8 @@ int main(int argc, char **argv)
     int game_argc = 0;
     int index;
     int success = 1;
+    char launcher_error[2048];
+    wg_game_arguments_t prepared;
     wolf3d_result_t result;
 
     game_argv = (char **)calloc((size_t)argc + 1U, sizeof(*game_argv));
@@ -98,17 +100,29 @@ int main(int argc, char **argv)
         game_argv[game_argc++] = argv[index];
     }
 
-    if (!success || !WG_InstallPlatform())
+    if (success
+        && !WG_PrepareGameArguments(game_argc, game_argv, &prepared,
+                                    launcher_error,
+                                    sizeof(launcher_error)))
     {
-        if (success)
-        {
-            fprintf(stderr, "wolf3d: unable to install platform API.\n");
-        }
+        fprintf(stderr, "wolf3d: %s", launcher_error);
+        success = 0;
+    }
+    if (!success)
+    {
+        free(game_argv);
+        return 1;
+    }
+    if (!WG_InstallPlatform())
+    {
+        fprintf(stderr, "wolf3d: unable to install platform API.\n");
+        WG_FreeGameArguments(&prepared);
         free(game_argv);
         return 1;
     }
 
-    result = wolf3d_Create(game_argc, game_argv);
+    result = wolf3d_Create(prepared.argc, prepared.argv);
+    WG_FreeGameArguments(&prepared);
     if (result == WOLF3D_RESULT_OK)
     {
         result = wolf3d_Run();

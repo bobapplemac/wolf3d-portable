@@ -42,14 +42,17 @@ Mouse and XInput joystick hardware are detected automatically. Use --mouse or
 An enabled mouse is captured inside the window and released when the game
 loses focus.
 
-If this folder contains more than one game, open a terminal here and select the
-desired extension explicitly:
+The launcher recursively scans this folder and ordinary subfolders for
+complete game-data sets. If multiple directories contain the selected
+extension, choose one explicitly with --data PATH. Select an extension with
+either form:
 
   wolf3d.exe --game WL6
-  wolf3d.exe --game SOD
+  wolf3d.exe -WL1
 
-Renaming the executable to a name beginning with "wolf" prefers WL1/WL6 data.
-A name beginning with "spear" or "sod" prefers SOD/SDM/SD1/SD2/SD3 data. You
+Names beginning with "wolf" prefer WL6 then WL1. The exact basename "spear"
+prefers SOD then SDM. Either falls back to the other family if needed. Mission
+packs SD1/SD2/SD3 are selected only by --game or -SD1/-SD2/-SD3. You
 may instead keep game files elsewhere and pass --data "C:\path\to\game".
 
 @W3P_OPL_KEEP_NOTE@

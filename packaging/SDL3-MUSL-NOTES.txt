@@ -8,9 +8,10 @@ launcher selects the bundled musl runtime and limits library lookup to lib/,
 so the application does not depend on the destination distribution's glibc
 version and does not require SDL3 to be installed.
 
-Place the original game data files beside the top-level wolf3d launcher. The
-launcher preserves its own path and name for engine data discovery even though
-the hosted SDL3 executable resides under bin/.
+Place original game data beside the top-level wolf3d launcher or in any nested
+ordinary subdirectory. The launcher preserves its own path and name for the
+recursive, symlink-free data scan even though the hosted SDL3 executable
+resides under bin/.
 
 The destination still supplies a Linux kernel and whichever desktop/audio
 services SDL uses at runtime. Musl-compatible X11, Wayland, eudev, ALSA, and

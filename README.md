@@ -227,6 +227,13 @@ wolf3d-sdl3 --data /path/to/WL1
 wolf3d --data /path/to/WL6 --game WL6
 ```
 
+Without `--data`, every launcher recursively searches its own directory for
+complete supported data sets. They may therefore be kept in layouts such as
+`GAMEDATA/WL1`, `GAMEDATA/WL6`, `GAMEDATA/SDM`, and `GAMEDATA/SOD` instead of
+beside the executable. Symbolic links, junctions, and other reparse points are
+not followed. If more than one directory contains the selected extension, the
+launcher lists the conflicting paths and requires an explicit `--data PATH`.
+
 Every launcher accepts `--help`, `-h`, or `/?` and exits after listing the
 generic game options, the current host's options, and its compiled OPL
 drivers. The older `--sdl3-help` and `--linux-console-help` spellings remain
@@ -244,9 +251,12 @@ WOLF3D.EXE --game WL1
 WOLF3D.EXE --game WL1 --opl dbopl
 ```
 
-Executable names beginning with `wolf` prefer WL1/WL6 data. Names beginning
-with `spear` or `sod` prefer Spear data. `--game` accepts the exact data-file
-extension. Interactive hosts detect mouse and joystick hardware by default.
+Executable names beginning with `wolf` prefer `WL6`, then `WL1`; the exact
+basename `spear` prefers `SOD`, then `SDM`. Either name falls back to the other
+family if its preferred family is absent. `SD1`, `SD2`, and `SD3` are never
+auto-selected. Use `--game EXT` or its short form (`-WL1`, `-WL6`, `-SDM`,
+`-SOD`, `-SD1`, `-SD2`, or `-SD3`) for an exact selection. Interactive hosts
+detect mouse and joystick hardware by default.
 Use `--mouse` or `--joy` to force a device present, and `--nomouse` or
 `--nojoy` to force it absent. Win32 and SDL3 capture an enabled mouse inside
 the game window and release it while the window lacks focus. Use

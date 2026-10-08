@@ -6,8 +6,11 @@
   original hardware-oriented execution model.
 - Kept DBOPL and timing-preserving silence in normal DOS packages while making
   the computationally expensive guest-side Nuked emulator an explicit opt-in.
-- Documented initial interactive DOSBox results and retained all four drivers
-  as selectable build-time choices for continued diagnosis and preservation.
+- Confirmed native AdLib, DBOPL, and silent operation through interactive
+  DOSBox gameplay; the initially silent AdLib session was traced to persisted
+  game configuration rather than the hardware-output driver.
+- Retained all four drivers as selectable build-time choices for continued
+  diagnosis and preservation.
 
 ## 2026-10-07 - Native Open Watcom DOS workspace
 

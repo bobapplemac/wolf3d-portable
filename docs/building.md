@@ -288,10 +288,12 @@ make dos DOS_OPL_DRIVERS=nuked,dbopl,silent,adlib DOS_OPL_DEFAULT=nuked
 
 The current package is compile-and-package validated and has completed
 headless DOSBox startup smokes with WL1 data through the Nuked, DBOPL, silent,
-native AdLib, SB16, and no-device paths. Those tests establish that the extender, DMA/IRQ
-initialization, null fallback, runtime driver selection, and engine run loop
-remain live;
-physical DOS hardware gameplay is not yet claimed. `make clean-dos` removes
+native AdLib, SB16, and no-device paths. Interactive DOSBox gameplay also
+confirms native AdLib, DBOPL, and silent operation; an initially silent native
+AdLib session was resolved by removing stale `CONFIG.WL1` state. These tests
+establish that the extender, DMA/IRQ initialization, null fallback, runtime
+driver selection, and engine run loop remain live. Physical DOS hardware
+gameplay is not yet claimed. `make clean-dos` removes
 its build tree and project-specific Docker image. `make clean` includes the
 same cleanup without pruning unrelated Docker objects.
 

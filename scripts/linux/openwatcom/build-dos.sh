@@ -99,8 +99,9 @@ that reference emulator inside a DOS virtual machine is computationally
 expensive. Packages containing Nuked also include RELINK materials so its LGPL
 implementation can be replaced. WGADLIB.LIB is kept separate in that kit.
 
-The game and DOS/32A loader must remain together. This checkpoint has not yet
-been validated on physical DOS hardware.
+The game and DOS/32A loader must remain together. Native AdLib, DBOPL, and
+silent operation have been confirmed through interactive DOSBox gameplay;
+physical DOS hardware remains untested.
 EOF
 
 echo "Open Watcom DOS32 application staged: $dist_dir"

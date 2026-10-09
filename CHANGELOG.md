@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-10-09 - Confirmed source updates before builds
+
+- Check for published source updates from all three root build scripts, with
+  one confirmation to update clean source and required components.
+- Follow compatible engine main from portable without requiring a parent
+  commit for each engine fix; preserve local work and unattended/offline builds.
+- Add local Git integration tests for confirmation, source preservation, and
+  independent engine updates and API compatibility.
+- Independently declare supported platform API v6 and reject incompatible
+  engines during compilation across all four hosts.
+
 ## 2026-10-09 - Win9x console and native AdLib support
 
 - Advance wolf3d-lib to 1.4.63. DOS and Win9x include DBOPL, silent, and native

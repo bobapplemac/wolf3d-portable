@@ -69,8 +69,7 @@ function Initialize-RecordedSubmodules {
     $uninitialized = @($status | Where-Object { $_ -match '^-' })
     $different = @($status | Where-Object { $_ -match '^\+' })
     if ($different.Count -gt 0) {
-        Write-Warning 'One or more submodules differ from the recorded revision. The configurator will not overwrite local dependency work.'
-        $different | ForEach-Object { Write-Host "  $_" }
+        Write-Host 'Using the selected component versions (including any accepted engine update).'
     }
     if ($missing -or $uninitialized.Count -gt 0) {
         Write-Host ''

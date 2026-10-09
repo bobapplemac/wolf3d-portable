@@ -98,7 +98,7 @@ help:
 		'  make sdl3-release            Build the SDL3 distribution.' \
 		'  make console-release         Build the DRM/fbdev/evdev/ALSA distribution.' \
 		'  make releases                Build both Linux distributions.' \
-		'  make fresh                   Update wolf3d-lib main, initialize dependencies, and build.' \
+		'  make fresh                   Offer compatible source updates, then build.' \
 		'  make dependencies            Initialize the recorded submodule revisions.' \
 		'' \
 		'Portable Debian 10 targets:' \
@@ -160,8 +160,7 @@ dependencies:
 	$(GIT) submodule update --init --recursive
 
 fresh:
-	$(GIT) submodule update --remote --merge -- lib/wolf3d
-	$(GIT) submodule update --init --recursive
+	bash scripts/git-preflight.sh .
 	$(MAKE) all
 
 configure-sdl3:

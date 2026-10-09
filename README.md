@@ -1,8 +1,9 @@
 # wolf3d-portable
 
 `wolf3d-portable` provides runnable host integrations for the preservation-
-oriented [`wolf3d-lib`](https://github.com/bobapplemac/wolf3d-lib) engine. Every wrapper builds the library
-from its recorded Git submodule checkout and links only the public `WOLF3D.h`
+oriented [`wolf3d-lib`](https://github.com/bobapplemac/wolf3d-lib) engine.
+Every wrapper builds the library from its selected Git submodule checkout
+and links only the public `WOLF3D.h`
 API through the `wolf3d::wolf3d` CMake target.
 
 The repository currently contains:
@@ -51,6 +52,38 @@ audio clock.
 
 ## Clone and initialize
 
+The root `build.sh`, `build.ps1`, and `build.cmd` scripts check for newer
+published source before building. For a clean older copy, answer **Yes** to
+update the source and its required components together, or **No** (the default)
+to build your current copy. Local edits, local development commits, and
+explicitly selected source versions are preserved. The check follows your
+configured branch (normally `main`); it never switches branches.
+
+Portable normally offers to build against the latest compatible `wolf3d-lib`
+`main`, including engine fixes published without an application update. The
+same confirmation covers application updates and engine updates. The host
+independently declares its supported API in `platforms/WG_ENGINE_COMPAT.h`;
+an incompatible engine update is skipped with an explanation, and compilation
+also rejects an incompatible engine selected manually. Breaking contract
+changes must advance the engine API version.
+
+The recorded engine commit remains a reproducible/offline starting point;
+third-party components such as SDL3 stay at their recorded versions. An engine
+update accepted through these scripts is remembered locally so later checks
+can continue updating it. Edits or other custom component selections are
+preserved. Build/package versions identify the engine actually selected.
+
+The check needs Git (and Git for Windows Bash on Windows). Source archives,
+unavailable tools, and failed network checks continue with existing sources.
+An accepted update that fails stops the build so incomplete dependencies are
+not used. Unattended runs never accept updates automatically. Set
+`WOLF3D_GIT_CHECK=0` to skip the check entirely, or
+`WOLF3D_GIT_INTERACTIVE=0` to check without prompting; PowerShell's
+`-NonInteractive` also disables update prompts. Direct Make/CMake and executor
+scripts retain their existing behavior. Regression coverage can be run with
+`python tests/WG_GIT_PREFLIGHT_TEST.py` (Python 3 and Git/Bash required).
+
+
 Clone recursively so both `wolf3d-lib` and the pinned SDL3 checkout are
 present:
 
@@ -65,10 +98,11 @@ For an existing checkout:
 git submodule update --init --recursive
 ```
 
-The committed `wolf3d-lib` gitlink is the reproducible default. On Linux,
-`make fresh` deliberately advances it to current `main`, initializes nested
-dependencies, and builds the default SDL3 package. Review and commit the new
-gitlink before treating that result as an official release.
+The committed engine revision is a reproducible starting point. The root build
+scripts offer the latest compatible engine independently of that revision. On
+Linux, `make fresh` uses the same confirmed update check and then builds the
+default SDL3 package. Packages record both application and engine commit IDs;
+engine-only fixes do not require updating the application repository.
 
 The repository's development lineage and its relationship to the companion
 library's reconstructed public history are recorded in

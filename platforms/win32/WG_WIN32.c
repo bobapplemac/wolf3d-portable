@@ -2,7 +2,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include "WOLF3D.h"
+#include "../WG_ENGINE_COMPAT.h"
 #include "../WG_HELP.h"
 #include "../WG_HOST.h"
 #include "../WG_TEXT_OUTPUT.h"

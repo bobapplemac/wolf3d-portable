@@ -1,4 +1,4 @@
-#include "WOLF3D.h"
+#include "../WG_ENGINE_COMPAT.h"
 #include "../WG_HOST.h"
 #include "../WG_TEXT_OUTPUT.h"
 #include "WG_LINUX_CONSOLE.h"

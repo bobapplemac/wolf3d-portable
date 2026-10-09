@@ -47,7 +47,7 @@ if ready git; then
             printf 'Git dependencies: initialized and usable.\n'
         fi
         if printf '%s\n' "$status" | grep -q '^+'; then
-            printf 'Warning: a submodule differs from its recorded revision; local dependency work was left untouched.\n' >&2
+            printf 'Using the selected component versions (including any accepted engine update).\n' >&2
         fi
     elif [ -f "$root/lib/wolf3d/CMakeLists.txt" ] && [ -f "$root/third_party/SDL3/CMakeLists.txt" ]; then
         printf 'Source export dependencies: present (Git metadata is unavailable).\n'

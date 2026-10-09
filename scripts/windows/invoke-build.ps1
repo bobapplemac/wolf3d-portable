@@ -337,10 +337,6 @@ if ($selected.Name -eq 'mingw-ucrt64' -and $Architecture -ne 'x64') {
 if ($selected.Name -eq 'mingw-ucrt64' -and $Runtime -ne 'static') {
     throw 'MinGW packages require the statically linked GCC support runtime.'
 }
-if ($selected.Name -eq 'mingw-ucrt64') {
-    $env:PATH = $selected.Bin + ';' +
-        (Join-Path $selected.Installation 'usr\bin') + ';' + $env:PATH
-}
 if (-not $selected.SupportsSDL3 -and $Wrapper -ne 'win32') {
     throw "$($selected.Name)/$($selected.Toolset) supports only the Win32 wrapper; select -Wrapper win32."
 }
@@ -405,9 +401,16 @@ function Invoke-DisplayedCommand {
     }
     Write-Host ('> "{0}" {1}' -f $Executable, ($displayArguments -join ' '))
     if (-not $DryRun) {
-        & $Executable @Arguments
-        if ($LASTEXITCODE -ne 0) {
-            throw "Command failed with exit code $LASTEXITCODE."
+        $savedBuildPath = $env:PATH
+        try {
+            if ($selected.Name -eq 'mingw-ucrt64') {
+                $env:PATH = $selected.Bin + ';' +
+                    (Join-Path $selected.Installation 'usr\bin') + ';' + $savedBuildPath
+            }
+            & $Executable @Arguments
+            if ($LASTEXITCODE -ne 0) { throw "Command failed with exit code $LASTEXITCODE." }
+        } finally {
+            $env:PATH = $savedBuildPath
         }
     }
 }

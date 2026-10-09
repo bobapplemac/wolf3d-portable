@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-09 - Locate CMake from legacy IDEs
+
+- Resolve legacy CMake from an explicit override, the existing build cache,
+  PATH, or standard installation directories so IDE builds work even when
+  the IDE cannot find the command used by a standalone terminal.
+- Apply the same resolution to configure, build, clean, rebuild, and publish.
+
 ## 2026-10-09 - Repair legacy IDE build commands
 
 - Replace obsolete `standard` OPL arguments with `all` in VC6 through VS2005

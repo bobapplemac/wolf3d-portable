@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-09 - Compile monitor diagnostics with the VC6 SDK
+
+- Define the documented SM_CMONITORS metric index when older Windows headers
+  omit it, preserving modern SDK definitions and the Win9x diagnostic path.
+- Compile the legacy host with the metric present and absent in regression
+  coverage to catch old-SDK header dependencies.
+
 ## 2026-10-09 - Locate CMake from legacy IDEs
 
 - Resolve legacy CMake from an explicit override, the existing build cache,

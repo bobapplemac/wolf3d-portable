@@ -13,6 +13,11 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <shellapi.h>
+
+/* Older Platform SDK headers omit this GetSystemMetrics index. */
+#ifndef SM_CMONITORS
+#define SM_CMONITORS 80
+#endif
 #if defined(_MSC_VER) && _MSC_VER < 1600
 #include "WOLF3D_STDINT.h"
 #else

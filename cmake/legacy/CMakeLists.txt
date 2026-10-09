@@ -10,6 +10,8 @@ set(W3P_WOLF3D_ROOT "${W3P_ROOT}/lib/wolf3d")
 file(READ "${W3P_WOLF3D_ROOT}/VERSION" W3P_PROJECT_VERSION)
 string(STRIP "${W3P_PROJECT_VERSION}" W3P_PROJECT_VERSION)
 set(PROJECT_VERSION "${W3P_PROJECT_VERSION}")
+include("${W3P_ROOT}/cmake/W3PCheckEngineVersion.cmake")
+w3p_check_engine_version("${W3P_PROJECT_VERSION}")
 
 option(WG_STATIC_MSVC_RUNTIME "Link the legacy MSVC runtime statically" ON)
 set(W3P_DIST_ROOT "${W3P_ROOT}/dist" CACHE PATH

@@ -15,6 +15,9 @@ if(NOT W3P_WOLF3D_VERSION MATCHES "^1\\.4\\.[0-9]+$")
     message(FATAL_ERROR "Invalid wolf3d-lib version '${W3P_WOLF3D_VERSION}'")
 endif()
 
+include(cmake/W3PCheckEngineVersion.cmake)
+w3p_check_engine_version("${W3P_WOLF3D_VERSION}")
+
 project(wolf3d-portable VERSION "${W3P_WOLF3D_VERSION}" LANGUAGES C)
 include(CTest)
 

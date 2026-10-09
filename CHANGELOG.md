@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-09 - Diagnose inaccessible and outdated engines
+
+- Stop source-update checks on Git inspection errors, including ownership
+  failures, instead of misreporting them as local edits.
+- Reject engines older than 1.4.57 during CMake configuration with an update
+  instruction, before compiling calls to the command-line help API.
+
 ## 2026-10-09 - Ignore legacy Visual Studio generated files
 
 - Ignore legacy IDE browse databases (`.ncb`), workspace options (`.opt`),

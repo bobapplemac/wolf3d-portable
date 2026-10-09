@@ -1,7 +1,7 @@
 # wolf3d-portable
 
 `wolf3d-portable` provides runnable host integrations for the preservation-
-oriented [`wolf3d-lib`](lib/wolf3d) engine. Every wrapper builds the library
+oriented [`wolf3d-lib`](https://github.com/bobapplemac/wolf3d-lib) engine. Every wrapper builds the library
 from its recorded Git submodule checkout and links only the public `WOLF3D.h`
 API through the `wolf3d::wolf3d` CMake target.
 

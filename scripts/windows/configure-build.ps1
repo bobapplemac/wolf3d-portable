@@ -101,11 +101,17 @@ if ($available.Count -eq 0) {
     throw 'No complete supported Windows build environment was detected. See docs/building.md for prerequisite details.'
 }
 
-$compiler = Read-Choice 'Compiler' $available 'Name'
+foreach ($toolchain in $available) {
+    $displayName = if ($toolchain.Name -eq 'mingw-ucrt64') { 'MinGW GCC / UCRT (MSYS2)' } else { "MSVC $($toolchain.Toolset) ($($toolchain.Name) installation)" }
+    $toolchain | Add-Member -NotePropertyName DisplayName -NotePropertyValue $displayName -Force
+}
+$compiler = Read-Choice 'Toolchain' $available 'DisplayName'
 $architectures = if ($compiler.Name -eq 'mingw-ucrt64') { @('x64') } else { @('x64', 'x86') }
 $architecture = Read-Choice 'Architecture' $architectures
 $wrappers = if ($compiler.SupportsSDL3) { @('all', 'win32', 'sdl3') } else { @('win32') }
-$wrapper = Read-Choice 'Wrapper' $wrappers
+$backendNames = @{ all = 'GDI + SDL3'; win32 = 'GDI'; sdl3 = 'SDL3' }
+$backendOptions = @($wrappers | ForEach-Object { [pscustomobject]@{ Value = $_; Label = $backendNames[$_] } })
+$wrapper = (Read-Choice 'Backend' $backendOptions 'Label').Value
 $action = Read-Choice 'What would you like to produce?' @('publish', 'build', 'clean')
 $configuration = if ($action -eq 'publish') { 'Release' } else {
     Read-Choice 'Configuration' @('Release', 'Debug')
@@ -149,7 +155,7 @@ Write-Host ''
 Write-Host 'Build plan:'
 Write-Host "  Compiler:      $($compiler.Name) / $($compiler.Toolset)"
 Write-Host "  Architecture:  $architecture"
-Write-Host "  Wrapper:       $wrapper"
+Write-Host "  Backend:       $($backendNames[$wrapper])"
 Write-Host "  Result:        $action / $configuration"
 Write-Host "  Runtime:       $runtime"
 Write-Host "  OPL drivers:   $drivers (default: $defaultOpl)"

@@ -85,15 +85,15 @@ help:
 		'Common targets:' \
 		'  make | make all              Build the SDL3 distribution (default).' \
 		'  make sdl3-release            Build the SDL3 distribution.' \
-		'  make console-release         Build the DRM/fbdev/evdev/ALSA distribution.' \
+		'  make console-release         Build the KMS/fbdev distribution (evdev/ALSA).' \
 		'  make releases                Build both Linux distributions.' \
 		'  make fresh                   Offer compatible source updates, then build.' \
 		'  make dependencies            Initialize the recorded submodule revisions.' \
 		'' \
 		'Portable Debian 10 targets:' \
-		'  make portable                Build portable SDL3 and console distributions.' \
+		'  make portable                Build portable SDL3 and KMS/fbdev distributions.' \
 		'  make portable-sdl3           Build the portable SDL3 distribution.' \
-		'  make portable-console        Build the portable console distribution.' \
+		'  make portable-console        Build the portable KMS/fbdev distribution.' \
 		'' \
 		'Relocatable musl target:' \
 		'  make musl-sdl3               Build an AppDir-style SDL3 bundle with its musl loader.' \
@@ -105,11 +105,11 @@ help:
 		'  make dos-release             Explicit form of make dos.' \
 		'' \
 		'Linux-hosted Windows cross-builds (Docker):' \
-		'  make windows-win9x          Open Watcom Win9x x86 Win32 package.' \
-		'  make windows-xp             MinGW/MSVCRT XP x86 Win32 package.' \
-		'  make windows-win7           MinGW/MSVCRT Win7 x86/x64 Win32+SDL3.' \
-		'  make windows-llvm-win7      LLVM/MSVCRT Win7 x86/x64 Win32+SDL3.' \
-		'  make windows-win10          LLVM/UCRT Win10 x64 Win32+SDL3.' \
+		'  make windows-win9x          Open Watcom Win9x x86 GDI package.' \
+		'  make windows-xp             MinGW GCC/MSVCRT XP x86 GDI package.' \
+		'  make windows-win7           MinGW GCC/MSVCRT Win7 x86/x64 GDI + SDL3.' \
+		'  make windows-llvm-win7      LLVM-MinGW/MSVCRT Win7 x86/x64 GDI + SDL3.' \
+		'  make windows-win10          LLVM-MinGW/UCRT Win10 x64 GDI + SDL3.' \
 		'  make windows-cross          Build every Windows cross profile.' \
 		'' \
 		'Useful variables:' \
@@ -129,7 +129,7 @@ help:
 		'Cleanup:' \
 		'  make clean                   Remove build trees and project builder images.' \
 		'  make clean-sdl3              Remove the SDL3 build tree.' \
-		'  make clean-console           Remove the console build tree.' \
+		'  make clean-console           Remove the KMS/fbdev build tree.' \
 		'  make clean-portable          Remove Debian portable trees and builder image.' \
 		'  make clean-musl              Remove musl trees and builder image.' \
 		'  make clean-dos               Remove DOS32 tree and builder image.' \

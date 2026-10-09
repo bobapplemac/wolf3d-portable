@@ -14,7 +14,7 @@ Publishes both x64 wrappers with the newest supported installed compiler.
 
 .EXAMPLE
 .\build.ps1 -Compiler vs2015 -Architecture x86 -Wrapper win32
-Publishes the 32-bit Win32 host with Visual Studio 2015/v140.
+Publishes the x86 GDI host with Visual Studio 2015/v140.
 
 .EXAMPLE
 .\build.ps1 -Action build -Configuration Debug -Wrapper sdl3
@@ -240,6 +240,8 @@ $toolchains = @(
     Find-MinGW -Root $Msys2Root
 )
 
+$backendNames = @{ all = 'GDI + SDL3'; win32 = 'GDI'; sdl3 = 'SDL3' }
+
 function Read-BuildChoice {
     param(
         [string]$Prompt,
@@ -252,7 +254,8 @@ function Read-BuildChoice {
         Write-Host $Prompt
         for ($index = 0; $index -lt $Options.Count; ++$index) {
             $defaultMarker = if ($index -eq $DefaultIndex) { ' (default)' } else { '' }
-            Write-Host ("  {0}. {1}{2}" -f ($index + 1), $Options[$index], $defaultMarker)
+            $label = if ($Prompt -eq 'Backend') { $backendNames[$Options[$index]] } else { $Options[$index] }
+            Write-Host ("  {0}. {1}{2}" -f ($index + 1), $label, $defaultMarker)
         }
         $answer = Read-Host 'Selection'
         if ([string]::IsNullOrWhiteSpace($answer)) {
@@ -262,6 +265,9 @@ function Read-BuildChoice {
         if ([int]::TryParse($answer, [ref]$number) -and
             $number -ge 1 -and $number -le $Options.Count) {
             return $Options[$number - 1]
+        }
+        if ($Prompt -eq 'Backend') {
+            foreach ($option in $Options) { if ($backendNames[$option] -ieq $answer) { return $option } }
         }
         $match = $Options | Where-Object { $_ -ieq $answer } | Select-Object -First 1
         if ($match) { return $match }
@@ -289,7 +295,7 @@ if ($PSBoundParameters.Count -eq 0 -and -not $NonInteractive -and $canPrompt) {
     } else {
         @('win32')
     }
-    $Wrapper = Read-BuildChoice 'Wrapper' $wrapperChoices
+    $Wrapper = Read-BuildChoice 'Backend' $wrapperChoices
     $Action = Read-BuildChoice 'Action' @('publish', 'build', 'clean')
     if ($Action -ne 'publish') {
         $Configuration = Read-BuildChoice 'Configuration' @('Release', 'Debug')
@@ -338,7 +344,7 @@ if ($selected.Name -eq 'mingw-ucrt64' -and $Runtime -ne 'static') {
     throw 'MinGW packages require the statically linked GCC support runtime.'
 }
 if (-not $selected.SupportsSDL3 -and $Wrapper -ne 'win32') {
-    throw "$($selected.Name)/$($selected.Toolset) supports only the Win32 wrapper; select -Wrapper win32."
+    throw "$($selected.Name)/$($selected.Toolset) supports only the GDI backend; select -Wrapper win32."
 }
 
 $archPreset = if ($Architecture -eq 'x86') { 'x86' } else { 'x64' }
@@ -445,7 +451,7 @@ function Assert-MinGWRuntimeImports {
 Write-Host 'wolf3d-portable Windows build'
 Write-Host "  Compiler:      $($selected.Name) / $($selected.Toolset)"
 Write-Host "  Architecture:  $Architecture"
-Write-Host "  Wrapper:       $Wrapper"
+Write-Host "  Backend:       $($backendNames[$Wrapper])"
 Write-Host "  Configuration: $Configuration"
 Write-Host "  Compiler CRT:  $Runtime"
 Write-Host "  OPL drivers:   $($driverList -join ', ')"

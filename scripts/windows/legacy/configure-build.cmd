@@ -44,7 +44,7 @@ if "%DEFAULT_OPL%"=="" set "DEFAULT_OPL=nuked"
 
 echo.
 echo Build plan:
-echo   %COMPILER% x86 Win32/GDI, %CONFIG%, %ACTION%
+echo   %COMPILER% x86 GDI, %CONFIG%, %ACTION%
 echo   runtime=%RUNTIME%, drivers=%DRIVERS%, default=%DEFAULT_OPL%
 echo.
 echo Reproducible command:

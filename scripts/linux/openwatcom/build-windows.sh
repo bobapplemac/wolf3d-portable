@@ -60,10 +60,10 @@ cp "$root/THIRD_PARTY.md" "$dist_dir/THIRD_PARTY_NOTICES.txt"
 cp "$library_dist/WOLF3D-LIB.txt" "$dist_dir/WOLF3D-LIB.txt"
 
 cat > "$dist_dir/README.txt" <<EOF
-wolf3d-portable $version Win32 host for Windows 95 and later
+wolf3d-portable $version GDI host for Win9x (Windows 95/98/Me)
 
 This x86 package was cross-built on Linux with Open Watcom. It uses only the
-legacy Win32/GDI host; SDL3 is intentionally not part of the Win9x profile.
+legacy GDI host; SDL3 is intentionally not part of the Win9x profile.
 Keep wolf3d.exe, wolf3d.dll, and any supplied OPL DLL together. Place legally
 obtained Wolfenstein 3D or Spear of Destiny data beside wolf3d.exe or in a
 nested subdirectory, then launch wolf3d.exe. Run wolf3d.exe --help for options
@@ -71,7 +71,7 @@ or wolf3d.exe --diag for a hardware and game-data report.
 
 The executable uses a console-subsystem main entry so COMMAND.COM retains
 help/diagnostic output and supplies parsed arguments. The game still opens its
-normal ANSI Win32/GDI window and uses the legacy cursor-warp mouse path.
+normal ANSI GDI window and uses the legacy cursor-warp mouse path.
 
 Compiled OPL drivers: $drivers
 Default OPL driver: $default_driver

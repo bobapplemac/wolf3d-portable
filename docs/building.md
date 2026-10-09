@@ -408,3 +408,45 @@ and `OPL_DEFAULT` overrides also remain accepted by that target.
 Run `tests/WG_WIN9X_SMOKE.ps1 -PackagePath <package>` on Windows to exercise the
 actual Open Watcom executable's console output, INI lookup, and driver errors.
 This does not substitute for native AdLib playback testing on Windows 98.
+
+## Relocatable musl KMS/fbdev package
+
+Select **Linux musl KMS/fbdev relocatable distribution (Docker)** in `./build.sh`,
+or run `make musl-console JOBS=8`. `make musl-all` produces both SDL3 and
+KMS/fbdev musl packages. `make musl-console-audit` checks an existing console
+bundle; the existing `musl-audit` target continues to check the SDL3 bundle.
+
+The console output is
+`dist/wolf3d-portable_<version>_linux-musl_x64_kms-fbdev_gcc<major>/` (or clang).
+Docker is needed only for building/auditing. The package bundles its loader,
+libdrm, ALSA, and dependencies, with a private direct-hardware ALSA configuration.
+It does not load host ALSA configuration or glibc plugins. The launcher uses
+`/proc/self/fd/9` to pass its private configuration safely through ALSA's path-list
+parser; `/proc` must be mounted. The default PCM is
+`plughw:0,0`; use `--alsa-device plughw:CARD,DEV` to choose another device.
+`--alsa-device null` is useful for a silent ALSA path check.
+
+For a physical console test, place original game data beside the top-level
+launcher or supply `--data /path/to/WL1`. From an active virtual console:
+
+```sh
+./wolf3d --diag
+./wolf3d --video drm --no-audio --data /path/to/WL1
+./wolf3d --video fbdev --no-audio --data /path/to/WL1
+./wolf3d --video auto --alsa-device plughw:0,0 --data /path/to/WL1
+```
+
+Use `--drm-device /dev/dri/cardN`, `--fb-device /dev/fbN`, or repeated
+`--input-device /dev/input/eventN` if automatic selection picks the wrong device.
+A VGA-connected monitor can still use KMS; fbdev requires an actual `/dev/fbN`.
+The user needs display/input/audio device permissions and KMS display ownership.
+An active desktop may own the display. Verify keyboard/mouse, sound, image
+scaling, and restoration of the original console after normal exit.
+
+The automatic audit checks dependency closure, no glibc references, relocation
+(including paths with spaces), launcher naming, and bundled ALSA null PCM.
+It does not take control of the display or claim hardware validation. Build-info
+preserves all build options plus the bundle's ALSA configuration and launcher.
+Custom directories/settings use `MUSL_CONSOLE_BUILD_DIR`,
+`MUSL_CONSOLE_STAGE_ROOT`, `MUSL_CONSOLE_DIST_DIR`, and
+`MUSL_CONSOLE_CMAKE_ARGS`. `make clean-musl` clears both musl backend build trees.

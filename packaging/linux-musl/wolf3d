@@ -10,6 +10,18 @@ if [ ! -x "$loader" ]; then
     exit 127
 fi
 
+# Console bundles carry a private ALSA configuration and plugin directory.
+# Do not load a host glibc ALSA plugin into the bundled musl process.
+if [ -d "$app_dir/share/alsa" ]; then
+    export ALSA_CONFIG_DIR="$app_dir/share/alsa"
+    # ALSA_CONFIG_PATH is a colon/space-separated list without quoting.
+    # An inherited descriptor keeps configuration readable after relocation
+    # into a path containing spaces without changing the caller's directory.
+    exec 9< "$app_dir/share/alsa/alsa.conf"
+    export ALSA_CONFIG_PATH=/proc/self/fd/9
+    export ALSA_PLUGIN_DIR="$app_dir/lib/alsa-lib"
+fi
+
 exec "$loader" --library-path "$app_dir/lib" \
     --argv0 "$app_dir/$launcher_name" \
-    "$app_dir/bin/wolf3d-sdl3" "$@"
+    "$app_dir/bin/@BINARY@" "$@"

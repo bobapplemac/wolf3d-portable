@@ -31,6 +31,11 @@ MUSL_SDL3_BUILD_DIR ?= build/linux-sdl3-musl-$(COMPILER_NAME)
 MUSL_STAGE_ROOT ?= build/linux-sdl3-musl-stage
 MUSL_STAGE_DIR ?= $$(cat "$(MUSL_SDL3_BUILD_DIR)/W3P_SDL3_RELEASE_DIR-Release.path")
 MUSL_SDL3_DIST_DIR ?= dist/$$(basename "$(MUSL_STAGE_DIR)")
+MUSL_CONSOLE_BUILD_DIR ?= build/linux-kms-fbdev-musl-$(COMPILER_NAME)
+MUSL_CONSOLE_STAGE_ROOT ?= build/linux-kms-fbdev-musl-stage
+MUSL_CONSOLE_STAGE_DIR ?= $$(cat "$(MUSL_CONSOLE_BUILD_DIR)/W3P_CONSOLE_RELEASE_DIR-Release.path")
+MUSL_CONSOLE_DIST_DIR ?= dist/$$(basename "$(MUSL_CONSOLE_STAGE_DIR)")
+MUSL_CONSOLE_CMAKE_ARGS ?= -DW3P_DIST_ROOT=/src/$(MUSL_CONSOLE_STAGE_ROOT) -DWG_LINUX_LIBC=musl
 MUSL_BUILD_IMAGE ?= wolf3d-portable-build-alpine-musl
 DOS_BUILD_DIR ?= build/openwatcom-dos32
 DOS_DIST_DIR ?=
@@ -69,7 +74,7 @@ PARALLEL_ARG := --parallel $(JOBS)
 	configure-console console console-release linux-console-release releases \
 	portable portable-sdl3 portable-sdl3-release portable-console \
 	portable-console-release portable-image portable-glibc-audit print-config \
-	musl-sdl3 musl-sdl3-release musl-image musl-audit universal-sdl3 \
+	musl-console musl-console-release musl-console-audit musl-all musl-sdl3 musl-sdl3-release musl-image musl-audit universal-sdl3 \
 	dos dos-release dos-image windows-cross windows-win9x windows-xp \
 	windows-win7 windows-llvm-win7 windows-win10 windows-mingw-image \
 	windows-llvm-msvcrt-image windows-llvm-ucrt-image \
@@ -95,7 +100,10 @@ help:
 		'  make portable-sdl3           Build the portable SDL3 distribution.' \
 		'  make portable-console        Build the portable KMS/fbdev distribution.' \
 		'' \
-		'Relocatable musl target:' \
+		'Relocatable musl targets (Docker):' \
+		'  make musl-console           Relocatable Linux musl KMS/fbdev package.' \
+		'  make musl-all               Both musl SDL3 and KMS/fbdev packages.' \
+		'  make musl-console-audit     Re-audit an existing KMS/fbdev bundle.' \
 		'  make musl-sdl3               Build an AppDir-style SDL3 bundle with its musl loader.' \
 		'  make universal-sdl3          Alias for make musl-sdl3.' \
 		'  make musl-audit              Re-audit an existing musl SDL3 bundle.' \
@@ -235,6 +243,28 @@ musl-sdl3-release: musl-image
 		$(DOCKER_RUN_ARGS) "$(MUSL_BUILD_IMAGE)" sh tools/W3P_MUSL_AUDIT.sh \
 		"$(MUSL_SDL3_DIST_DIR)"
 
+musl-console-release: musl-image
+	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
+		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
+		"$(MUSL_BUILD_IMAGE)" make console-release CC="$(CC)" \
+		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" SAMPLE_RATE="$(SAMPLE_RATE)" \
+		CONSOLE_BUILD_DIR="$(MUSL_CONSOLE_BUILD_DIR)" JOBS="$(JOBS)" \
+		CMAKE_ARGS="$(MUSL_CONSOLE_CMAKE_ARGS)"
+	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
+		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
+		"$(MUSL_BUILD_IMAGE)" sh tools/W3P_MUSL_BUNDLE.sh \
+		"$(MUSL_CONSOLE_STAGE_DIR)" "$(MUSL_CONSOLE_DIST_DIR)" kms-fbdev
+	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
+		$(DOCKER_RUN_ARGS) "$(MUSL_BUILD_IMAGE)" sh tools/W3P_MUSL_AUDIT.sh \
+		"$(MUSL_CONSOLE_DIST_DIR)" kms-fbdev
+
+musl-console: musl-console-release
+musl-all: musl-sdl3-release musl-console-release
+musl-console-audit: musl-image
+	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
+		$(DOCKER_RUN_ARGS) "$(MUSL_BUILD_IMAGE)" sh tools/W3P_MUSL_AUDIT.sh \
+		"$(MUSL_CONSOLE_DIST_DIR)" kms-fbdev
+
 musl-sdl3: musl-sdl3-release
 universal-sdl3: musl-sdl3-release
 musl-audit: musl-image
@@ -341,6 +371,8 @@ clean-portable:
 	@if command -v "$(DOCKER)" >/dev/null 2>&1; then \
 		$(DOCKER) image rm "$(PORTABLE_BUILD_IMAGE)" >/dev/null 2>&1 || true; fi
 clean-musl:
+	$(CMAKE) -E remove_directory "$(MUSL_CONSOLE_BUILD_DIR)"
+	$(CMAKE) -E remove_directory "$(MUSL_CONSOLE_STAGE_ROOT)"
 	$(CMAKE) -E remove_directory "$(MUSL_SDL3_BUILD_DIR)"
 	$(CMAKE) -E remove_directory "$(MUSL_STAGE_ROOT)"
 	@if command -v "$(DOCKER)" >/dev/null 2>&1; then \

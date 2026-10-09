@@ -77,3 +77,21 @@ The 32-bit DOS package uses DOS/32 Advanced DOS Extender technology. The file
 staged as `DOS4GW.EXE` is DOS/32A's compatible drop-in loader, not the original
 proprietary DOS/4GW binary. It remains a separate, replaceable executable and
 is distributed with its required license text.
+
+## Linux musl KMS/fbdev bundle
+
+The optional direct-console bundle redistributes unmodified Alpine musl builds
+of libdrm (MIT-style licenses) and alsa-lib (LGPL-2.1-or-later), plus their
+runtime dependencies. Exact installed Alpine versions appear in BUILD-INFO.txt.
+Upstream sources: https://dri.freedesktop.org/libdrm/ and
+https://www.alsa-project.org/files/pub/lib/ . Alpine v3.20 build recipes:
+https://gitlab.alpinelinux.org/alpine/aports/-/tree/3.20-stable/main/libdrm and
+https://gitlab.alpinelinux.org/alpine/aports/-/tree/3.20-stable/main/alsa-lib .
+The libraries remain separate and replaceable; build matching musl replacements
+from those sources. No external ALSA plugins are required by the bundled config.
+
+`packaging/COPYING.libdrm.txt` and `packaging/COPYING.ALSA.txt` preserve the
+upstream copyright/license collections distributed in Debian's libdrm2 and
+libasound2t64 copyright files (copied from ajmbuild01 on 2026-10-09). The full
+LGPL-2.1 text is also shipped in LICENSES/LGPL-2.1.txt. See the existing musl
+notices for the loader/libc license and corresponding source.

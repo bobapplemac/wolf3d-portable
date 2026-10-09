@@ -1,13 +1,19 @@
 #!/bin/sh
 set -eu
 
-if [ "$#" -ne 2 ]; then
-    echo "usage: $0 STAGED_SDL3_DIR BUNDLE_DIR" >&2
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+    echo "usage: $0 STAGED_DIR BUNDLE_DIR [sdl3|kms-fbdev]" >&2
     exit 2
 fi
 
 stage=$1
 bundle=$2
+backend=${3:-sdl3}
+case "$backend" in
+    sdl3) staged_binary=wolf3d-sdl3; binary=wolf3d-sdl3 ;;
+    kms-fbdev) staged_binary=wolf3d; binary=wolf3d-console ;;
+    *) echo "Unsupported musl backend: $backend" >&2; exit 2 ;;
+esac
 
 case "$bundle" in
     ""|/|.|..)
@@ -16,8 +22,8 @@ case "$bundle" in
         ;;
 esac
 
-if [ ! -x "$stage/wolf3d-sdl3" ]; then
-    echo "staged SDL3 executable is missing: $stage/wolf3d-sdl3" >&2
+if [ ! -x "$stage/$staged_binary" ]; then
+    echo "staged executable is missing: $stage/$staged_binary" >&2
     exit 2
 fi
 if [ "$(uname -m)" != "x86_64" ]; then
@@ -28,7 +34,7 @@ fi
 rm -rf -- "$bundle"
 mkdir -p "$bundle/bin" "$bundle/lib" "$bundle/LICENSES"
 
-cp "$stage/wolf3d-sdl3" "$bundle/bin/wolf3d-sdl3"
+cp "$stage/$staged_binary" "$bundle/bin/$binary"
 for item in "$stage"/*.so*; do
     [ -e "$item" ] || [ -L "$item" ] || continue
     cp -a "$item" "$bundle/lib/"
@@ -78,6 +84,7 @@ copy_runtime_library()
     return 0
 }
 
+if [ "$backend" = sdl3 ]; then
 runtime_roots='libX11.so.6
 libXext.so.6
 libXcursor.so.1
@@ -94,6 +101,14 @@ libxkbcommon.so.0
 libudev.so.1
 libasound.so.2
 libpulse.so.0'
+else
+    runtime_roots='libdrm.so.2 libasound.so.2'
+    mkdir -p "$bundle/share" "$bundle/lib/alsa-lib"
+    mkdir -p "$bundle/share/alsa"
+    # Use ALSA's built-in hardware/plug/null PCMs. External desktop-server
+    # plugins are deliberately not dependencies of the direct-console host.
+    cp packaging/linux-musl/alsa-console.conf "$bundle/share/alsa/alsa.conf"
+fi
 
 for runtime_root in $runtime_roots; do
     copy_runtime_library "$runtime_root" || true
@@ -102,7 +117,7 @@ done
 changed=1
 while [ "$changed" -eq 1 ]; do
     changed=0
-    for candidate in "$bundle/bin/wolf3d-sdl3" "$bundle"/lib/*; do
+    for candidate in "$bundle/bin/$binary" "$bundle"/lib/*; do
         [ -f "$candidate" ] || continue
         if ! file "$candidate" | grep -q 'ELF'; then
             continue
@@ -117,14 +132,21 @@ while [ "$changed" -eq 1 ]; do
 done
 
 cp packaging/COPYING.musl.txt "$bundle/LICENSES/musl-MIT.txt"
-cp lib/wolf3d/third_party/Nuked-OPL3/LICENSE \
-    "$bundle/LICENSES/LGPL-2.1.txt"
-cat packaging/SDL3-MUSL-NOTES.txt >> "$bundle/README.txt"
-cp packaging/linux-musl/wolf3d "$bundle/wolf3d"
-chmod 0755 "$bundle/wolf3d" "$bundle/bin/wolf3d-sdl3" \
+if [ -e "$bundle/lib/libNuked-OPL3.so" ] || [ "$backend" = kms-fbdev ]; then
+    cp packaging/COPYING.LGPL-2.1.txt "$bundle/LICENSES/LGPL-2.1.txt"
+fi
+if [ "$backend" = sdl3 ]; then
+    cat packaging/SDL3-MUSL-NOTES.txt >> "$bundle/README.txt"
+else
+    cp packaging/KMS-FBDEV-MUSL-NOTES.txt "$bundle/README.txt"
+    cp packaging/COPYING.ALSA.txt "$bundle/LICENSES/ALSA.txt"
+    cp packaging/COPYING.libdrm.txt "$bundle/LICENSES/libdrm.txt"
+fi
+sed "s/@BINARY@/$binary/g" packaging/linux-musl/wolf3d > "$bundle/wolf3d"
+chmod 0755 "$bundle/wolf3d" "$bundle/bin/$binary" \
     "$bundle/lib/ld-musl-x86_64.so.1"
 
-for item in "$bundle/bin/wolf3d-sdl3" "$bundle"/lib/*; do
+for item in "$bundle/bin/$binary" "$bundle"/lib/*; do
     [ -f "$item" ] || continue
     if file "$item" | grep -q 'ELF'; then
         strip --strip-unneeded "$item"
@@ -135,6 +157,14 @@ printf '%s\n' "musl bundle staged: $bundle"
 
 {
     printf '\n===== Musl bundle recipe =====\n'
-    printf 'Stage: %s\nBundle: %s\n' "$stage" "$bundle"
+    printf 'Stage: %s\nBundle: %s\nBackend: %s\n' "$stage" "$bundle" "$backend"
     cat "$0"
+    printf '\n===== Alpine build packages =====\n'
+    apk info -v
+    printf '\n===== Launcher recipe =====\n'
+    cat "$bundle/wolf3d"
+    if [ "$backend" = kms-fbdev ]; then
+        printf '\n===== ALSA configuration =====\n'
+        cat "$bundle/share/alsa/alsa.conf"
+    fi
 } >> "$bundle/BUILD-INFO.txt"

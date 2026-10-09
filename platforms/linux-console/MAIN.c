@@ -8,7 +8,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <linux/input.h>
-#include <sys/ioctl.h>
+#include "WG_LINUX_IOCTL.h"
 #include <unistd.h>
 
 #define WG_DIAG_BITS_PER_LONG (sizeof(unsigned long) * 8U)
@@ -51,21 +51,21 @@ static void WG_LinuxConsoleDiagnosticReport(char *report, size_t report_size)
             memset(relative, 0, sizeof(relative));
             memset(absolute, 0, sizeof(absolute));
             if (descriptor >= 0
-                && ioctl(descriptor, EVIOCGBIT(0, sizeof(events)), events) >= 0)
+                && WG_IOCTL(descriptor, EVIOCGBIT(0, sizeof(events)), events) >= 0)
             {
                 if (WG_DiagnosticBit(events, EV_KEY))
                 {
-                    (void)ioctl(descriptor,
+                    (void)WG_IOCTL(descriptor,
                         EVIOCGBIT(EV_KEY, sizeof(keys)), keys);
                 }
                 if (WG_DiagnosticBit(events, EV_REL))
                 {
-                    (void)ioctl(descriptor,
+                    (void)WG_IOCTL(descriptor,
                         EVIOCGBIT(EV_REL, sizeof(relative)), relative);
                 }
                 if (WG_DiagnosticBit(events, EV_ABS))
                 {
-                    (void)ioctl(descriptor,
+                    (void)WG_IOCTL(descriptor,
                         EVIOCGBIT(EV_ABS, sizeof(absolute)), absolute);
                 }
                 if (WG_DiagnosticBit(relative, REL_X)

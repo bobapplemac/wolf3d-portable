@@ -361,3 +361,6 @@ help/diagnostics in its invoking command prompt while the game opens a GDI windo
 
 Distribution folders and generated build metadata follow the shared
 [build/dist naming convention](docs/BUILD-NAMING.md).
+
+`make musl-console` builds the relocatable Linux musl KMS/fbdev package;
+see [console test instructions](docs/building.md#relocatable-musl-kmsfbdev-package).

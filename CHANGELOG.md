@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased - 2026-10-09 - Relocatable musl KMS/fbdev distribution
+
+- Add `make musl-console`, `musl-console-audit`, and `musl-all`, with guided
+  Linux build choices and x64 musl KMS/fbdev packaging.
+- Share the musl bundler/launcher with SDL3; bundle libdrm and ALSA with private
+  direct-hardware audio configuration, metadata, and dependency notices.
+- Audit relocation, dependencies, and ALSA null PCM without taking over a display.
+- Adapt Linux ioctl request types for musl while preserving the glibc interface.
+- Keep bundled ALSA configuration usable from paths containing spaces.
+- Record that VS2013 solution opening on ajmbuild02 works after Update 5.
+
 ## 1.4.74 - 2026-10-09 - Align build menu terminology
 
 - Use GDI, SDL3, VGA, and KMS/fbdev in guided build choices, summaries, and

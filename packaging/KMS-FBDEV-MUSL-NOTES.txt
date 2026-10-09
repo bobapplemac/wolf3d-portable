@@ -1,0 +1,43 @@
+wolf3d-portable - relocatable Linux musl KMS/fbdev distribution
+============================================================
+
+This x64 bundle runs from an active Linux virtual console without X11,
+Wayland, SDL3, Docker, or a host musl installation. Kernel drivers and access
+to display, evdev input, and ALSA devices are still required. DRM/KMS dumb
+buffers are preferred; fbdev is the fallback. A VGA connector does not imply
+that the Linux fbdev interface is available.
+
+Keep the entire directory together and run the top-level ./wolf3d launcher.
+Place original game data beside it, or use --data /absolute/path/to/game-data.
+The loader, engine, libdrm, ALSA, and their shared dependencies are bundled.
+
+From a local virtual console (not SSH or a desktop terminal):
+  ./wolf3d --diag
+  ./wolf3d --video drm --no-audio --data /path/to/WL1
+  ./wolf3d --video fbdev --no-audio --data /path/to/WL1
+  ./wolf3d --video auto --alsa-device plughw:0,0 --data /path/to/WL1
+
+Use --drm-device /dev/dri/cardN or --fb-device /dev/fbN when needed. Quit
+normally and verify the original console is restored. Device access may
+require seat ACLs, video/input/audio group membership, or root. Stop an active
+desktop display server before trying to take DRM display ownership.
+
+The private ALSA configuration intentionally ignores host /etc/asound.conf,
+~/.asoundrc, and desktop sound-server plugins. "default" uses plughw:0,0;
+"hw:CARD,DEV", "plughw:CARD,DEV", and "null" are supported. Use aplay -l
+(if installed) to identify cards. Another process may already own the device.
+No audio hardware is necessary to run with --no-audio.
+
+For a custom ALSA setup, edit share/alsa/alsa.conf within this bundle. External
+plugins must be compatible musl builds in lib/alsa-lib. Do not copy host glibc
+plugins into this directory.
+
+BUILD-INFO.txt includes the complete build configuration, package versions,
+launcher and bundling recipe. The automated audit checks dependencies,
+relocation, argument forwarding, and ALSA null PCM. Actual KMS/fbdev display,
+input, real audio, and console restoration remain hardware runtime tests.
+
+Dependencies remain separate and replaceable in lib/. Copyright notices and
+licenses are in LICENSES/. Corresponding unmodified dependency sources and
+Alpine packaging recipes are identified in THIRD_PARTY_NOTICES.txt and the
+Alpine package versions recorded in BUILD-INFO.txt.

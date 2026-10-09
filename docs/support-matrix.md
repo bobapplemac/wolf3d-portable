@@ -29,6 +29,7 @@ or the local submodule's `lib/wolf3d/docs/support-matrix.md`.
 | Both native Linux wrappers | Linux | `make releases` | Both native folders |
 | Portable glibc Linux wrappers | Linux + Docker | `./build.sh` or `make portable` | SDL3 and console x86-64 folders audited to glibc 2.28 |
 | Bundled-musl Linux SDL3 | Linux + Docker | `./build.sh` or `make musl-sdl3` | Relocatable AppDir-style x86-64 folder |
+| Bundled-musl Linux KMS/fbdev | Linux + Docker | `make musl-console` | Relocatable x64 folder; hardware console runtime test pending |
 | 32-bit protected-mode DOS | Linux + Docker | `./build.sh` or `make dos` | `dist/wolf3d-portable_<version>_dos32_x86_vga_openwatcom<major>/` |
 | Complete Windows cross matrix | Linux + Docker | `./build.sh` or `make windows-cross` | Compiler/OS-labelled Win32 and SDL3 folders under `dist/` |
 
@@ -52,7 +53,7 @@ presets, package contents, and dependency setup.
 | Visual Studio 2017 | v141 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2017 solution, CMake presets | Windows 11 compatibility host; no legacy-OS minimum claimed |
 | Visual Studio 2015 | v140 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2015 solution, CMake presets | No legacy-OS minimum claimed |
 | Visual Studio 2015 XP SDK | v140_xp | x86, x64 | Validated | Not supported | `build.ps1`, VS2015 solution, CMake presets | x86 Win32/GDI package validated with WL1 data on Windows XP SP3; x64 destination untested; PE minimum 5.01 x86 / 5.02 x64 |
-| Visual Studio 2013 Update 5 | v120 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2013 solution, CMake presets | No legacy-OS minimum claimed |
+| Visual Studio 2013 Update 5 | v120 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2013 solution, CMake presets | Solution opening confirmed after updating RTM to Update 5 on ajmbuild02; no legacy-OS minimum claimed |
 | Visual Studio 2012 Update 5 | v110 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2012 solution, CMake presets | No legacy-OS minimum claimed |
 | Visual Studio 2010 SP1 | v100 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2010 solution, CMake presets | No legacy-OS minimum claimed |
 | Visual Studio 2008 SP1 | v90 | x86, x64 | Validated | Not supported | `build.ps1`, CMake presets | No legacy-OS minimum claimed |

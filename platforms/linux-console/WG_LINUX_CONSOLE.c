@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
+#include "WG_LINUX_IOCTL.h"
 #include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
@@ -370,7 +370,7 @@ static void WG_ProcessInputEvent(wg_input_device_t *device,
     {
         struct input_absinfo info;
 
-        if (ioctl(device->descriptor, EVIOCGABS(source->code), &info) == 0)
+        if (WG_IOCTL(device->descriptor, EVIOCGABS(source->code), &info) == 0)
         {
             int16_t value = WG_ScaleAbsolute(source->value, &info);
 
@@ -442,23 +442,23 @@ static int WG_OpenInput(const char *path)
     }
     descriptor = open(path, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
     if (descriptor < 0
-        || ioctl(descriptor, EVIOCGBIT(0, sizeof(event_bits)), event_bits) < 0)
+        || WG_IOCTL(descriptor, EVIOCGBIT(0, sizeof(event_bits)), event_bits) < 0)
     {
         if (descriptor >= 0) close(descriptor);
         return 0;
     }
     if (WG_TestBit(event_bits, EV_KEY))
     {
-        (void)ioctl(descriptor, EVIOCGBIT(EV_KEY, sizeof(key_bits)), key_bits);
+        (void)WG_IOCTL(descriptor, EVIOCGBIT(EV_KEY, sizeof(key_bits)), key_bits);
     }
     if (WG_TestBit(event_bits, EV_REL))
     {
-        (void)ioctl(descriptor, EVIOCGBIT(EV_REL, sizeof(relative_bits)),
+        (void)WG_IOCTL(descriptor, EVIOCGBIT(EV_REL, sizeof(relative_bits)),
                     relative_bits);
     }
     if (WG_TestBit(event_bits, EV_ABS))
     {
-        (void)ioctl(descriptor, EVIOCGBIT(EV_ABS, sizeof(absolute_bits)),
+        (void)WG_IOCTL(descriptor, EVIOCGBIT(EV_ABS, sizeof(absolute_bits)),
                     absolute_bits);
     }
 
@@ -495,17 +495,17 @@ static int WG_OpenInput(const char *path)
             struct input_absinfo info;
 
             device.joystick_index = joystick_index;
-            if (ioctl(descriptor, EVIOCGABS(ABS_X), &info) == 0)
+            if (WG_IOCTL(descriptor, EVIOCGABS(ABS_X), &info) == 0)
             {
                 device.joystick_x = WG_ScaleAbsolute(info.value, &info);
             }
-            if (ioctl(descriptor, EVIOCGABS(ABS_Y), &info) == 0)
+            if (WG_IOCTL(descriptor, EVIOCGABS(ABS_Y), &info) == 0)
             {
                 device.joystick_y = WG_ScaleAbsolute(info.value, &info);
             }
         }
     }
-    device.grabbed = ioctl(descriptor, EVIOCGRAB, 1) == 0;
+    device.grabbed = WG_IOCTL(descriptor, EVIOCGRAB, 1) == 0;
     wg_inputs[wg_input_count++] = device;
     if (device.joystick)
     {
@@ -562,7 +562,7 @@ static void WG_CloseInputs(void)
         }
         if (wg_inputs[index].grabbed)
         {
-            (void)ioctl(wg_inputs[index].descriptor, EVIOCGRAB, 0);
+            (void)WG_IOCTL(wg_inputs[index].descriptor, EVIOCGRAB, 0);
         }
         close(wg_inputs[index].descriptor);
     }
@@ -723,7 +723,7 @@ static int WG_OpenDRMCard(const char *path)
     create_request.width = (uint32_t)wg_drm.mode.hdisplay;
     create_request.height = (uint32_t)wg_drm.mode.vdisplay;
     create_request.bpp = 32U;
-    if (ioctl(wg_drm.descriptor, DRM_IOCTL_MODE_CREATE_DUMB,
+    if (WG_IOCTL(wg_drm.descriptor, DRM_IOCTL_MODE_CREATE_DUMB,
               &create_request) < 0)
     {
         WG_CloseDRM();
@@ -741,7 +741,7 @@ static int WG_OpenDRMCard(const char *path)
     }
     memset(&map_request, 0, sizeof(map_request));
     map_request.handle = wg_drm.handle;
-    if (ioctl(wg_drm.descriptor, DRM_IOCTL_MODE_MAP_DUMB, &map_request) < 0)
+    if (WG_IOCTL(wg_drm.descriptor, DRM_IOCTL_MODE_MAP_DUMB, &map_request) < 0)
     {
         WG_CloseDRM();
         return 0;
@@ -822,7 +822,7 @@ static void WG_CloseDRM(void)
 
         memset(&destroy_request, 0, sizeof(destroy_request));
         destroy_request.handle = wg_drm.handle;
-        (void)ioctl(wg_drm.descriptor, DRM_IOCTL_MODE_DESTROY_DUMB,
+        (void)WG_IOCTL(wg_drm.descriptor, DRM_IOCTL_MODE_DESTROY_DUMB,
                     &destroy_request);
         wg_drm.handle = 0U;
     }
@@ -842,9 +842,9 @@ static int WG_OpenFBDevPath(const char *path)
     {
         return 0;
     }
-    if (ioctl(wg_fbdev.descriptor, FBIOGET_FSCREENINFO,
+    if (WG_IOCTL(wg_fbdev.descriptor, FBIOGET_FSCREENINFO,
               &wg_fbdev.fixed) < 0
-        || ioctl(wg_fbdev.descriptor, FBIOGET_VSCREENINFO,
+        || WG_IOCTL(wg_fbdev.descriptor, FBIOGET_VSCREENINFO,
                  &wg_fbdev.variable) < 0
         || wg_fbdev.fixed.type != FB_TYPE_PACKED_PIXELS
         || wg_fbdev.fixed.visual != FB_VISUAL_TRUECOLOR
@@ -999,14 +999,14 @@ static int WG_LinuxConsoleInit(void)
     wg_previous_frame_valid = 0;
     wg_console_descriptor = open("/dev/tty", O_RDWR | O_CLOEXEC);
     if (wg_console_descriptor < 0
-        || ioctl(wg_console_descriptor, KDGETMODE, &wg_console_mode) < 0)
+        || WG_IOCTL(wg_console_descriptor, KDGETMODE, &wg_console_mode) < 0)
     {
         if (wg_console_descriptor >= 0) close(wg_console_descriptor);
         wg_console_descriptor = open("/dev/tty0", O_RDWR | O_CLOEXEC);
     }
     if (wg_console_descriptor >= 0
-        && ioctl(wg_console_descriptor, KDGETMODE, &wg_console_mode) == 0
-        && ioctl(wg_console_descriptor, KDSETMODE, KD_GRAPHICS) == 0)
+        && WG_IOCTL(wg_console_descriptor, KDGETMODE, &wg_console_mode) == 0
+        && WG_IOCTL(wg_console_descriptor, KDSETMODE, KD_GRAPHICS) == 0)
     {
         wg_console_graphics = 1;
     }
@@ -1024,7 +1024,7 @@ static void WG_LinuxConsoleShutdown(void)
     {
         if (wg_console_graphics)
         {
-            (void)ioctl(wg_console_descriptor, KDSETMODE, wg_console_mode);
+            (void)WG_IOCTL(wg_console_descriptor, KDSETMODE, wg_console_mode);
         }
         close(wg_console_descriptor);
         wg_console_descriptor = -1;

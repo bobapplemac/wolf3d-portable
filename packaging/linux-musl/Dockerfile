@@ -13,6 +13,8 @@ RUN apk add --no-cache \
         eudev-dev \
         file \
         libdecor-dev \
+        libdrm-dev \
+        pkgconf \
         libx11-dev \
         libxcursor-dev \
         libxext-dev \

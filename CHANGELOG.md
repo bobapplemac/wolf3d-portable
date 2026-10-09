@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-09 - Ignore legacy Visual Studio generated files
+
+- Ignore legacy IDE browse databases (`.ncb`), workspace options (`.opt`),
+  build logs (`.plg`), and `obj` directories under `ide/visual-studio`.
+- Keep solution/project changes visible and verify generated files do not
+  block the confirmed source-update workflow.
+
 ## 2026-10-09 - Compile monitor diagnostics with the VC6 SDK
 
 - Define the documented SM_CMONITORS metric index when older Windows headers

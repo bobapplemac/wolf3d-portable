@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - 2026-10-09 - Generated and mirrored asset checks
+
+- Inventory mirrored helpers and manual/dynamic support assets; add read-only
+  reference, ownership and mirror checks with explicit peer selection.
+- Add non-mutating Open Watcom generator checks and isolated drift regressions.
+- Restore WG_HELP.c to the generated DOS IDE game target and align the glibc
+  auditor with the shared implementation.
+- Document generator ownership, external regeneration inputs and retained manual tests.
+
 ## Unreleased - 2026-10-09 - Repository documentation review
 
 - Condense the root README into a quick start and link to indexed topic guides.

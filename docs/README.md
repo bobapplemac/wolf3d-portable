@@ -13,6 +13,8 @@ reference evidence and preserved historical material.
 
 ## Develop and package
 
+- [maintenance](maintenance.md) — Generated/mirrored file ownership and reference-audit findings.
+
 - [repository-layout](repository-layout.md) — Source directory ownership and file-placement rules.
 - [BUILD-NAMING](BUILD-NAMING.md) — Shared package/build identity vocabulary.
 - [DISTRIBUTION-CONTENTS](DISTRIBUTION-CONTENTS.md) — Shared binary-package file layout and extension rules.

@@ -26,3 +26,11 @@ them after changing target composition with:
 ```text
 python tools\W3P_GENERATE_OPENWATCOM_IDE.py
 ```
+
+Check for drift without changing files:
+
+```text
+python tools/W3P_GENERATE_OPENWATCOM_IDE.py --check
+```
+
+See [maintenance ownership and checks](../../docs/maintenance.md).

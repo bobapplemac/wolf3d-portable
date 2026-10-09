@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-09 - Full Linux-hosted build validation
+
+- Update the musl launcher audit to match the current shared command-line help
+  while continuing to verify that the top-level executable name is preserved.
+
 ## 2026-10-09 - Saved startup preferences and launcher precedence
 
 - Advance the engine to wolf3d-lib 1.4.62, preserving saved input and sound

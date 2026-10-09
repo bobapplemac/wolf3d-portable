@@ -42,7 +42,7 @@ fi
 bundle_absolute=$(CDPATH= cd -- "$bundle" && pwd)
 help_output=$("$bundle/wolf3d" --sdl3-help)
 if ! printf '%s\n' "$help_output" \
-        | grep -F "Usage: $bundle_absolute/wolf3d [game options]" >/dev/null; then
+        | grep -F "Usage: $bundle_absolute/wolf3d [options]" >/dev/null; then
     echo "musl launcher did not preserve its top-level argv[0]" >&2
     exit 1
 fi

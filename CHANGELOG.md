@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-09 - Use IDE-supported C++ project items
+
+- Replace wildcard C++ project items with explicit relative file paths in
+  Visual Studio projects, removing an unsupported IDE construct documented
+  to cause crashes and unreliable project loading/saving.
+- Preserve the existing source inventory and build configurations.
+
 ## 2026-10-09 - Diagnose inaccessible and outdated engines
 
 - Stop source-update checks on Git inspection errors, including ownership

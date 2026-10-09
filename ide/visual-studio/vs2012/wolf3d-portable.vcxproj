@@ -68,13 +68,18 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <ItemGroup>
-    <ClCompile Include="$(WGRoot)platforms\*.c" />
-    <ClCompile Include="$(WGRoot)platforms\win32\*.c" />
-    <ClInclude Include="$(WGRoot)lib\wolf3d\include\*.h" />
-    <ClInclude Include="$(WGRoot)platforms\*.h" />
-    <None Include="$(WGRoot)CMakeLists.txt" />
-    <None Include="$(WGRoot)CMakePresets.json" />
-    <None Include="$(WGRoot)README.md" />
+    <ClCompile Include="..\..\..\platforms\WG_HELP.c" />
+    <ClCompile Include="..\..\..\platforms\WG_TEXT_OUTPUT.c" />
+    <ClCompile Include="..\..\..\platforms\win32\WG_WIN32.c" />
+    <ClInclude Include="..\..\..\lib\wolf3d\include\WOLF3D.h" />
+    <ClInclude Include="..\..\..\lib\wolf3d\include\WOLF3D_STDINT.h" />
+    <ClInclude Include="..\..\..\platforms\WG_ENGINE_COMPAT.h" />
+    <ClInclude Include="..\..\..\platforms\WG_HELP.h" />
+    <ClInclude Include="..\..\..\platforms\WG_HOST.h" />
+    <ClInclude Include="..\..\..\platforms\WG_TEXT_OUTPUT.h" />
+    <None Include="..\..\..\CMakeLists.txt" />
+    <None Include="..\..\..\CMakePresets.json" />
+    <None Include="..\..\..\README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

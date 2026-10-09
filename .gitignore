@@ -16,7 +16,7 @@
 /lib/wolf3d/ide/open-watcom/**/*.lb1
 /lib/wolf3d/ide/open-watcom/**/*.lib
 /CMakeUserPresets.json
-/.vs/
+.vs/
 /CMakeSettings.json
 *.user
 *.suo

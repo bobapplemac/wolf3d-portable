@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-09 - Keep IDE caches out of source update checks
+
+- Ignore Visual Studio `.vs` caches at every directory level so opening an
+  in-tree solution does not block source updates as apparent local work.
+- Verify generated IDE caches allow updates while genuine untracked files
+  continue to protect the local checkout.
+
 ## 2026-10-09 - Detect MSYS2 Bash for source updates
 
 - Locate Bash beside the selected Git executable in PowerShell and CMD,

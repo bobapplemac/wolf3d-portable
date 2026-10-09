@@ -1,7 +1,7 @@
 # Build and compatibility matrix
 
 This document is the authoritative user-facing matrix for building runnable
-`wolf3d-portable` packages. Every row compiles the pinned `wolf3d-lib`
+`wolf3d-portable` packages. Every row compiles the selected `wolf3d-lib`
 submodule; wrappers never consume an unrelated prebuilt engine.
 
 The status language is intentionally precise:
@@ -22,7 +22,6 @@ or the local submodule's `lib/wolf3d/docs/support-matrix.md`.
 | Desired package | Build host | Command | Staged result |
 | --- | --- | --- | --- |
 | Windows Win32/GDI | Windows | `.\build.ps1 -Wrapper win32` | `dist/wolf3d-portable_<version>_<platform>_<arch>_gdi_<toolchain>/` |
-| Windows 95/98/Me GDI | `WOLF3D.EXE` | `wolf3d.dll`; Nuked-OPL3 DLL only when explicitly selected |
 | Windows SDL3 | Windows with VS2019/2022/2026 or MinGW UCRT64 | `.\build.ps1 -Wrapper sdl3` | `dist/wolf3d-portable_<version>_win10_<arch>_sdl3_<toolchain>/` |
 | Both modern Windows wrappers | Windows with VS2019/2022/2026 or MinGW UCRT64 | `.\build.ps1 -Wrapper all` | Both folders above |
 | Native Linux SDL3 | Linux | `./build.sh` or `make sdl3-release CC=clang` | `dist/wolf3d-portable_<version>_linux-glibc_<arch>_sdl3_<toolchain>/` |
@@ -30,7 +29,7 @@ or the local submodule's `lib/wolf3d/docs/support-matrix.md`.
 | Both native Linux wrappers | Linux | `make releases` | Both native folders |
 | Portable glibc Linux wrappers | Linux + Docker | `./build.sh` or `make portable` | SDL3 and console x86-64 folders audited to glibc 2.28 |
 | Bundled-musl Linux SDL3 | Linux + Docker | `./build.sh` or `make musl-sdl3` | Relocatable AppDir-style x86-64 folder |
-| Bundled-musl Linux KMS/fbdev | Linux + Docker | `make musl-console` | Relocatable x64 folder; hardware console runtime test pending |
+| Bundled-musl Linux KMS/fbdev | Linux + Docker | `make musl-console` | Relocatable x64 folder; fbdev console runtime confirmed on ajmbuild01; DRM/audio validation remains separate |
 | 32-bit protected-mode DOS | Linux + Docker | `./build.sh` or `make dos` | `dist/wolf3d-portable_<version>_dos32_x86_vga_openwatcom<major>/` |
 | Complete Windows cross matrix | Linux + Docker | `./build.sh` or `make windows-cross` | Compiler/OS-labelled Win32 and SDL3 folders under `dist/` |
 
@@ -134,6 +133,5 @@ pinned by `wolf3d-lib`. The package does not redistribute the proprietary
 DOS/4GW extender: its adjacent `DOS4GW.EXE` is DOS/32A's compatible loader and
 includes the DOS/32A license. When explicitly enabled, Nuked-OPL3 remains a
 separable library in the package's Open Watcom relink kit even though DOS has
-no runtime shared-library facility. Native AdLib output is confined to the DOS
-host and is not compiled into unrelated platform packages by default.
-
+no runtime shared-library facility. Native AdLib output is confined to the DOS and Win9x hosts and is not
+compiled into unrelated platform packages by default.

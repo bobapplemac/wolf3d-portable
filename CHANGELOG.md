@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - 2026-10-09 - Repository documentation review
+
+- Condense the root README into a quick start and link to indexed topic guides.
+- Document every source-directory responsibility and separate source layout
+  from generated package layout; retain established build/source paths.
+- Consolidate source-update guidance and correct stale workflow descriptions.
+- Add a maintainer audit for local documentation links, anchors, tables and
+  documentation-index coverage.
+
 ## Unreleased - 2026-10-09 - Consistent distribution documentation
 
 - Standardize distributed executables as wolf3d / wolf3d.exe, with WOLF3D.EXE

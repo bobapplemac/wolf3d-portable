@@ -1,35 +1,17 @@
 # Build identity
 
-`wolf3d-portable` is currently an unversioned rolling source project on
-`main`. A portable release/version policy will be chosen when public binary
-releases are planned; the repository does not claim a provisional semantic
-version before then.
+wolf3d-portable is a rolling source project on main, without a separate portable
+release version. The version in a package folder identifies the selected
+wolf3d-lib engine. The full naming vocabulary is maintained in
+[BUILD-NAMING.md](BUILD-NAMING.md); package contents are defined in
+[DISTRIBUTION-CONTENTS.md](DISTRIBUTION-CONTENTS.md).
 
-Package-folder names retain their established form:
+DOCS/BUILD.TXT records the actual portable and engine revisions plus every
+configured build option. The folder name alone does not identify exact sources.
 
-```text
-wolf3d-portable-<wolf3d-lib-version>-<host/platform/compiler>
-```
-
-The numeric component identifies the bundled engine version. It is useful for
-sorting compatible host builds, but it is not a `wolf3d-portable` release
-version. Every staged package includes `DOCS/BUILD.TXT`, which records the full
-portable commit plus the exact wolf3d-lib version and commit.
-
-## Pinned and latest-library workflows
-
-The committed `lib/wolf3d` gitlink is the reproducible default. A normal build
-is offline with respect to the engine and always uses that exact commit.
-
-The submodule declares `branch = main`, so maintainers can deliberately test
-and adopt the newest public engine with:
-
-```text
-git submodule update --remote --merge -- lib/wolf3d
-git submodule update --init --recursive
-```
-
-On Linux, `make fresh` performs those operations and then builds. If the new
-engine is accepted, commit the changed gitlink. Automatically advancing the
-submodule during every ordinary build is intentionally unsupported because it
-would make identical portable commits produce different binaries over time.
+The committed engine gitlink is a reproducible starting point. Guided build
+scripts offer newer compatible engine main revisions with user confirmation;
+direct build commands use the selected checkout. Engine bug fixes do not require
+a portable gitlink update before users can accept them. See
+[source-updates.md](source-updates.md) for update checks, local changes, offline
+builds and unattended operation.

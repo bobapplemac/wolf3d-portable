@@ -5,6 +5,8 @@ of supported compilers, wrappers, produced artifacts, and runtime-validated
 destination operating systems. This document supplies the detailed commands,
 dependencies, and package behavior.
 
+For cloning and confirmed updates, see [source updates](source-updates.md).
+
 ## Dependencies
 
 Initialize both submodules before configuring:
@@ -65,7 +67,7 @@ For example, this creates a ready-to-copy VC6 package:
 scripts\windows\legacy\build.cmd vc6 Release all nuked static package
 ```
 
-The legacy definition always compiles the pinned library submodule as part of
+The legacy definition always compiles the selected library submodule as part of
 the wrapper build. It supports x86 only and never configures SDL3. Old Windows
 SDKs lack raw-input declarations, so these builds use ordinary Win32 mouse
 messages; keyboard, GDI presentation, WinMM audio, fullscreen toggling, and
@@ -94,7 +96,9 @@ build:
 - `Publish All` stages both hosts.
 
 Choose `x64` or `Win32` independently in the platform selector. Publish
-configurations are Release builds with the static MSVC runtime and produce
+configurations are Release builds with the static MSVC runtime and stage
+ready-to-copy packages under `dist/`.
+
 Visual Studio 2017's bundled CMake predates preset support, so its dispatcher
 and native project locate CMake 3.20 or newer from `PATH` or a newer installed
 Visual Studio while retaining the native VS15 generator and v141 compiler.
@@ -322,21 +326,10 @@ same cleanup without pruning unrelated Docker objects.
 
 ## Reproducibility and latest-main builds
 
-Ordinary builds are offline with respect to `wolf3d-lib`: they use the
-committed gitlink. `make fresh` runs:
-
-```text
-git submodule update --remote --merge -- lib/wolf3d
-git submodule update --init --recursive
-make all
-```
-
-This is intentionally convenient for active integration. Commit the resulting
-gitlink to make that engine selection reproducible. Every staged folder
-contains `DOCS/BUILD.TXT` with the exact portable commit plus the resolved
-engine `1.4.REVISION` and full commit SHA. See
-[`build-identity.md`](build-identity.md) for package naming and the explicit
-latest-library workflow.
+The root scripts and `make fresh` use the confirmed update workflow described
+in [source-updates.md](source-updates.md). Direct Make/CMake commands build the
+currently selected sources. Packages record their actual source revisions and
+all settings in DOCS/BUILD.TXT; see [build identity](build-identity.md).
 
 ## Linux portability
 

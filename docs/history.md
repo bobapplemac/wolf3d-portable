@@ -26,7 +26,8 @@ Public portable development began by pinning curated wolf3d-lib commit
 and third-party sources at the private and initial public checkpoints were
 byte-for-byte identical. The initial public checkpoint differed only in
 reviewed history, licensing, versioning, and repository-link documentation.
-Subsequent portable commits advance the exact public library gitlink normally.
+The recorded gitlink remains available for reproduction; current update
+behavior is documented in [source-updates.md](source-updates.md).
 
 The portable repository remains an unversioned rolling `main` until public
 binary releases are planned. Existing package-folder numbers identify the

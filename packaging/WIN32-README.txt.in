@@ -6,10 +6,8 @@ This folder contains:
   wolf3d.exe              Win32 video, input, timing, and audio host
   wolf3d.dll              Platform-neutral Wolf3D engine
 @W3P_OPL_FILE_LINE@
-  WOLF3D-LIB.txt          Exact wolf3d-lib version and commit
-  LICENSE.txt             wolf3d-portable license
-  LICENSES/               wolf3d-lib and component license texts
-  THIRD_PARTY_NOTICES.txt Third-party provenance and revisions
+  README.TXT             Getting started and runtime options
+  DOCS/                  Build details, component notices and licenses
 
 Official packages embed the MSVC runtime, so the Microsoft Visual C++
 Redistributable is not required on the destination system. Custom builds made
@@ -36,7 +34,7 @@ original -noal for no detected sound card with PC-speaker effects, or
 --no-sound for no detected sound card with all in-game sound initially off.
 SIGNON and the Sound menu reflect the selected emulated hardware.
 Use --opl nuked, --opl dbopl, or --opl silent to select a driver recorded in
-WOLF3D-LIB.txt. Use --sample-rate HZ to change the preferred PCM rate.
+DOCS/BUILD.TXT. Use --sample-rate HZ to change the preferred PCM rate.
 Mouse and XInput joystick hardware are detected automatically. Use --mouse or
 --joy to force a device present, and --nomouse or --nojoy to force it absent.
 An enabled mouse is captured inside the window and released when the game
@@ -69,5 +67,5 @@ game-data directory and retain that game's data extension.
 Run wolf3d.exe --help (also -h or /?) from a terminal to list all game and
 Win32 host options plus the OPL drivers compiled into this package.
 
-BUILD-INFO.txt records the complete configured build options, compiler and
+DOCS/BUILD.TXT records the complete configured build options, compiler and
 source details. See docs/BUILD-NAMING.md in the source tree for package naming.

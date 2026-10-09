@@ -13,7 +13,7 @@ library_build="$build_dir/wolf3d-lib"
 library_dist="$build_dir/wolf3d-lib-dist"
 
 rm -rf "$build_dir" "$dist_dir"
-mkdir -p "$build_dir/objects" "$dist_dir/LICENSES"
+mkdir -p "$build_dir/objects" "$dist_dir/DOCS/LICENSES"
 
 WG_OPENWATCOM_BUILD_DIR="$library_build" \
 WG_OPENWATCOM_DIST_DIR="$library_dist" \
@@ -61,13 +61,11 @@ wlink system dos4g option quiet \
 # WLINK's DOS/4G system target requests DOS4GW.EXE by name. DOS/32A is a
 # compatible replacement and is the extender deliberately shipped here.
 cp "$WATCOM/binw/dos32a.exe" "$dist_dir/DOS4GW.EXE"
-cp "$WATCOM/binw/license.d32" "$dist_dir/LICENSES/DOS32A.txt"
-cp "$root/LICENSE" "$dist_dir/LICENSE.txt"
-cp "$root/THIRD_PARTY.md" "$dist_dir/THIRD_PARTY_NOTICES.txt"
-cp "$library_dist/WOLF3D-LIB.txt" "$dist_dir/WOLF3D-LIB.txt"
-if [ -f "$library_dist/licenses/NUKED-OPL3-LGPL-2.1.txt" ]; then
-    cp "$library_dist/licenses/NUKED-OPL3-LGPL-2.1.txt" \
-       "$dist_dir/LICENSES/Nuked-OPL3-LGPL-2.1.txt"
+cp "$WATCOM/binw/license.d32" "$dist_dir/DOCS/LICENSES/DOS32A.TXT"
+cp "$root/LICENSE" "$dist_dir/DOCS/LICENSES/GPL-2.TXT"
+if [ -f "$library_dist/NUKEDOPL.LIB" ]; then
+    cp "$root/lib/wolf3d/third_party/Nuked-OPL3/LICENSE" \
+       "$dist_dir/DOCS/LICENSES/LGPL-21.TXT"
     mkdir -p "$dist_dir/RELINK"
     cp "$build_dir/objects/WG_HELP.obj" "$dist_dir/RELINK/WG_HELP.obj"
     cp "$build_dir/objects/WG_DOS.obj" "$dist_dir/RELINK/WG_DOS.obj"
@@ -78,14 +76,13 @@ if [ -f "$library_dist/licenses/NUKED-OPL3-LGPL-2.1.txt" ]; then
     cp "$library_dist/NUKEDOPL.LIB" "$dist_dir/RELINK/NUKEDOPL.LIB"
     cp "$root/packaging/DOS-RELINK.LNK" "$dist_dir/RELINK/RELINK.LNK"
     cp "$root/packaging/DOS-RELINK-README.txt" \
-       "$dist_dir/RELINK/README.txt"
+       "$dist_dir/RELINK/README.TXT"
 fi
-if [ -f "$library_dist/licenses/DBOPL-PROVENANCE.txt" ]; then
-    cp "$library_dist/licenses/DBOPL-PROVENANCE.txt" \
-       "$dist_dir/LICENSES/DBOPL-PROVENANCE.txt"
-fi
+case ",$drivers," in
+    *,dbopl,*) cp "$root/lib/wolf3d/third_party/DBOPL/README.wolf3d-lib.md" "$dist_dir/DOCS/DBOPL.TXT" ;;
+esac
 
-cat > "$dist_dir/README.txt" <<EOF
+cat > "$dist_dir/README.TXT" <<EOF
 wolf3d-portable $version for 32-bit protected-mode DOS
 
 This package uses DOS/32 Advanced DOS Extender technology. DOS4GW.EXE is the
@@ -132,3 +129,5 @@ EOF
 echo "Open Watcom DOS32 application staged: $dist_dir"
 
 write_build_info wolf3d-portable dos32 "vga" "$root/lib/wolf3d"
+
+sh "$root/scripts/package-docs.sh" "$root" "$dist_dir" wolf3d-portable

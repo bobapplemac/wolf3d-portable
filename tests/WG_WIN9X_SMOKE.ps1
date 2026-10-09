@@ -7,11 +7,11 @@ $package = (Resolve-Path -LiteralPath $PackagePath).Path
 $fixture = Join-Path $WorkRoot ([Guid]::NewGuid().ToString('N'))
 $gameDir = Join-Path $fixture 'Game With Spaces'
 New-Item -ItemType Directory -Force -Path $gameDir | Out-Null
-Copy-Item -LiteralPath (Join-Path $package 'wolf3d.exe') -Destination $gameDir
+Copy-Item -LiteralPath (Join-Path $package 'WOLF3D.EXE') -Destination $gameDir
 Get-ChildItem -LiteralPath $package -Filter '*.dll' | Copy-Item -Destination $gameDir
 $gameDir = (Resolve-Path -LiteralPath $gameDir).Path
 $fixture = (Resolve-Path -LiteralPath $fixture).Path
-$exe = Join-Path $gameDir 'wolf3d.exe'
+$exe = Join-Path $gameDir 'WOLF3D.EXE'
 $bytes = [IO.File]::ReadAllBytes($exe)
 $pe = [BitConverter]::ToInt32($bytes, 0x3c)
 if ([BitConverter]::ToUInt16($bytes, $pe + 92) -ne 3) {

@@ -33,7 +33,7 @@ with `W3P_USE_SYSTEM_SDL3=ON` to use an installed
 SDL 3.2-or-newer package instead of the pinned submodule. SDL release packages
 include the zlib notice; system-SDL packaging uses the vendored copy at
 `packaging/COPYING.SDL3.txt` so the source submodule need not be initialized.
-Staged packages name the notice `LICENSES/SDL3-Zlib.txt`.
+Staged packages name the notice `DOCS/LICENSES/SDL3.TXT`.
 
 ## musl libc
 
@@ -41,7 +41,7 @@ The optional relocatable Linux SDL3 package redistributes the musl 1.2.5
 runtime loader/libc from Alpine Linux 3.20.10. musl is distributed under the
 MIT license with additional permissive notices; its notice is included as
 `packaging/COPYING.musl.txt` and copied into that distribution as
-`LICENSES/musl-MIT.txt`.
+`DOCS/LICENSES/MUSL.TXT`.
 
 ### Bundled musl desktop clients
 
@@ -53,7 +53,7 @@ projects and licenses are X.Org libraries (MIT/X11), Wayland (MIT), xkbcommon
 (MIT), eudev (LGPL-2.1-or-later), ALSA lib (LGPL-2.1-or-later), PulseAudio
 (LGPL-2.1-or-later), and PulseAudio's codec/runtime dependencies under their
 respective permissive or LGPL licenses. The package includes the LGPL 2.1
-license as `LICENSES/LGPL-2.1.txt`; exact pinned binary provenance is the
+license as `DOCS/LICENSES/LGPL-21.TXT`; exact pinned binary provenance is the
 digest-pinned Alpine 3.20.10 builder in `packaging/linux-musl/Dockerfile`.
 
 ## Wayland 1.18 build toolchain
@@ -70,7 +70,7 @@ ships the matching musl-built Wayland client objects as described above.
 
 - Upstream: `dos32a.sourceforge.net`
 - Bundled component: DOS/32A 9.1.2 from the pinned Open Watcom v2 toolchain
-- License: permissive DOS/32A license; see `LICENSES/DOS32A.txt` in
+- License: permissive DOS/32A license; see `DOCS/LICENSES/DOS32A.TXT` in
   the DOS distribution
 
 The 32-bit DOS package uses DOS/32 Advanced DOS Extender technology. The file
@@ -82,7 +82,7 @@ is distributed with its required license text.
 
 The optional direct-console bundle redistributes unmodified Alpine musl builds
 of libdrm (MIT-style licenses) and alsa-lib (LGPL-2.1-or-later), plus their
-runtime dependencies. Exact installed Alpine versions appear in BUILD-INFO.txt.
+runtime dependencies. Exact installed Alpine versions appear in DOCS/BUILD.TXT.
 Upstream sources: https://dri.freedesktop.org/libdrm/ and
 https://www.alsa-project.org/files/pub/lib/ . Alpine v3.20 build recipes:
 https://gitlab.alpinelinux.org/alpine/aports/-/tree/3.20-stable/main/libdrm and
@@ -93,5 +93,5 @@ from those sources. No external ALSA plugins are required by the bundled config.
 `packaging/COPYING.libdrm.txt` and `packaging/COPYING.ALSA.txt` preserve the
 upstream copyright/license collections distributed in Debian's libdrm2 and
 libasound2t64 copyright files (copied from ajmbuild01 on 2026-10-09). The full
-LGPL-2.1 text is also shipped in LICENSES/LGPL-2.1.txt. See the existing musl
+LGPL-2.1 text is also shipped in DOCS/LICENSES/LGPL-21.TXT. See the existing musl
 notices for the loader/libc license and corresponding source.

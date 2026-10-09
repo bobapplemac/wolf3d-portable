@@ -203,9 +203,9 @@ ready-to-copy folders under `dist/` as the command-line presets. Ordinary
 Debug and Release configurations remain development builds under `build/`.
 
 Use the corresponding `x86` presets for 32-bit builds. Release folders appear
-under `dist/` and include `wolf3d.exe` or `wolf3d-sdl3.exe`, `wolf3d.dll`,
+under `dist/` and include `wolf3d.exe`, `wolf3d.dll`,
 the replaceable `Nuked-OPL3.dll`, all required host DLLs, notices, and a
-`WOLF3D-LIB.txt` file recording the exact portable commit plus the engine
+`DOCS/BUILD.TXT` file recording the exact portable commit plus the engine
 version and commit. The numeric component in a package-folder name identifies
 the bundled engine version; it is not a portable release version.
 
@@ -265,7 +265,7 @@ Copy one original game installation beside the selected executable, or pass
 its location explicitly:
 
 ```text
-wolf3d-sdl3 --data /path/to/WL1
+wolf3d --data /path/to/WL1
 wolf3d --data /path/to/WL6 --game WL6
 ```
 

@@ -13,7 +13,7 @@ library_build="$build_dir/wolf3d-lib"
 library_dist="$build_dir/wolf3d-lib-dist"
 
 rm -rf "$build_dir" "$dist_dir"
-mkdir -p "$build_dir/objects" "$dist_dir/LICENSES"
+mkdir -p "$build_dir/objects" "$dist_dir/DOCS/LICENSES"
 
 WG_OPENWATCOM_WINDOWS_BUILD_DIR="$library_build" \
 WG_OPENWATCOM_WINDOWS_DIST_DIR="$library_dist" \
@@ -38,36 +38,32 @@ wcc386 -zq -bt=nt -5r -ox -fr -w4 -we \
     -fo="$build_dir/objects/WG_WIN32.obj" \
     "$root/platforms/win32/WG_WIN32.c"
 
-echo "Open Watcom Link: wolf3d.exe"
+echo "Open Watcom Link: WOLF3D.EXE"
 wlink system nt option quiet \
-    name "$dist_dir/wolf3d.exe" \
+    name "$dist_dir/WOLF3D.EXE" \
     file "$build_dir/objects/WG_HELP.obj,$build_dir/objects/WG_TEXT_OUTPUT.obj,$build_dir/objects/WG_DOS_ADLIB.obj,$build_dir/objects/WG_WIN32.obj" \
     library "$library_dist/WOLF3D.LIB,user32.lib,gdi32.lib,winmm.lib,shell32.lib"
 
 cp "$library_dist/wolf3d.dll" "$dist_dir/wolf3d.dll"
 if [ -f "$library_dist/Nuked-OPL3.dll" ]; then
     cp "$library_dist/Nuked-OPL3.dll" "$dist_dir/Nuked-OPL3.dll"
-    cp "$library_dist/licenses/NUKED-OPL3-LGPL-2.1.txt" \
-       "$dist_dir/LICENSES/Nuked-OPL3-LGPL-2.1.txt"
+    cp "$root/lib/wolf3d/third_party/Nuked-OPL3/LICENSE" \
+       "$dist_dir/DOCS/LICENSES/LGPL-21.TXT"
 fi
-if [ -f "$library_dist/licenses/DBOPL-PROVENANCE.txt" ]; then
-    cp "$library_dist/licenses/DBOPL-PROVENANCE.txt" \
-       "$dist_dir/LICENSES/DBOPL-PROVENANCE.txt"
-fi
-cp "$root/LICENSE" "$dist_dir/LICENSE.txt"
-cp "$root/lib/wolf3d/LICENSE" "$dist_dir/LICENSES/wolf3d-lib-GPL-2.0.txt"
-cp "$root/THIRD_PARTY.md" "$dist_dir/THIRD_PARTY_NOTICES.txt"
-cp "$library_dist/WOLF3D-LIB.txt" "$dist_dir/WOLF3D-LIB.txt"
+case ",$drivers," in
+    *,dbopl,*) cp "$root/lib/wolf3d/third_party/DBOPL/README.wolf3d-lib.md" "$dist_dir/DOCS/DBOPL.TXT" ;;
+esac
+cp "$root/LICENSE" "$dist_dir/DOCS/LICENSES/GPL-2.TXT"
 
-cat > "$dist_dir/README.txt" <<EOF
+cat > "$dist_dir/README.TXT" <<EOF
 wolf3d-portable $version GDI host for Win9x (Windows 95/98/Me)
 
 This x86 package was cross-built on Linux with Open Watcom. It uses only the
 legacy GDI host; SDL3 is intentionally not part of the Win9x profile.
-Keep wolf3d.exe, wolf3d.dll, and any supplied OPL DLL together. Place legally
-obtained Wolfenstein 3D or Spear of Destiny data beside wolf3d.exe or in a
-nested subdirectory, then launch wolf3d.exe. Run wolf3d.exe --help for options
-or wolf3d.exe --diag for a hardware and game-data report.
+Keep WOLF3D.EXE, wolf3d.dll, and any supplied OPL DLL together. Place legally
+obtained Wolfenstein 3D or Spear of Destiny data beside WOLF3D.EXE or in a
+nested subdirectory, then launch WOLF3D.EXE. Run WOLF3D.EXE --help for options
+or WOLF3D.EXE --diag for a hardware and game-data report.
 
 The executable uses a console-subsystem main entry so COMMAND.COM retains
 help/diagnostic output and supplies parsed arguments. The game still opens its
@@ -80,7 +76,7 @@ Native adlib accesses ISA ports 388h/389h on Windows 95/98/Me only and requires
 compatible OPL hardware exposed by the machine or VM. On NT-based Windows or
 without that hardware, select --opl dbopl or --opl silent explicitly.
 
-Wolf3d.ini beside wolf3d.exe accepts one option per line, for example:
+Wolf3d.ini beside WOLF3D.EXE accepts one option per line, for example:
 --opl dbopl
 Windows 95/98/Me runtime validation remains a separate physical/VM test.
 EOF
@@ -89,3 +85,5 @@ echo "Open Watcom Win9x portable package staged: $dist_dir"
 sh "$root/lib/wolf3d/tools/WG_WINDOWS_PE_AUDIT.sh" win9x-x86 "$dist_dir"
 
 write_build_info wolf3d-portable win9x "gdi" "$root/lib/wolf3d"
+
+sh "$root/scripts/package-docs.sh" "$root" "$dist_dir" wolf3d-portable

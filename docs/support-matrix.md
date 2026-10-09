@@ -22,6 +22,7 @@ or the local submodule's `lib/wolf3d/docs/support-matrix.md`.
 | Desired package | Build host | Command | Staged result |
 | --- | --- | --- | --- |
 | Windows Win32/GDI | Windows | `.\build.ps1 -Wrapper win32` | `dist/wolf3d-portable_<version>_<platform>_<arch>_gdi_<toolchain>/` |
+| Windows 95/98/Me GDI | `WOLF3D.EXE` | `wolf3d.dll`; Nuked-OPL3 DLL only when explicitly selected |
 | Windows SDL3 | Windows with VS2019/2022/2026 or MinGW UCRT64 | `.\build.ps1 -Wrapper sdl3` | `dist/wolf3d-portable_<version>_win10_<arch>_sdl3_<toolchain>/` |
 | Both modern Windows wrappers | Windows with VS2019/2022/2026 or MinGW UCRT64 | `.\build.ps1 -Wrapper all` | Both folders above |
 | Native Linux SDL3 | Linux | `./build.sh` or `make sdl3-release CC=clang` | `dist/wolf3d-portable_<version>_linux-glibc_<arch>_sdl3_<toolchain>/` |
@@ -110,13 +111,14 @@ drivers, device permissions, or a sound server.
 | Wrapper | Executable | Required adjacent components |
 | --- | --- | --- |
 | Windows Win32/GDI | `wolf3d.exe` | `wolf3d.dll`; `Nuked-OPL3.dll` for the default backend |
-| Windows SDL3 | `wolf3d-sdl3.exe` | `wolf3d.dll`, SDL3 DLLs; `Nuked-OPL3.dll` for the default backend |
-| Linux SDL3 | `wolf3d-sdl3` (native/glibc package) or top-level `wolf3d` launcher (musl bundle) | `libwolf3d.so`, pinned SDL3 when selected, and default Nuked-OPL3 shared object |
+| Windows 95/98/Me GDI | `WOLF3D.EXE` | `wolf3d.dll`; Nuked-OPL3 DLL only when explicitly selected |
+| Windows SDL3 | `wolf3d.exe` | `wolf3d.dll`, SDL3 DLLs; `Nuked-OPL3.dll` for the default backend |
+| Linux SDL3 | `wolf3d` (native/glibc package) or top-level `wolf3d` launcher (musl bundle) | `libwolf3d.so`, pinned SDL3 when selected, and default Nuked-OPL3 shared object |
 | Linux console | `wolf3d` | `libwolf3d.so`, system DRM/ALSA libraries, and default Nuked-OPL3 shared object |
 | 32-bit DOS | `WOLF3D.EXE` | DOS/32A loader staged as `DOS4GW.EXE`; SB16 PCM uses `BLASTER`; native AdLib (default), DBOPL, and silent are runtime selectable; Nuked is an opt-in build and its packages include `RELINK/` materials |
 
-Each staged folder also contains plain-text project and third-party licenses
-and `WOLF3D-LIB.txt`, which records the exact portable commit plus the engine
+Each staged folder contains `README.TXT` and `DOCS/` with full licenses,
+component notices and `BUILD.TXT`, which records the exact portable commit plus the engine
 version and commit. Copy
 the whole staged folder rather than selecting individual DLLs/shared objects.
 Original game data is not included.

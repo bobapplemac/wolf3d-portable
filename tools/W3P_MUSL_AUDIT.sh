@@ -8,9 +8,15 @@ fi
 
 bundle=$1
 backend=${2:-sdl3}
+test -f "$bundle/README.TXT"
+test -f "$bundle/DOCS/BUILD.TXT"
+test -f "$bundle/DOCS/NOTICES.TXT"
+test -f "$bundle/DOCS/LICENSES/GPL-2.TXT"
+test ! -d "$bundle/DOCS/DOCS"
+test ! -d "$bundle/LICENSES"
 case "$backend" in
-    sdl3) binary=wolf3d-sdl3 ;;
-    kms-fbdev) binary=wolf3d-console ;;
+    sdl3) binary=wolf3d ;;
+    kms-fbdev) binary=wolf3d ;;
     *) echo "Unsupported musl backend: $backend" >&2; exit 2 ;;
 esac
 if [ ! -x "$bundle/wolf3d" ] || [ ! -x "$bundle/bin/$binary" ]; then
@@ -57,7 +63,7 @@ if [ "$backend" = kms-fbdev ]; then
     # Validate relocation and audio configuration without touching a real VT,
     # DRM master, input device, or sound card.
     test -f "$bundle/share/alsa/alsa.conf"
-    test -f "$bundle/BUILD-INFO.txt"
+    test -f "$bundle/DOCS/BUILD.TXT"
     temp=$(mktemp -d)
     trap 'rm -rf "$temp"' EXIT INT TERM
     mkdir -p "$temp/relocated bundle"

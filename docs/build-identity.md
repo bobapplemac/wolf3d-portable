@@ -13,7 +13,7 @@ wolf3d-portable-<wolf3d-lib-version>-<host/platform/compiler>
 
 The numeric component identifies the bundled engine version. It is useful for
 sorting compatible host builds, but it is not a `wolf3d-portable` release
-version. Every staged package includes `WOLF3D-LIB.txt`, which records the full
+version. Every staged package includes `DOCS/BUILD.TXT`, which records the full
 portable commit plus the exact wolf3d-lib version and commit.
 
 ## Pinned and latest-library workflows

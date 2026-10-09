@@ -3,7 +3,7 @@ Portable musl bundle
 --------------------
 
 This release is laid out as a relocatable application directory. Run the
-top-level ./wolf3d launcher; do not invoke bin/wolf3d-sdl3 directly. The
+top-level ./wolf3d launcher; do not invoke bin/wolf3d directly. The
 launcher selects the bundled musl runtime and limits library lookup to lib/,
 so the application does not depend on the destination distribution's glibc
 version and does not require SDL3 to be installed.

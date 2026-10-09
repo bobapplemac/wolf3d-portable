@@ -41,7 +41,7 @@ Host-specific options:
   --help                              (also -h or /?)
 
 Game audio options are --opl nuked|dbopl|silent and --sample-rate HZ. Only
-drivers recorded in WOLF3D-LIB.txt are available. Emulated hardware is selected
+drivers recorded in DOCS/BUILD.TXT are available. Emulated hardware is selected
 independently with --adlib/-nosb, --pc-speaker/-noal, or --no-sound. Host-only
 --no-audio suppresses ALSA output without changing detected game hardware.
 
@@ -58,9 +58,9 @@ libwolf3d.so is the generic engine library. When present, libNuked-OPL3.so is
 kept separate and replaceable under the LGPL-2.1 license. System libdrm, ALSA,
 libc, and their dependencies must be supplied by the target Linux installation.
 
-See LICENSE.txt for wolf3d-portable's license, LICENSES/ for the explicit
-wolf3d-lib and applicable component license texts, and THIRD_PARTY_NOTICES.txt for
+See DOCS/LICENSES/GPL-2.TXT for wolf3d-portable's license, DOCS/LICENSES/ for the explicit
+wolf3d-lib and applicable component license texts, and DOCS/NOTICES.TXT for
 component provenance.
 
-BUILD-INFO.txt records the complete configured build options, compiler and
+DOCS/BUILD.TXT records the complete configured build options, compiler and
 source details. See docs/BUILD-NAMING.md in the source tree for package naming.

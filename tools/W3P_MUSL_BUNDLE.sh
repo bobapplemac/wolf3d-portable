@@ -10,8 +10,8 @@ stage=$1
 bundle=$2
 backend=${3:-sdl3}
 case "$backend" in
-    sdl3) staged_binary=wolf3d-sdl3; binary=wolf3d-sdl3 ;;
-    kms-fbdev) staged_binary=wolf3d; binary=wolf3d-console ;;
+    sdl3) staged_binary=wolf3d; binary=wolf3d ;;
+    kms-fbdev) staged_binary=wolf3d; binary=wolf3d ;;
     *) echo "Unsupported musl backend: $backend" >&2; exit 2 ;;
 esac
 
@@ -32,7 +32,7 @@ if [ "$(uname -m)" != "x86_64" ]; then
 fi
 
 rm -rf -- "$bundle"
-mkdir -p "$bundle/bin" "$bundle/lib" "$bundle/LICENSES"
+mkdir -p "$bundle/bin" "$bundle/lib" "$bundle/DOCS/LICENSES"
 
 cp "$stage/$staged_binary" "$bundle/bin/$binary"
 for item in "$stage"/*.so*; do
@@ -40,20 +40,14 @@ for item in "$stage"/*.so*; do
     cp -a "$item" "$bundle/lib/"
 done
 
-for item in BUILD-INFO.txt README.txt LICENSE.txt THIRD_PARTY_NOTICES.txt WOLF3D-LIB.txt; do
-    if [ -f "$stage/$item" ]; then
-        cp "$stage/$item" "$bundle/$item"
-    fi
-done
-for item in "$stage"/LICENSES/*; do
-    [ -f "$item" ] || continue
-    cp "$item" "$bundle/LICENSES/"
-done
+cp "$stage/README.TXT" "$bundle/README.TXT"
+cp -R "$stage/DOCS/." "$bundle/DOCS/"
 
 # The loader and libc are the same musl ELF under two runtime names. Follow
 # Alpine's symlink so the bundle remains intact when copied or archived.
 cp -L /lib/ld-musl-x86_64.so.1 "$bundle/lib/ld-musl-x86_64.so.1"
 cp -L /lib/ld-musl-x86_64.so.1 "$bundle/lib/libc.musl-x86_64.so.1"
+apk info --who-owns /lib/ld-musl-x86_64.so.1 > "$bundle/DOCS/RUNTIME.TXT"
 
 # SDL loads its desktop and audio backends with dlopen(). A musl process cannot
 # load the destination system's glibc-built copies, so seed the bundle with the
@@ -81,6 +75,7 @@ copy_runtime_library()
         exit 1
     fi
     cp -L "$source_path" "$bundle/lib/$soname"
+    apk info --who-owns "$(readlink -f "$source_path")" >> "$bundle/DOCS/RUNTIME.TXT"
     return 0
 }
 
@@ -131,16 +126,14 @@ while [ "$changed" -eq 1 ]; do
     done
 done
 
-cp packaging/COPYING.musl.txt "$bundle/LICENSES/musl-MIT.txt"
-if [ -e "$bundle/lib/libNuked-OPL3.so" ] || [ "$backend" = kms-fbdev ]; then
-    cp packaging/COPYING.LGPL-2.1.txt "$bundle/LICENSES/LGPL-2.1.txt"
-fi
+cp packaging/COPYING.musl.txt "$bundle/DOCS/LICENSES/MUSL.TXT"
+cp packaging/COPYING.LGPL-2.1.txt "$bundle/DOCS/LICENSES/LGPL-21.TXT"
+cp packaging/COPYING.ALSA.txt "$bundle/DOCS/LICENSES/ALSA.TXT"
 if [ "$backend" = sdl3 ]; then
-    cat packaging/SDL3-MUSL-NOTES.txt >> "$bundle/README.txt"
+    cat packaging/SDL3-MUSL-NOTES.txt >> "$bundle/README.TXT"
 else
-    cp packaging/KMS-FBDEV-MUSL-NOTES.txt "$bundle/README.txt"
-    cp packaging/COPYING.ALSA.txt "$bundle/LICENSES/ALSA.txt"
-    cp packaging/COPYING.libdrm.txt "$bundle/LICENSES/libdrm.txt"
+    cp packaging/KMS-FBDEV-MUSL-NOTES.txt "$bundle/README.TXT"
+    cp packaging/COPYING.libdrm.txt "$bundle/DOCS/LICENSES/LIBDRM.TXT"
 fi
 sed "s/@BINARY@/$binary/g" packaging/linux-musl/wolf3d > "$bundle/wolf3d"
 chmod 0755 "$bundle/wolf3d" "$bundle/bin/$binary" \
@@ -167,4 +160,28 @@ printf '%s\n' "musl bundle staged: $bundle"
         printf '\n===== ALSA configuration =====\n'
         cat "$bundle/share/alsa/alsa.conf"
     fi
-} >> "$bundle/BUILD-INFO.txt"
+} >> "$bundle/DOCS/BUILD.TXT"
+
+# Record only runtime packages actually copied, not every build dependency.
+{
+    printf '\nBundled Alpine musl runtime components\n=====================================\n'
+    printf 'These shared libraries remain independently replaceable.\n'
+    printf 'musl terms: LICENSES/MUSL.TXT; ALSA notices: LICENSES/ALSA.TXT.\n'
+    printf 'LGPL runtime terms: LICENSES/LGPL-21.TXT.\n'
+    if [ "$backend" = kms-fbdev ]; then
+        printf 'libdrm notices: LICENSES/LIBDRM.TXT.\n'
+    fi
+    printf 'Corresponding sources and build recipes: https://gitlab.alpinelinux.org/alpine/aports/-/tree/3.20-stable\n'
+    printf 'Exact library ownership:\n'
+    sort -u "$bundle/DOCS/RUNTIME.TXT"
+    printf '\nPackage versions, licenses and upstream source websites:\n'
+    awk 'BEGIN { RS=""; FS="\n" }
+        NR==FNR { for(i=1;i<=NF;i++) { n=split($i,a," "); wanted[a[n]]=1 } next }
+        { p="";v="";l="";u="";o="";
+          for(i=1;i<=NF;i++) { key=substr($i,1,2); val=substr($i,3);
+            if(key=="P:")p=val; if(key=="V:")v=val; if(key=="L:")l=val;
+            if(key=="U:")u=val; if(key=="o:")o=val }
+          if(wanted[p "-" v]) printf "%s %s | %s | %s | Alpine source package: %s\n",p,v,l,u,o
+        }' "$bundle/DOCS/RUNTIME.TXT" /lib/apk/db/installed
+} >> "$bundle/DOCS/NOTICES.TXT"
+rm "$bundle/DOCS/RUNTIME.TXT"

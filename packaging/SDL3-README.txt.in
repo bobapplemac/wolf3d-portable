@@ -3,7 +3,7 @@ wolf3d-portable @PROJECT_VERSION@ - SDL3 GUI host
 
 This folder is a minimal cross-platform GUI build. Keep the executable,
 Wolf3D shared library, SDL3 shared library, and every other included shared
-library together. WOLF3D-LIB.txt records the compiled audio drivers.
+library together. DOCS/BUILD.TXT records the compiled audio drivers.
 
 On Linux, the local shared libraries are discovered relative to this
 executable, so SDL3 does not need to be installed separately. The package
@@ -15,14 +15,14 @@ runtime libraries; the default pinned-SDL build minimizes those direct
 dependencies and is recommended for redistribution.
 
 Place original game data in this directory or any ordinary subdirectory, then
-run wolf3d-sdl3. The launcher recursively finds complete WL1, WL6, SDM, and SOD
+run wolf3d (wolf3d.exe on Windows). The launcher recursively finds complete WL1, WL6, SDM, and SOD
 sets; symbolic links are not followed. Use --data PATH to resolve duplicate
 installations. Use --game EXT or -WL1/-WL6/-SDM/-SOD for an exact set;
 SD1/SD2/SD3 mission packs always require their explicit selector.
 
 Optional defaults may be placed beside the launcher in wolf3d.ini on Windows
 or wolf3d.conf on Linux, one command-line option per line. An exact
-wolf3d-sdl3.ini/.conf takes priority. Command-line arguments override config
+a renamed executable's matching .ini/.conf takes priority. Command-line arguments override config
 defaults. Use --config FILE, --no-config, or --diag to select another file,
 bypass defaults, or print a data/hardware report without launching.
 
@@ -50,8 +50,8 @@ change the preferred PCM rate. Emulated hardware is selected independently:
 
 SDL3 is distributed under the zlib license. When included, Nuked-OPL3 is
 independently replaceable and distributed under LGPL-2.1-or-later. See the included
-LICENSE.txt, LICENSES directory, and THIRD_PARTY_NOTICES.txt. The LICENSES
+DOCS/LICENSES/GPL-2.TXT, DOCS/LICENSES directory, and DOCS/NOTICES.TXT. The DOCS/LICENSES
 directory also identifies wolf3d-lib's GPL-2.0 license explicitly.
 
-BUILD-INFO.txt records the complete configured build options, compiler and
+DOCS/BUILD.TXT records the complete configured build options, compiler and
 source details. See docs/BUILD-NAMING.md in the source tree for package naming.

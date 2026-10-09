@@ -333,7 +333,7 @@ make all
 
 This is intentionally convenient for active integration. Commit the resulting
 gitlink to make that engine selection reproducible. Every staged folder
-contains `WOLF3D-LIB.txt` with the exact portable commit plus the resolved
+contains `DOCS/BUILD.TXT` with the exact portable commit plus the resolved
 engine `1.4.REVISION` and full commit SHA. See
 [`build-identity.md`](build-identity.md) for package naming and the explicit
 latest-library workflow.

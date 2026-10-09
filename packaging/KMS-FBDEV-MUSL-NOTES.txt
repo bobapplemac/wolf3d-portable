@@ -32,12 +32,15 @@ For a custom ALSA setup, edit share/alsa/alsa.conf within this bundle. External
 plugins must be compatible musl builds in lib/alsa-lib. Do not copy host glibc
 plugins into this directory.
 
-BUILD-INFO.txt includes the complete build configuration, package versions,
+DOCS/BUILD.TXT includes the complete build configuration, package versions,
 launcher and bundling recipe. The automated audit checks dependencies,
 relocation, argument forwarding, and ALSA null PCM. Actual KMS/fbdev display,
 input, real audio, and console restoration remain hardware runtime tests.
 
 Dependencies remain separate and replaceable in lib/. Copyright notices and
-licenses are in LICENSES/. Corresponding unmodified dependency sources and
-Alpine packaging recipes are identified in THIRD_PARTY_NOTICES.txt and the
-Alpine package versions recorded in BUILD-INFO.txt.
+licenses are in DOCS/LICENSES/. Corresponding unmodified dependency sources and
+Alpine packaging recipes are identified in DOCS/NOTICES.TXT and the
+Alpine package versions recorded in DOCS/BUILD.TXT.
+
+This package contains GPL software; see DOCS/NOTICES.TXT for license mappings
+and DOCS/LICENSES/GPL-2.TXT for the license. Keep DOCS with the package.

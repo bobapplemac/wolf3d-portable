@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased - 2026-10-09 - Consistent distribution documentation
+
+- Standardize distributed executables as wolf3d / wolf3d.exe, with WOLF3D.EXE
+  for DOS and Win9x; backend identity stays in the distribution folder name.
+- Keep README.TXT at the root and collect build metadata, package-specific
+  notices and complete license texts under DOCS, using DOS-safe filenames.
+- Merge engine/audio metadata into DOCS/BUILD.TXT and DBOPL provenance into
+  DOCS/NOTICES.TXT; share identical GPL/LGPL license texts.
+- Apply the layout to CMake, legacy Visual Studio and Open Watcom packages,
+  retain functional relinking materials, and add documentation regression tests.
+
 ## Unreleased - 2026-10-09 - Relocatable musl KMS/fbdev distribution
 
 - Add `make musl-console`, `musl-console-audit`, and `musl-all`, with guided

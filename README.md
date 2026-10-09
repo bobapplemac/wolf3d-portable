@@ -44,7 +44,7 @@ build because emulating it inside a DOS virtual machine is expensive.
 Emulated hardware is a separate runtime choice. The default exposes Sound
 Blaster and its AdLib-compatible OPL; `--adlib` or original `-nosb` exposes
 AdLib only; `--pc-speaker` or original `-noal` exposes no sound card and
-selects PC-speaker effects; `--no-sound` exposes no sound card with all
+defaults to PC-speaker effects without CONFIG; `--no-sound` exposes no sound card with all
 in-game sound initially off. Host-only `--no-audio` suppresses physical output
 without changing what hardware the game detects. All modes retain the internal
 audio clock.
@@ -307,3 +307,13 @@ See the [build and compatibility matrix](docs/support-matrix.md) for every
 supported compiler, wrapper, build entry point, artifact, and validated
 destination operating system. [docs/building.md](docs/building.md) contains the
 complete commands and option details.
+
+Startup preference precedence: launcher `.ini`/`.conf` files provide default
+arguments, and real command-line arguments override matching option families.
+Input and sound hardware switches then establish availability; a valid dataset
+`CONFIG.<EXT>` supplies user preferences. Detected or forced presence never
+re-enables a saved disabled choice. Missing hardware disables unsupported saved
+choices, including a joystick whose selected port is absent. Without a valid
+CONFIG file, mouse and sound defaults follow hardware and joystick control is
+off. `--no-sound` explicitly mutes every sound choice. `--opl` and host audio
+output settings are independent of these preferences.

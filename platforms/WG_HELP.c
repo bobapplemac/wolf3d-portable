@@ -698,6 +698,18 @@ static char *WG_ConfigPath(const char *argument_zero, int normalized)
     return path;
 }
 
+/* Match the engine's original US_CheckParm-style DOS option spelling. */
+static int WG_DOSOptionEqual(const char *option, const char *name)
+{
+    while (*option != '\0'
+           && !((*option >= 'A' && *option <= 'Z')
+                || (*option >= 'a' && *option <= 'z')))
+    {
+        ++option;
+    }
+    return WG_ASCIIEqual(option, name);
+}
+
 static const char *WG_OptionGroup(const char *option)
 {
     unsigned profile;
@@ -728,8 +740,8 @@ static const char *WG_OptionGroup(const char *option)
     if (strcmp(option, "--adlib") == 0
         || strcmp(option, "--pc-speaker") == 0
         || strcmp(option, "--no-sound") == 0
-        || WG_ASCIIEqual(option, "-noal")
-        || WG_ASCIIEqual(option, "-nosb"))
+        || WG_DOSOptionEqual(option, "noal")
+        || WG_DOSOptionEqual(option, "nosb"))
     {
         return "sound-hardware";
     }

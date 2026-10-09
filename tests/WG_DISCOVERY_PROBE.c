@@ -50,6 +50,20 @@ int main(int argc, char **argv)
         free(program);
         return 2;
     }
+    if (WG_CommandLineDiagnosticsRequested(launcher.argc, launcher.argv))
+    {
+        for (index = 1; index < launcher.argc; ++index)
+        {
+            if (strcmp(launcher.argv[index], "--diag") != 0)
+            {
+                (void)printf("%s\n", launcher.argv[index]);
+            }
+        }
+        WG_FreeLauncherArguments(&launcher);
+        free(game_argv);
+        free(program);
+        return 0;
+    }
     if (!WG_PrepareGameArguments(launcher.argc, launcher.argv, &prepared,
                                  error, sizeof(error)))
     {

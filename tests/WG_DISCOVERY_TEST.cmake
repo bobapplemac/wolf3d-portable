@@ -114,4 +114,36 @@ if(NOT ambiguous_result EQUAL 2
         "output '${ambiguous_output}', error '${ambiguous_error}'")
 endif()
 
+# Input and sound switches describe hardware. CLI replaces only its own
+# launcher-default family, regardless of the DOS spelling accepted by the engine.
+function(expect_options label defaults expected)
+    file(WRITE "${config_root}/wolf.${CONFIG_EXTENSION}" "${defaults}\n")
+    execute_process(COMMAND "${PROBE}" "${config_root}" wolf.exe --diag ${ARGN}
+        RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+    string(REPLACE "\r" "" output "${output}")
+    string(STRIP "${output}" output)
+    if(NOT result EQUAL 0 OR NOT output STREQUAL expected)
+        message(FATAL_ERROR "${label}: '${output}', expected '${expected}': ${error}")
+    endif()
+endfunction()
+
+expect_options("preserve defaults" "--nomouse\n--nojoy\n--no-sound"
+    "--nomouse\n--nojoy\n--no-sound")
+expect_options("force presence replaces absence" "--nomouse\n--nojoy\n--no-sound"
+    "--no-sound\n--mouse\n--joy" --mouse --joy)
+expect_options("suppress presence" "--mouse\n--joy\n--adlib"
+    "--adlib\n--nomouse\n--nojoy" --nomouse --nojoy)
+foreach(sound --adlib --pc-speaker --no-sound -noal -NoSb /NOAL /NOSB noal --nosb)
+    expect_options("CLI sound ${sound}" "--mouse\n--nojoy\n--pc-speaker"
+        "--mouse\n--nojoy\n${sound}" "${sound}")
+    if(sound MATCHES "^-")
+        expect_options("config sound ${sound}" "${sound}\n--nomouse"
+            "--nomouse\n--adlib" --adlib)
+    endif()
+endforeach()
+expect_options("OPL is independent" "--no-sound\n--opl silent"
+    "--no-sound\n--opl\nnuked" --opl nuked)
+expect_options("no-config bypasses hardware defaults" "--nomouse\n--nojoy\n--no-sound"
+    "--no-config\n--mouse" --no-config --mouse)
+
 file(REMOVE_RECURSE "${ROOT}")

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-10-09 - Saved startup preferences and launcher precedence
+
+- Advance the engine to wolf3d-lib 1.4.62, preserving saved input and sound
+  choices when hardware is available.
+- Match all engine-supported DOS noal/nosb spellings when command-line options
+  replace launcher configuration defaults.
+- Add launcher regression tests for input/sound overrides, aliases, independent
+  OPL selection, and bypassing launcher configuration.
+
 ## 2026-10-08 - Linux-hosted Windows cross-build matrix
 
 - Advanced the engine to wolf3d-lib 1.4.61.

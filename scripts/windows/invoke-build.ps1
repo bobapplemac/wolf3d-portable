@@ -422,7 +422,7 @@ function Assert-MinGWRuntimeImports {
         -TotalCount 1).Trim()
     $packages = @(Get-ChildItem -LiteralPath (Join-Path $root 'dist') `
         -Directory -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -like "wolf3d-portable-$version-*-mingw-ucrt-gcc*" })
+        Where-Object { $_.Name -like "wolf3d-portable_${version}_*_mingw-gcc*-ucrt*" })
     if ($packages.Count -eq 0) {
         throw 'No MinGW package was found for runtime-import validation.'
     }

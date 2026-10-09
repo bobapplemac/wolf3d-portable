@@ -118,47 +118,7 @@ if(W3P_BUILD_SDL3)
     endif()
 endif()
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set(W3P_RELEASE_ARCH x64)
-else()
-    set(W3P_RELEASE_ARCH x86)
-endif()
-string(TOLOWER "${CMAKE_SYSTEM_NAME}" W3P_RELEASE_SYSTEM)
-set(W3P_RELEASE_RUNTIME_SUFFIX "")
-if(MSVC AND NOT WG_STATIC_MSVC_RUNTIME)
-    set(W3P_RELEASE_RUNTIME_SUFFIX "-dynamic-crt")
-elseif(MINGW AND NOT WG_STATIC_GNU_RUNTIME)
-    set(W3P_RELEASE_RUNTIME_SUFFIX "-dynamic-gcc-runtime")
-endif()
-set(W3P_RELEASE_COMPILER_SUFFIX "")
-if(W3P_COMPILER_LABEL)
-    set(W3P_RELEASE_COMPILER_SUFFIX "-${W3P_COMPILER_LABEL}")
-endif()
-set(W3P_RELEASE_AUDIO_SUFFIX "")
-if(NOT WG_ENABLE_OPL_NUKED OR NOT WG_ENABLE_OPL_DBOPL
-   OR NOT WG_ENABLE_OPL_SILENT)
-    set(W3P_ENABLED_OPL_NAMES "")
-    if(WG_ENABLE_OPL_NUKED)
-        list(APPEND W3P_ENABLED_OPL_NAMES nuked)
-    endif()
-    if(WG_ENABLE_OPL_DBOPL)
-        list(APPEND W3P_ENABLED_OPL_NAMES dbopl)
-    endif()
-    if(WG_ENABLE_OPL_SILENT)
-        list(APPEND W3P_ENABLED_OPL_NAMES silent)
-    endif()
-    string(REPLACE ";" "-" W3P_ENABLED_OPL_LABEL
-        "${W3P_ENABLED_OPL_NAMES}")
-    set(W3P_RELEASE_AUDIO_SUFFIX "-opl-${W3P_ENABLED_OPL_LABEL}")
-endif()
-if(NOT WG_DEFAULT_OPL_DRIVER STREQUAL "nuked")
-    string(APPEND W3P_RELEASE_AUDIO_SUFFIX
-        "-default-${WG_DEFAULT_OPL_DRIVER}")
-endif()
-if(NOT WG_DEFAULT_SAMPLE_RATE STREQUAL "48000")
-    string(APPEND W3P_RELEASE_AUDIO_SUFFIX
-        "-${WG_DEFAULT_SAMPLE_RATE}hz")
-endif()
+include(cmake/WGDistribution.cmake)
 
 function(w3p_configure_host target)
     target_link_libraries(${target} PRIVATE wolf3d::wolf3d)
@@ -225,8 +185,7 @@ if(W3P_BUILD_WIN32)
     set_target_properties(wolf3d-win32 PROPERTIES OUTPUT_NAME "wolf3d")
     w3p_copy_engine_runtime(wolf3d-win32)
 
-    set(W3P_WIN32_RELEASE_DIR
-        "${W3P_DIST_ROOT}/wolf3d-portable-${PROJECT_VERSION}-win32-${W3P_RELEASE_ARCH}${W3P_RELEASE_COMPILER_SUFFIX}${W3P_RELEASE_RUNTIME_SUFFIX}${W3P_RELEASE_AUDIO_SUFFIX}")
+    wg_distribution(W3P_WIN32_RELEASE_DIR wolf3d-portable "${PROJECT_VERSION}" "gdi" "${CMAKE_CURRENT_SOURCE_DIR}" "${W3P_DIST_ROOT}")
     set(W3P_WIN32_OPL_COMMANDS "")
     set(W3P_WIN32_RELEASE_DEPENDS wolf3d-win32 wolf3d)
     if(TARGET nuked-opl3)
@@ -248,6 +207,13 @@ if(W3P_BUILD_WIN32)
     add_custom_target(win32-release
         COMMAND ${CMAKE_COMMAND} -E remove_directory "${W3P_WIN32_RELEASE_DIR}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_WIN32_RELEASE_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${W3P_WIN32_RELEASE_DIR_INFO}" "${W3P_WIN32_RELEASE_DIR}/BUILD-INFO.txt"
+        COMMAND ${CMAKE_COMMAND} "-DINFO=${W3P_WIN32_RELEASE_DIR}/BUILD-INFO.txt"
+            "-DROOT=${CMAKE_CURRENT_SOURCE_DIR}" "-DENGINE=${CMAKE_CURRENT_SOURCE_DIR}/lib/wolf3d"
+            "-DCACHE=${CMAKE_BINARY_DIR}/CMakeCache.txt"
+            "-DSETTINGS=${CMAKE_CURRENT_BINARY_DIR}/distribution-target-settings.txt"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/WGStampBuildInfo.cmake"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_WIN32_RELEASE_DIR}/LICENSES"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:wolf3d-win32>" "${W3P_WIN32_RELEASE_DIR}/wolf3d.exe"
@@ -267,7 +233,7 @@ if(W3P_BUILD_WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_CURRENT_BINARY_DIR}/WOLF3D-LIB.txt" "${W3P_WIN32_RELEASE_DIR}/WOLF3D-LIB.txt"
         DEPENDS ${W3P_WIN32_RELEASE_DEPENDS}
-        COMMENT "Staging ${W3P_RELEASE_ARCH} Win32 release" VERBATIM)
+        COMMENT "Staging ${W3P_WIN32_RELEASE_DIR_ARCH} GDI release" VERBATIM)
 endif()
 
 if(W3P_BUILD_SDL3)
@@ -298,12 +264,18 @@ if(W3P_BUILD_SDL3)
             COMMENT "Copying SDL3 beside wolf3d-sdl3" VERBATIM)
     endif()
 
-    set(W3P_SDL3_RELEASE_DIR
-        "${W3P_DIST_ROOT}/wolf3d-portable-${PROJECT_VERSION}-sdl3-${W3P_RELEASE_SYSTEM}-${W3P_RELEASE_ARCH}${W3P_RELEASE_COMPILER_SUFFIX}${W3P_RELEASE_RUNTIME_SUFFIX}${W3P_RELEASE_AUDIO_SUFFIX}")
+    wg_distribution(W3P_SDL3_RELEASE_DIR wolf3d-portable "${PROJECT_VERSION}" "sdl3" "${CMAKE_CURRENT_SOURCE_DIR}" "${W3P_DIST_ROOT}")
     set(W3P_SDL3_RELEASE_DEPENDS wolf3d-sdl3 wolf3d SDL3::SDL3-shared)
     set(W3P_SDL3_RELEASE_COMMANDS
         COMMAND ${CMAKE_COMMAND} -E remove_directory "${W3P_SDL3_RELEASE_DIR}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_SDL3_RELEASE_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${W3P_SDL3_RELEASE_DIR_INFO}" "${W3P_SDL3_RELEASE_DIR}/BUILD-INFO.txt"
+        COMMAND ${CMAKE_COMMAND} "-DINFO=${W3P_SDL3_RELEASE_DIR}/BUILD-INFO.txt"
+            "-DROOT=${CMAKE_CURRENT_SOURCE_DIR}" "-DENGINE=${CMAKE_CURRENT_SOURCE_DIR}/lib/wolf3d"
+            "-DCACHE=${CMAKE_BINARY_DIR}/CMakeCache.txt"
+            "-DSETTINGS=${CMAKE_CURRENT_BINARY_DIR}/distribution-target-settings.txt"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/WGStampBuildInfo.cmake"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_SDL3_RELEASE_DIR}/LICENSES"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:wolf3d-sdl3>" "${W3P_SDL3_RELEASE_DIR}/$<TARGET_FILE_NAME:wolf3d-sdl3>"
@@ -354,7 +326,7 @@ if(W3P_BUILD_SDL3)
     endif()
     add_custom_target(sdl3-release ${W3P_SDL3_RELEASE_COMMANDS}
         DEPENDS ${W3P_SDL3_RELEASE_DEPENDS}
-        COMMENT "Staging ${W3P_RELEASE_ARCH} SDL3 release" VERBATIM)
+        COMMENT "Staging ${W3P_SDL3_RELEASE_DIR_ARCH} SDL3 release" VERBATIM)
     if(BUILD_TESTING)
         add_test(NAME sdl3-help COMMAND wolf3d-sdl3 --help)
     endif()
@@ -371,8 +343,7 @@ if(W3P_BUILD_LINUX_CONSOLE)
     set_target_properties(wolf3d-console PROPERTIES OUTPUT_NAME "wolf3d"
         BUILD_WITH_INSTALL_RPATH ON INSTALL_RPATH "$ORIGIN")
 
-    set(W3P_CONSOLE_RELEASE_DIR
-        "${W3P_DIST_ROOT}/wolf3d-portable-${PROJECT_VERSION}-console-${W3P_RELEASE_ARCH}${W3P_RELEASE_AUDIO_SUFFIX}")
+    wg_distribution(W3P_CONSOLE_RELEASE_DIR wolf3d-portable "${PROJECT_VERSION}" "kms-fbdev" "${CMAKE_CURRENT_SOURCE_DIR}" "${W3P_DIST_ROOT}")
     set(W3P_CONSOLE_OPL_COMMANDS "")
     set(W3P_CONSOLE_RELEASE_DEPENDS wolf3d-console wolf3d)
     if(TARGET nuked-opl3)
@@ -394,6 +365,13 @@ if(W3P_BUILD_LINUX_CONSOLE)
     add_custom_target(console-release
         COMMAND ${CMAKE_COMMAND} -E remove_directory "${W3P_CONSOLE_RELEASE_DIR}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_CONSOLE_RELEASE_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${W3P_CONSOLE_RELEASE_DIR_INFO}" "${W3P_CONSOLE_RELEASE_DIR}/BUILD-INFO.txt"
+        COMMAND ${CMAKE_COMMAND} "-DINFO=${W3P_CONSOLE_RELEASE_DIR}/BUILD-INFO.txt"
+            "-DROOT=${CMAKE_CURRENT_SOURCE_DIR}" "-DENGINE=${CMAKE_CURRENT_SOURCE_DIR}/lib/wolf3d"
+            "-DCACHE=${CMAKE_BINARY_DIR}/CMakeCache.txt"
+            "-DSETTINGS=${CMAKE_CURRENT_BINARY_DIR}/distribution-target-settings.txt"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/WGStampBuildInfo.cmake"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_CONSOLE_RELEASE_DIR}/LICENSES"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:wolf3d-console>" "${W3P_CONSOLE_RELEASE_DIR}/wolf3d"
@@ -417,7 +395,7 @@ if(W3P_BUILD_LINUX_CONSOLE)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_CURRENT_BINARY_DIR}/WOLF3D-LIB.txt" "${W3P_CONSOLE_RELEASE_DIR}/WOLF3D-LIB.txt"
         DEPENDS ${W3P_CONSOLE_RELEASE_DEPENDS}
-        COMMENT "Staging ${W3P_RELEASE_ARCH} console release" VERBATIM)
+        COMMENT "Staging ${W3P_CONSOLE_RELEASE_DIR_ARCH} KMS/fbdev release" VERBATIM)
     if(BUILD_TESTING)
         add_test(NAME console-help COMMAND wolf3d-console --help)
     endif()
@@ -434,3 +412,5 @@ if(BUILD_TESTING)
             "-DCONFIG_EXTENSION=$<IF:$<BOOL:${WIN32}>,ini,conf>"
             -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/WG_DISCOVERY_TEST.cmake")
 endif()
+
+wg_distribution_target_info("${CMAKE_CURRENT_SOURCE_DIR}")

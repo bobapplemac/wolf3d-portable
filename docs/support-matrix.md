@@ -21,15 +21,15 @@ or the local submodule's `lib/wolf3d/docs/support-matrix.md`.
 
 | Desired package | Build host | Command | Staged result |
 | --- | --- | --- | --- |
-| Windows Win32/GDI | Windows | `.\build.ps1 -Wrapper win32` | `dist/wolf3d-portable-<version>-win32-<arch>-<compiler>/` |
-| Windows SDL3 | Windows with VS2019/2022/2026 or MinGW UCRT64 | `.\build.ps1 -Wrapper sdl3` | `dist/wolf3d-portable-<version>-sdl3-windows-<arch>-<compiler>/` |
+| Windows Win32/GDI | Windows | `.\build.ps1 -Wrapper win32` | `dist/wolf3d-portable_<version>_<platform>_<arch>_gdi_<toolchain>/` |
+| Windows SDL3 | Windows with VS2019/2022/2026 or MinGW UCRT64 | `.\build.ps1 -Wrapper sdl3` | `dist/wolf3d-portable_<version>_win10_<arch>_sdl3_<toolchain>/` |
 | Both modern Windows wrappers | Windows with VS2019/2022/2026 or MinGW UCRT64 | `.\build.ps1 -Wrapper all` | Both folders above |
-| Native Linux SDL3 | Linux | `./build.sh` or `make sdl3-release CC=clang` | `dist/wolf3d-portable-<version>-sdl3-linux-<arch>/` |
-| Native Linux console | Linux | `make console-release` | `dist/wolf3d-portable-<version>-console-<arch>/` |
+| Native Linux SDL3 | Linux | `./build.sh` or `make sdl3-release CC=clang` | `dist/wolf3d-portable_<version>_linux-glibc_<arch>_sdl3_<toolchain>/` |
+| Native Linux console | Linux | `make console-release` | `dist/wolf3d-portable_<version>_linux-glibc_<arch>_kms-fbdev_<toolchain>/` |
 | Both native Linux wrappers | Linux | `make releases` | Both native folders |
 | Portable glibc Linux wrappers | Linux + Docker | `./build.sh` or `make portable` | SDL3 and console x86-64 folders audited to glibc 2.28 |
 | Bundled-musl Linux SDL3 | Linux + Docker | `./build.sh` or `make musl-sdl3` | Relocatable AppDir-style x86-64 folder |
-| 32-bit protected-mode DOS | Linux + Docker | `./build.sh` or `make dos` | `dist/wolf3d-portable-<version>-dos32-x86/` |
+| 32-bit protected-mode DOS | Linux + Docker | `./build.sh` or `make dos` | `dist/wolf3d-portable_<version>_dos32_x86_vga_openwatcom<major>/` |
 | Complete Windows cross matrix | Linux + Docker | `./build.sh` or `make windows-cross` | Compiler/OS-labelled Win32 and SDL3 folders under `dist/` |
 
 Run `./build.sh`, `make help`, `.\build.ps1`, or root `build.cmd` without

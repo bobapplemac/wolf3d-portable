@@ -4,7 +4,8 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
 version=$(sed -n '1p' "$root/lib/wolf3d/VERSION")
 build_dir=${W3P_OPENWATCOM_BUILD_DIR:-$root/build/openwatcom-dos32}
-dist_dir=${W3P_OPENWATCOM_DIST_DIR:-$root/dist/wolf3d-portable-$version-dos32-x86}
+. "$root/scripts/dist-openwatcom.sh"
+dist_dir=${W3P_OPENWATCOM_DIST_DIR:-$root/dist/wolf3d-portable_${version}_dos32_x86_vga_${toolchain}}
 drivers=${W3P_OPENWATCOM_OPL_DRIVERS:-dbopl,silent,adlib}
 default_driver=${W3P_OPENWATCOM_DEFAULT_OPL:-adlib}
 sample_rate=${W3P_OPENWATCOM_SAMPLE_RATE:-44100}
@@ -129,3 +130,5 @@ physical DOS hardware remains untested.
 EOF
 
 echo "Open Watcom DOS32 application staged: $dist_dir"
+
+write_build_info wolf3d-portable dos32 "vga" "$root/lib/wolf3d"

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.73 - 2026-10-09 - Standardize distribution identity and build metadata
+
+- Use underscore-delimited product/version/platform/architecture/backend/toolchain
+  fields, detected compiler versions, and explicit configuration/runtime variants.
+- Record audio choices and the complete build configuration in BUILD-INFO.txt;
+  audio-only variants intentionally share one package name.
+- Make audits and bundlers consume generated package paths; document the full
+  vocabulary and extension rules and add naming regression coverage.
+
 ## 2026-10-09 - Normalize legacy solutions and ignore IntelliSense caches
 
 - Order legacy solution configurations as Visual Studio saves them and add

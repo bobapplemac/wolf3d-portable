@@ -64,9 +64,20 @@ case "$profile" in
         ;;
 esac
 
+case "$profile" in
+    *-xp-*) dist_platform=winxp ;;
+    *-win7-*) dist_platform=win7 ;;
+    *-win10-*) dist_platform=win10 ;;
+esac
+case "$profile" in
+    llvm-mingw-win10-*) dist_crt=ucrt ;;
+    *) dist_crt=msvcrt ;;
+esac
+
 build_dir="$root/build/windows-cross-$profile"
 cmake -S "$root" -B "$build_dir" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
+    -DWG_DIST_PLATFORM="$dist_platform" -DWG_DIST_CRT="$dist_crt" \
     -DCMAKE_TOOLCHAIN_FILE="$root/lib/wolf3d/cmake/toolchains/$toolchain" \
     -DCMAKE_C_FLAGS="-D_WIN32_WINNT=$minimum_windows -DWINVER=$minimum_windows" \
     -DW3P_BUILD_WIN32=ON \
@@ -89,13 +100,13 @@ for target in $release_targets; do
     fi
 done
 
-for directory in \
-    "$root/dist/wolf3d-portable-$version-win32-$arch-$compiler_label" \
-    "$root/dist/wolf3d-portable-$version-sdl3-windows-$arch-$compiler_label"; do
-    if [ -d "$directory" ]; then
-        sh "$root/lib/wolf3d/tools/WG_WINDOWS_PE_AUDIT.sh" \
-            "$profile" "$directory"
-    fi
+for target in $release_targets; do
+    case "$target" in
+        win32-release) manifest=W3P_WIN32_RELEASE_DIR ;;
+        sdl3-release) manifest=W3P_SDL3_RELEASE_DIR ;;
+    esac
+    directory="$root/$(cat "$build_dir/$manifest-Release.path")"
+    sh "$root/lib/wolf3d/tools/WG_WINDOWS_PE_AUDIT.sh" "$profile" "$directory"
 done
 
 echo "Windows portable profile staged: $profile"

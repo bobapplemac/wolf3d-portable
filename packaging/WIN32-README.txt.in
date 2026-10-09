@@ -68,3 +68,6 @@ game-data directory and retain that game's data extension.
 
 Run wolf3d.exe --help (also -h or /?) from a terminal to list all game and
 Win32 host options plus the OPL drivers compiled into this package.
+
+BUILD-INFO.txt records the complete configured build options, compiler and
+source details. See docs/BUILD-NAMING.md in the source tree for package naming.

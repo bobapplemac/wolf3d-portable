@@ -47,55 +47,8 @@ else()
     target_compile_options(wolf3d-win32 PRIVATE /W4)
 endif()
 
-if(MSVC_VERSION EQUAL 1200)
-    set(W3P_COMPILER_LABEL vc6)
-elseif(MSVC_VERSION EQUAL 1300)
-    set(W3P_COMPILER_LABEL vs2002)
-elseif(MSVC_VERSION EQUAL 1310)
-    set(W3P_COMPILER_LABEL vs2003)
-elseif(MSVC_VERSION EQUAL 1400)
-    set(W3P_COMPILER_LABEL vs2005)
-else()
-    set(W3P_COMPILER_LABEL msvc-legacy)
-endif()
-
-set(W3P_RUNTIME_SUFFIX "")
-if(NOT WG_STATIC_MSVC_RUNTIME)
-    set(W3P_RUNTIME_SUFFIX "-dynamic-crt")
-endif()
-set(W3P_AUDIO_SUFFIX "")
-if(NOT WG_ENABLE_OPL_NUKED OR NOT WG_ENABLE_OPL_DBOPL
-   OR NOT WG_ENABLE_OPL_SILENT)
-    set(W3P_ENABLED_OPL_LABEL "")
-    if(WG_ENABLE_OPL_NUKED)
-        set(W3P_ENABLED_OPL_LABEL nuked)
-    endif()
-    if(WG_ENABLE_OPL_DBOPL)
-        if(W3P_ENABLED_OPL_LABEL)
-            set(W3P_ENABLED_OPL_LABEL "${W3P_ENABLED_OPL_LABEL}-dbopl")
-        else()
-            set(W3P_ENABLED_OPL_LABEL dbopl)
-        endif()
-    endif()
-    if(WG_ENABLE_OPL_SILENT)
-        if(W3P_ENABLED_OPL_LABEL)
-            set(W3P_ENABLED_OPL_LABEL "${W3P_ENABLED_OPL_LABEL}-silent")
-        else()
-            set(W3P_ENABLED_OPL_LABEL silent)
-        endif()
-    endif()
-    set(W3P_AUDIO_SUFFIX "-opl-${W3P_ENABLED_OPL_LABEL}")
-endif()
-if(NOT WG_DEFAULT_OPL_DRIVER STREQUAL "nuked")
-    set(W3P_AUDIO_SUFFIX
-        "${W3P_AUDIO_SUFFIX}-default-${WG_DEFAULT_OPL_DRIVER}")
-endif()
-if(NOT WG_DEFAULT_SAMPLE_RATE STREQUAL "48000")
-    set(W3P_AUDIO_SUFFIX
-        "${W3P_AUDIO_SUFFIX}-${WG_DEFAULT_SAMPLE_RATE}hz")
-endif()
-set(W3P_RELEASE_DIR
-    "${W3P_DIST_ROOT}/wolf3d-portable-${W3P_PROJECT_VERSION}-win32-x86-${W3P_COMPILER_LABEL}${W3P_RUNTIME_SUFFIX}${W3P_AUDIO_SUFFIX}")
+include("${W3P_ROOT}/cmake/WGDistribution.cmake")
+wg_distribution(W3P_RELEASE_DIR wolf3d-portable "${W3P_PROJECT_VERSION}" "gdi" "${W3P_ROOT}" "${W3P_DIST_ROOT}")
 
 execute_process(
     COMMAND git -C "${W3P_ROOT}" rev-parse HEAD
@@ -135,6 +88,13 @@ configure_file("${W3P_ROOT}/packaging/WIN32-README.txt.in"
 set(W3P_RELEASE_COMMANDS
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${W3P_RELEASE_DIR}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_RELEASE_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${W3P_RELEASE_DIR_INFO}" "${W3P_RELEASE_DIR}/BUILD-INFO.txt"
+        COMMAND ${CMAKE_COMMAND} "-DINFO=${W3P_RELEASE_DIR}/BUILD-INFO.txt"
+            "-DROOT=${W3P_ROOT}" "-DENGINE=${W3P_ROOT}/lib/wolf3d"
+            "-DCACHE=${CMAKE_BINARY_DIR}/CMakeCache.txt"
+            "-DSETTINGS=${CMAKE_CURRENT_BINARY_DIR}/distribution-target-settings.txt"
+            -P "${W3P_ROOT}/cmake/WGStampBuildInfo.cmake"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_RELEASE_DIR}/LICENSES"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "$<TARGET_FILE:wolf3d-win32>" "${W3P_RELEASE_DIR}/wolf3d.exe"
@@ -176,3 +136,5 @@ endif()
 add_custom_target(win32_release
     ${W3P_RELEASE_COMMANDS}
     DEPENDS ${W3P_RELEASE_DEPENDS})
+
+wg_distribution_target_info("${CMAKE_CURRENT_SOURCE_DIR}")

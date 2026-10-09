@@ -61,3 +61,6 @@ libc, and their dependencies must be supplied by the target Linux installation.
 See LICENSE.txt for wolf3d-portable's license, LICENSES/ for the explicit
 wolf3d-lib and applicable component license texts, and THIRD_PARTY_NOTICES.txt for
 component provenance.
+
+BUILD-INFO.txt records the complete configured build options, compiler and
+source details. See docs/BUILD-NAMING.md in the source tree for package naming.

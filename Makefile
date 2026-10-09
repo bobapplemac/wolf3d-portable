@@ -19,32 +19,21 @@ OPL_DEFAULT ?= nuked
 SAMPLE_RATE ?= 48000
 
 comma := ,
-AUDIO_SUFFIX :=
-ifneq ("$(OPL_DRIVERS)","nuked,dbopl,silent")
-AUDIO_SUFFIX := $(AUDIO_SUFFIX)-opl-$(subst $(comma),-,$(OPL_DRIVERS))
-endif
-ifneq ("$(OPL_DEFAULT)","nuked")
-AUDIO_SUFFIX := $(AUDIO_SUFFIX)-default-$(OPL_DEFAULT)
-endif
-ifneq ("$(SAMPLE_RATE)","48000")
-AUDIO_SUFFIX := $(AUDIO_SUFFIX)-$(SAMPLE_RATE)hz
-endif
-
 CONSOLE_BUILD_DIR ?= build/linux-console-$(COMPILER_NAME)
 SDL3_BUILD_DIR ?= build/linux-sdl3-$(COMPILER_NAME)
 PORTABLE_CONSOLE_BUILD_DIR ?= build/linux-console-portable-debian10-gcc
 PORTABLE_SDL3_BUILD_DIR ?= build/linux-sdl3-portable-debian10-gcc
-PORTABLE_CONSOLE_DIST_DIR ?= dist/wolf3d-portable-$(WOLF3D_VERSION)-console-x64$(AUDIO_SUFFIX)
-PORTABLE_SDL3_DIST_DIR ?= dist/wolf3d-portable-$(WOLF3D_VERSION)-sdl3-linux-x64$(AUDIO_SUFFIX)
+PORTABLE_CONSOLE_DIST_DIR ?= $$(cat "$(PORTABLE_CONSOLE_BUILD_DIR)/W3P_CONSOLE_RELEASE_DIR-Release.path")
+PORTABLE_SDL3_DIST_DIR ?= $$(cat "$(PORTABLE_SDL3_BUILD_DIR)/W3P_SDL3_RELEASE_DIR-Release.path")
 PORTABLE_BUILD_IMAGE ?= wolf3d-portable-build-debian10
 PORTABLE_GLIBC_MAX ?= 2.28
 MUSL_SDL3_BUILD_DIR ?= build/linux-sdl3-musl-$(COMPILER_NAME)
 MUSL_STAGE_ROOT ?= build/linux-sdl3-musl-stage
-MUSL_STAGE_DIR ?= $(MUSL_STAGE_ROOT)/wolf3d-portable-$(WOLF3D_VERSION)-sdl3-linux-x64$(AUDIO_SUFFIX)
-MUSL_SDL3_DIST_DIR ?= dist/wolf3d-portable-$(WOLF3D_VERSION)-sdl3-linux-musl-x64$(AUDIO_SUFFIX)
+MUSL_STAGE_DIR ?= $$(cat "$(MUSL_SDL3_BUILD_DIR)/W3P_SDL3_RELEASE_DIR-Release.path")
+MUSL_SDL3_DIST_DIR ?= dist/$$(basename "$(MUSL_STAGE_DIR)")
 MUSL_BUILD_IMAGE ?= wolf3d-portable-build-alpine-musl
 DOS_BUILD_DIR ?= build/openwatcom-dos32
-DOS_DIST_DIR ?= dist/wolf3d-portable-$(WOLF3D_VERSION)-dos32-x86
+DOS_DIST_DIR ?=
 DOS_BUILD_IMAGE ?= wolf3d-portable-build-openwatcom-20261001
 DOS_OPL_DRIVERS ?= dbopl,silent,adlib
 DOS_OPL_DEFAULT ?= adlib
@@ -59,7 +48,7 @@ WINDOWS_LLVM_MINGW_UCRT_SHA256 ?= 2258c745e3155870c80793f3e8c80b28fbde11b9ff73c4
 WIN9X_OPL_DRIVERS ?= $(if $(filter file default undefined,$(origin OPL_DRIVERS)),dbopl$(comma)silent$(comma)adlib,$(OPL_DRIVERS))
 WIN9X_OPL_DEFAULT ?= $(if $(filter file default undefined,$(origin OPL_DEFAULT)),adlib,$(OPL_DEFAULT))
 WINDOWS_OPENWATCOM_BUILD_DIR ?= build/openwatcom-win9x-x86
-WINDOWS_OPENWATCOM_DIST_DIR ?= dist/wolf3d-portable-$(WOLF3D_VERSION)-win32-x86-openwatcom-win9x
+WINDOWS_OPENWATCOM_DIST_DIR ?=
 MUSL_SDL3_CMAKE_ARGS ?= -DW3P_DIST_ROOT=/src/$(MUSL_STAGE_ROOT) \
 	-DWG_LINUX_LIBC=musl -DSDL_KMSDRM=OFF -DSDL_OPENGL=OFF \
 	-DSDL_OPENGLES=OFF -DSDL_RENDER_GPU=OFF -DSDL_VULKAN=OFF \
@@ -234,7 +223,7 @@ musl-sdl3-release: musl-image
 		"$(MUSL_BUILD_IMAGE)" make sdl3-release CC="$(CC)" \
 		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" SAMPLE_RATE="$(SAMPLE_RATE)" \
 		SDL3_BUILD_DIR="$(MUSL_SDL3_BUILD_DIR)" JOBS="$(JOBS)" \
-		USE_SYSTEM_SDL3=OFF CMAKE_ARGS="$(MUSL_SDL3_CMAKE_ARGS)"
+		USE_SYSTEM_SDL3=OFF CMAKE_ARGS="-DWG_LINUX_LIBC=musl $(MUSL_SDL3_CMAKE_ARGS)"
 	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
 		$(DOCKER_RUN_ARGS) "$(MUSL_BUILD_IMAGE)" sh tools/W3P_SDL_CONFIG_AUDIT.sh \
 		"$(MUSL_SDL3_BUILD_DIR)"
@@ -260,7 +249,7 @@ dos-release: dos-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		--env W3P_OPENWATCOM_BUILD_DIR="/src/$(DOS_BUILD_DIR)" \
-		--env W3P_OPENWATCOM_DIST_DIR="/src/$(DOS_DIST_DIR)" \
+		--env W3P_OPENWATCOM_DIST_DIR="$(if $(DOS_DIST_DIR),/src/$(DOS_DIST_DIR))" \
 		--env W3P_OPENWATCOM_OPL_DRIVERS="$(DOS_OPL_DRIVERS)" \
 		--env W3P_OPENWATCOM_DEFAULT_OPL="$(DOS_OPL_DEFAULT)" \
 		--env W3P_OPENWATCOM_SAMPLE_RATE="$(DOS_SAMPLE_RATE)" \
@@ -290,7 +279,7 @@ windows-win9x: dos-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		--env W3P_OPENWATCOM_WINDOWS_BUILD_DIR="/src/$(WINDOWS_OPENWATCOM_BUILD_DIR)" \
-		--env W3P_OPENWATCOM_WINDOWS_DIST_DIR="/src/$(WINDOWS_OPENWATCOM_DIST_DIR)" \
+		--env W3P_OPENWATCOM_WINDOWS_DIST_DIR="$(if $(WINDOWS_OPENWATCOM_DIST_DIR),/src/$(WINDOWS_OPENWATCOM_DIST_DIR))" \
 		--env W3P_OPENWATCOM_WINDOWS_OPL_DRIVERS="$(WIN9X_OPL_DRIVERS)" \
 		--env W3P_OPENWATCOM_WINDOWS_DEFAULT_OPL="$(WIN9X_OPL_DEFAULT)" \
 		--env W3P_OPENWATCOM_WINDOWS_SAMPLE_RATE="$(SAMPLE_RATE)" \

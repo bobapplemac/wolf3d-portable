@@ -52,3 +52,6 @@ SDL3 is distributed under the zlib license. When included, Nuked-OPL3 is
 independently replaceable and distributed under LGPL-2.1-or-later. See the included
 LICENSE.txt, LICENSES directory, and THIRD_PARTY_NOTICES.txt. The LICENSES
 directory also identifies wolf3d-lib's GPL-2.0 license explicitly.
+
+BUILD-INFO.txt records the complete configured build options, compiler and
+source details. See docs/BUILD-NAMING.md in the source tree for package naming.

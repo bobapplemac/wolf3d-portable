@@ -34,7 +34,7 @@ for item in "$stage"/*.so*; do
     cp -a "$item" "$bundle/lib/"
 done
 
-for item in README.txt LICENSE.txt THIRD_PARTY_NOTICES.txt WOLF3D-LIB.txt; do
+for item in BUILD-INFO.txt README.txt LICENSE.txt THIRD_PARTY_NOTICES.txt WOLF3D-LIB.txt; do
     if [ -f "$stage/$item" ]; then
         cp "$stage/$item" "$bundle/$item"
     fi
@@ -132,3 +132,9 @@ for item in "$bundle/bin/wolf3d-sdl3" "$bundle"/lib/*; do
 done
 
 printf '%s\n' "musl bundle staged: $bundle"
+
+{
+    printf '\n===== Musl bundle recipe =====\n'
+    printf 'Stage: %s\nBundle: %s\n' "$stage" "$bundle"
+    cat "$0"
+} >> "$bundle/BUILD-INFO.txt"

@@ -238,7 +238,7 @@ so it has no dependency on the destination's glibc version.
 The DOS target is also a Linux-hosted Docker cross-build; Open Watcom does not
 need to be installed on the host. It stages `WOLF3D.EXE` and the DOS/32A
 drop-in `DOS4GW.EXE` loader under
-`dist/wolf3d-portable-<version>-dos32-x86/`. Copy original game data beside
+`dist/wolf3d-portable_<version>_dos32_x86_vga_openwatcom<major>/`. Copy original game data beside
 both files and run `WOLF3D` on a Pentium-class or newer DOS system. This first
 checkpoint has VGA mode 13h output, keyboard input, the original-style 700 Hz
 PIT clock, and SB16 44.1 kHz 16-bit stereo PCM. Native AdLib, DBOPL, and silent
@@ -358,3 +358,6 @@ software OPL (the spelling is `dbopl`, not `dbpol`) or `--opl silent`.
 Win9x native AdLib requires accessible ISA OPL hardware at 388h/389h; it is
 not available on NT-based Windows. The Win9x console-subsystem launcher prints
 help/diagnostics in its invoking command prompt while the game opens a GDI window.
+
+Distribution folders and generated build metadata follow the shared
+[build/dist naming convention](docs/BUILD-NAMING.md).

@@ -6,6 +6,9 @@
 #include "../WG_HELP.h"
 #include "../WG_HOST.h"
 #include "../WG_TEXT_OUTPUT.h"
+#ifdef WG_WIN9X
+#include "../dos/WG_DOS_ADLIB.h"
+#endif
 
 #include <windows.h>
 #include <mmsystem.h>
@@ -1310,9 +1313,15 @@ int WG_InstallPlatform(void)
         WG_Win32PCMWritableFrames,
         WG_Win32PCMSubmit,
         WG_Win32PCMInitEx,
+#ifdef WG_WIN9X
+        WG_DOSAdLibInit,
+        WG_DOSAdLibShutdown,
+        WG_DOSAdLibWrite,
+#else
         NULL,
         NULL,
         NULL,
+#endif
         WG_Win32InputDevices,
         WG_Win32RequestMouseCapture
     };
@@ -1374,21 +1383,23 @@ static void WG_Win32DiagnosticReport(char *report, size_t report_size)
 }
 
 #ifdef WG_WIN9X
-int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance,
-                   LPSTR command_line, int show_command)
+int main(int argc, char **argv)
 #else
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
                     LPWSTR command_line, int show_command)
 #endif
 {
+#ifdef WG_WIN9X
+    char module_path[MAX_PATH];
+    DWORD module_path_length;
+#else
     int argc;
-#ifndef WG_WIN9X
+    char **argv;
     wchar_t **wide_argv;
     wchar_t module_path[32768];
     const wchar_t *wide_argument;
     DWORD module_path_length;
 #endif
-    char **argv;
     int launcher_argc;
     char **launcher_argv;
     int index;
@@ -1398,10 +1409,12 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     wg_game_arguments_t game_arguments;
     wolf3d_result_t result;
 
+#ifndef WG_WIN9X
     (void)instance;
     (void)previous_instance;
     (void)command_line;
     (void)show_command;
+#endif
 
     if (!WG_InstallPlatform())
     {
@@ -1409,8 +1422,12 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     }
 
 #ifdef WG_WIN9X
-    argc = __argc;
-    argv = __argv;
+    module_path_length = GetModuleFileNameA(NULL, module_path, sizeof(module_path));
+    if (argc > 0 && module_path_length > 0U
+        && module_path_length < sizeof(module_path))
+    {
+        argv[0] = module_path;
+    }
 #else
     wide_argv = CommandLineToArgvW(GetCommandLineW(), &argc);
     if (wide_argv == NULL)

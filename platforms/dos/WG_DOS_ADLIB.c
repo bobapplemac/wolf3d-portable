@@ -1,7 +1,11 @@
 #include "WG_DOS_ADLIB.h"
 
 #include <conio.h>
+#ifdef WG_WIN9X
+#include <windows.h>
+#else
 #include <i86.h>
+#endif
 
 #define WG_DOS_ADLIB_ADDRESS_PORT 0x388U
 #define WG_DOS_ADLIB_DATA_PORT 0x389U
@@ -26,14 +30,18 @@ void WG_DOSAdLibWrite(uint16_t register_number, uint8_t value)
     /* Preserve the original Wolfenstein 3-D alOut delays. The six address
        reads exceed the YM3812's 3.3 us address delay; the 35 data reads
        exceed its 23 us data delay on period ISA hardware. */
+#ifndef WG_WIN9X
     _disable();
+#endif
     outp(WG_DOS_ADLIB_ADDRESS_PORT, (uint8_t)register_number);
     for (delay = 0U; delay < 6U; ++delay)
     {
         (void)inp(WG_DOS_ADLIB_ADDRESS_PORT);
     }
     outp(WG_DOS_ADLIB_DATA_PORT, value);
+#ifndef WG_WIN9X
     _enable();
+#endif
     for (delay = 0U; delay < 35U; ++delay)
     {
         (void)inp(WG_DOS_ADLIB_ADDRESS_PORT);
@@ -47,6 +55,13 @@ int WG_DOSAdLibInit(void)
     unsigned delay;
     unsigned register_number;
 
+#ifdef WG_WIN9X
+    /* NT does not allow user-mode ISA port I/O. Never probe it there. */
+    if ((GetVersion() & 0x80000000UL) == 0UL)
+    {
+        return 0;
+    }
+#endif
     WG_DOSAdLibWrite(4U, 0x60U);
     WG_DOSAdLibWrite(4U, 0x80U);
     status_before = WG_DOSAdLibStatus();

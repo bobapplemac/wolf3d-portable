@@ -103,7 +103,7 @@ fi
 drivers=all
 default_opl=nuked
 sample_rate=48000
-if [[ $target == dos-* ]]; then
+if [[ $target == dos-* || $target == windows-win9x ]]; then
     drivers=dos-default
     default_opl=adlib
     sample_rate=44100
@@ -118,6 +118,7 @@ elif [[ $target != clean ]]; then
     sample_rate=$(choose 'Preferred PCM sample rate' 48000 44100)
 fi
 opl_drivers=${drivers//-/,}
+[ "$drivers" = dos-default ] && opl_drivers=dbopl,silent,adlib
 [ "$drivers" = all ] && opl_drivers=nuked,dbopl,silent
 jobs=''
 if [[ $target != dos-* && $target != windows-win9x ]]; then
@@ -136,6 +137,9 @@ else
     args=("$target" "CC=$compiler" "USE_SYSTEM_SDL3=$system_sdl" \
           "OPL_DRIVERS=$opl_drivers" "OPL_DEFAULT=$default_opl" \
           "SAMPLE_RATE=$sample_rate")
+fi
+if [[ $target == windows-cross ]]; then
+    args+=("WIN9X_OPL_DRIVERS=dbopl,silent,adlib" "WIN9X_OPL_DEFAULT=adlib")
 fi
 [ -n "$jobs" ] && args+=("JOBS=$jobs")
 

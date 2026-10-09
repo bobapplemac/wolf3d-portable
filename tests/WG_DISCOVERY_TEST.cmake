@@ -146,4 +146,23 @@ expect_options("OPL is independent" "--no-sound\n--opl silent"
 expect_options("no-config bypasses hardware defaults" "--nomouse\n--nojoy\n--no-sound"
     "--no-config\n--mouse" --no-config --mouse)
 
+expect_options("DBOPL config selection" "--opl dbopl" "--opl\ndbopl")
+expect_options("DBOPL CLI selection" "--opl silent" "--opl\ndbopl" --opl dbopl)
+expect_options("CLI replaces invalid config driver" "--opl dbpol"
+    "--opl\ndbopl" --opl dbopl)
+foreach(invalid "--opl dbpol" "--opl")
+    file(WRITE "${config_root}/wolf.${CONFIG_EXTENSION}" "${invalid}\n")
+    execute_process(COMMAND "${PROBE}" "${config_root}" wolf.exe --diag
+        RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+    if(NOT result EQUAL 2 OR NOT error MATCHES "Available OPL drivers: auto"
+       OR NOT error MATCHES "dbopl")
+        message(FATAL_ERROR "Invalid config OPL was not diagnosed: ${result}: ${error}")
+    endif()
+endforeach()
+execute_process(COMMAND "${PROBE}" "${config_root}" wolf.exe --no-config --opl dbpol
+    RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+if(NOT result EQUAL 2 OR NOT error MATCHES "Unknown or unavailable OPL driver: dbpol")
+    message(FATAL_ERROR "Invalid CLI OPL was not diagnosed: ${result}: ${error}")
+endif()
+
 file(REMOVE_RECURSE "${ROOT}")

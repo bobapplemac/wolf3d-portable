@@ -383,3 +383,28 @@ framebuffer in software, and excluding those paths avoids graphics-stack ABI
 dependencies. The audit opens an SDL software-rendered window under Xvfb so a
 help-only launch can no longer conceal a missing video backend. The separate
 direct-console host remains available for DRM/KMS and fbdev systems.
+
+### Win9x command-line and native OPL
+
+The Open Watcom Win9x executable is a console-subsystem application with a GDI
+game window. `wolf3d --help` and `wolf3d --diag` write to the invoking console;
+redirection to a file works too. `Wolf3d.ini` is read beside the executable,
+independently of the command prompt's current directory. Each line contains one
+option, for example `--opl dbopl`. Command-line options override that option
+family in the INI. Unknown or uncompiled driver names produce an error listing
+the available names before a game window is created.
+
+DOS and Win9x default to `dbopl,silent,adlib`, with `adlib` selected at runtime.
+Win9x uses the same ISA OPL probe/register delays as DOS, without DOS interrupt
+masking. It only probes ports 388h/389h on Windows 95/98/Me; NT-based Windows
+requires `--opl dbopl` or `--opl silent`. Compatible physical or emulated ISA OPL
+hardware must actually be exposed. The `--adlib` hardware-profile switch is
+separate from the `--opl adlib` native renderer.
+
+`make windows-win9x WIN9X_OPL_DRIVERS=nuked,dbopl,silent,adlib
+WIN9X_OPL_DEFAULT=nuked` opts back into Nuked. Existing explicit `OPL_DRIVERS`
+and `OPL_DEFAULT` overrides also remain accepted by that target.
+
+Run `tests/WG_WIN9X_SMOKE.ps1 -PackagePath <package>` on Windows to exercise the
+actual Open Watcom executable's console output, INI lookup, and driver errors.
+This does not substitute for native AdLib playback testing on Windows 98.

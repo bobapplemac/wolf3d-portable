@@ -5,8 +5,8 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
 version=$(sed -n '1p' "$root/lib/wolf3d/VERSION")
 build_dir=${W3P_OPENWATCOM_WINDOWS_BUILD_DIR:-$root/build/openwatcom-win9x-x86}
 dist_dir=${W3P_OPENWATCOM_WINDOWS_DIST_DIR:-$root/dist/wolf3d-portable-$version-win32-x86-openwatcom-win9x}
-drivers=${W3P_OPENWATCOM_WINDOWS_OPL_DRIVERS:-nuked,dbopl,silent}
-default_driver=${W3P_OPENWATCOM_WINDOWS_DEFAULT_OPL:-nuked}
+drivers=${W3P_OPENWATCOM_WINDOWS_OPL_DRIVERS:-dbopl,silent,adlib}
+default_driver=${W3P_OPENWATCOM_WINDOWS_DEFAULT_OPL:-adlib}
 sample_rate=${W3P_OPENWATCOM_WINDOWS_SAMPLE_RATE:-48000}
 library_build="$build_dir/wolf3d-lib"
 library_dist="$build_dir/wolf3d-lib-dist"
@@ -21,12 +21,12 @@ WG_OPENWATCOM_WINDOWS_DEFAULT_OPL="$default_driver" \
 WG_OPENWATCOM_WINDOWS_SAMPLE_RATE="$sample_rate" \
 sh "$root/lib/wolf3d/scripts/linux/openwatcom/build-windows-library.sh"
 
-for source in WG_HELP WG_TEXT_OUTPUT; do
+for source in WG_HELP WG_TEXT_OUTPUT dos/WG_DOS_ADLIB; do
     echo "Open Watcom C: platforms/$source.c"
     wcc386 -zq -bt=nt -5r -ox -fr -w4 -we \
         -dWG_WIN9X=1 -dWG_LEGACY_WIN32=1 -dWIN32_LEAN_AND_MEAN=1 \
         -i="$WATCOM/h/nt" -i="$root/lib/wolf3d/include" -i="$root/platforms" \
-        -fo="$build_dir/objects/$source.obj" \
+        -fo="$build_dir/objects/$(basename "$source").obj" \
         "$root/platforms/$source.c"
 done
 
@@ -38,9 +38,9 @@ wcc386 -zq -bt=nt -5r -ox -fr -w4 -we \
     "$root/platforms/win32/WG_WIN32.c"
 
 echo "Open Watcom Link: wolf3d.exe"
-wlink system win95 option quiet \
+wlink system nt option quiet \
     name "$dist_dir/wolf3d.exe" \
-    file "$build_dir/objects/WG_HELP.obj,$build_dir/objects/WG_TEXT_OUTPUT.obj,$build_dir/objects/WG_WIN32.obj" \
+    file "$build_dir/objects/WG_HELP.obj,$build_dir/objects/WG_TEXT_OUTPUT.obj,$build_dir/objects/WG_DOS_ADLIB.obj,$build_dir/objects/WG_WIN32.obj" \
     library "$library_dist/WOLF3D.LIB,user32.lib,gdi32.lib,winmm.lib,shell32.lib"
 
 cp "$library_dist/wolf3d.dll" "$dist_dir/wolf3d.dll"
@@ -68,8 +68,19 @@ obtained Wolfenstein 3D or Spear of Destiny data beside wolf3d.exe or in a
 nested subdirectory, then launch wolf3d.exe. Run wolf3d.exe --help for options
 or wolf3d.exe --diag for a hardware and game-data report.
 
-The executable uses ANSI Win32 entry, window, and console APIs plus the legacy
-cursor-warp mouse path. The PE target is the Open Watcom WIN95 system profile.
+The executable uses a console-subsystem main entry so COMMAND.COM retains
+help/diagnostic output and supplies parsed arguments. The game still opens its
+normal ANSI Win32/GDI window and uses the legacy cursor-warp mouse path.
+
+Compiled OPL drivers: $drivers
+Default OPL driver: $default_driver
+Use --opl dbopl (not dbpol) for software synthesis or --opl silent for silence.
+Native adlib accesses ISA ports 388h/389h on Windows 95/98/Me only and requires
+compatible OPL hardware exposed by the machine or VM. On NT-based Windows or
+without that hardware, select --opl dbopl or --opl silent explicitly.
+
+Wolf3d.ini beside wolf3d.exe accepts one option per line, for example:
+--opl dbopl
 Windows 95/98/Me runtime validation remains a separate physical/VM test.
 EOF
 

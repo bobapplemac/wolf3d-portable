@@ -55,6 +55,9 @@ WINDOWS_LLVM_MINGW_UCRT_IMAGE ?= wolf3d-portable-build-llvm-mingw-20260908-ucrt
 WINDOWS_LLVM_MINGW_RELEASE ?= 20260908
 WINDOWS_LLVM_MINGW_MSVC_SHA256 ?= 4d905bae713182f1a2b4d33875fe5aa544ce9fc04cc153acb47755a90ca62f16
 WINDOWS_LLVM_MINGW_UCRT_SHA256 ?= 2258c745e3155870c80793f3e8c80b28fbde11b9ff73c4c78783635b3440b092
+# Win9x defaults follow DOS; explicit OPL_* overrides still apply.
+WIN9X_OPL_DRIVERS ?= $(if $(filter file default undefined,$(origin OPL_DRIVERS)),dbopl$(comma)silent$(comma)adlib,$(OPL_DRIVERS))
+WIN9X_OPL_DEFAULT ?= $(if $(filter file default undefined,$(origin OPL_DEFAULT)),adlib,$(OPL_DEFAULT))
 WINDOWS_OPENWATCOM_BUILD_DIR ?= build/openwatcom-win9x-x86
 WINDOWS_OPENWATCOM_DIST_DIR ?= dist/wolf3d-portable-$(WOLF3D_VERSION)-win32-x86-openwatcom-win9x
 MUSL_SDL3_CMAKE_ARGS ?= -DW3P_DIST_ROOT=/src/$(MUSL_STAGE_ROOT) \
@@ -289,8 +292,8 @@ windows-win9x: dos-image
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		--env W3P_OPENWATCOM_WINDOWS_BUILD_DIR="/src/$(WINDOWS_OPENWATCOM_BUILD_DIR)" \
 		--env W3P_OPENWATCOM_WINDOWS_DIST_DIR="/src/$(WINDOWS_OPENWATCOM_DIST_DIR)" \
-		--env W3P_OPENWATCOM_WINDOWS_OPL_DRIVERS="$(OPL_DRIVERS)" \
-		--env W3P_OPENWATCOM_WINDOWS_DEFAULT_OPL="$(OPL_DEFAULT)" \
+		--env W3P_OPENWATCOM_WINDOWS_OPL_DRIVERS="$(WIN9X_OPL_DRIVERS)" \
+		--env W3P_OPENWATCOM_WINDOWS_DEFAULT_OPL="$(WIN9X_OPL_DEFAULT)" \
 		--env W3P_OPENWATCOM_WINDOWS_SAMPLE_RATE="$(SAMPLE_RATE)" \
 		"$(DOS_BUILD_IMAGE)" sh scripts/linux/openwatcom/build-windows.sh
 

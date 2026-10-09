@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-10-09 - Win9x console and native AdLib support
+
+- Advance wolf3d-lib to 1.4.63. DOS and Win9x include DBOPL, silent, and native
+  AdLib by default, with AdLib selected at runtime and Nuked opt-in.
+- Use console startup and CRT arguments on Win9x; resolve launcher config
+  relative to the full executable path and retain the graphical game window.
+- Reuse the ISA OPL probe/writes on Win9x, guarding NT-based systems from port
+  access and keeping DOS interrupt masking out of the Windows path.
+- Diagnose invalid/unavailable OPL names before starting the game, including
+  configuration-file choices; add CLI/config regression coverage.
+
 ## 2026-10-09 - Full Linux-hosted build validation
 
 - Update the musl launcher audit to match the current shared command-line help

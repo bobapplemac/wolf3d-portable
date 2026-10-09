@@ -317,3 +317,10 @@ choices, including a joystick whose selected port is absent. Without a valid
 CONFIG file, mouse and sound defaults follow hardware and joystick control is
 off. `--no-sound` explicitly mutes every sound choice. `--opl` and host audio
 output settings are independent of these preferences.
+
+DOS and Win9x defaults include `dbopl,silent,adlib` and select native `adlib`.
+Nuked remains available as an explicit build choice. Use `--opl dbopl` for
+software OPL (the spelling is `dbopl`, not `dbpol`) or `--opl silent`.
+Win9x native AdLib requires accessible ISA OPL hardware at 388h/389h; it is
+not available on NT-based Windows. The Win9x console-subsystem launcher prints
+help/diagnostics in its invoking command prompt while the game opens a GDI window.

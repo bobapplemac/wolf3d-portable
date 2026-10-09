@@ -208,6 +208,8 @@ void WG_PrintCommandLineHelp(const char *program,
             WG_HelpWrite(&stream, name);
         }
     }
+    WG_HelpWrite(&stream, "\nDefault OPL driver: ");
+    WG_HelpWrite(&stream, wolf3d_GetSelectedOPLDriver());
     WG_HelpWrite(&stream, "\n");
     if (runtime_notes != NULL && runtime_notes[0] != '\0')
     {
@@ -874,7 +876,7 @@ static int WG_PathOption(const char *option)
         || strcmp(option, "--input-device") == 0;
 }
 
-int WG_LoadLauncherArguments(int argc, char **argv,
+static int WG_ReadLauncherArguments(int argc, char **argv,
                              wg_launcher_arguments_t *prepared,
                              char *error, size_t error_size)
 {
@@ -1094,6 +1096,65 @@ failure:
     free(config_directory);
     free(selected_path);
     return 0;
+}
+
+int WG_LoadLauncherArguments(int argc, char **argv,
+                             wg_launcher_arguments_t *prepared,
+                             char *error, size_t error_size)
+{
+    int index;
+    size_t driver;
+
+    if (!WG_ReadLauncherArguments(argc, argv, prepared, error, error_size))
+    {
+        return 0;
+    }
+    if (WG_CommandLineHelpRequested(prepared->argc, prepared->argv))
+    {
+        return 1;
+    }
+    for (index = 1; index < prepared->argc; ++index)
+    {
+        if (strcmp(prepared->argv[index], "--opl") != 0)
+        {
+            continue;
+        }
+        if (++index < prepared->argc)
+        {
+            if (strcmp(prepared->argv[index], "auto") == 0)
+            {
+                continue;
+            }
+            for (driver = 0U; driver < wolf3d_GetOPLDriverCount(); ++driver)
+            {
+                if (strcmp(prepared->argv[index],
+                           wolf3d_GetOPLDriverName(driver)) == 0)
+                {
+                    break;
+                }
+            }
+            if (driver < wolf3d_GetOPLDriverCount())
+            {
+                continue;
+            }
+            WG_ErrorAppend(error, error_size, "Unknown or unavailable OPL driver: ");
+            WG_ErrorAppend(error, error_size, prepared->argv[index]);
+        }
+        else
+        {
+            WG_ErrorAppend(error, error_size, "--opl requires a driver name.");
+        }
+        WG_ErrorAppend(error, error_size, "\nAvailable OPL drivers: auto");
+        for (driver = 0U; driver < wolf3d_GetOPLDriverCount(); ++driver)
+        {
+            WG_ErrorAppend(error, error_size, " ");
+            WG_ErrorAppend(error, error_size, wolf3d_GetOPLDriverName(driver));
+        }
+        WG_ErrorAppend(error, error_size, "\n");
+        WG_FreeLauncherArguments(prepared);
+        return 0;
+    }
+    return 1;
 }
 
 void WG_FreeLauncherArguments(wg_launcher_arguments_t *prepared)
@@ -1533,7 +1594,23 @@ void WG_PrintDiagnostics(int argc, char **argv,
         }
         WG_HelpWrite(&stream, wolf3d_GetOPLDriverName(index));
     }
-    WG_HelpWrite(&stream, ")\n");
+    WG_HelpWrite(&stream, ")\n  Requested OPL driver (not probed): ");
+    {
+        const char *requested = wolf3d_GetSelectedOPLDriver();
+        for (index = 1U; index + 1U < (size_t)argc; ++index)
+        {
+            if (strcmp(argv[index], "--opl") == 0)
+            {
+                if (strcmp(argv[index + 1U], "auto") != 0)
+                {
+                    requested = argv[index + 1U];
+                }
+                break;
+            }
+        }
+        WG_HelpWrite(&stream, requested);
+        WG_HelpWrite(&stream, "\n");
+    }
     WG_CloseHelpStream(&stream);
 }
 

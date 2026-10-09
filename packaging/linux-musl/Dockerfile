@@ -12,6 +12,7 @@ RUN apk add --no-cache \
         dbus-dev \
         eudev-dev \
         file \
+        git \
         libdecor-dev \
         libdrm-dev \
         pkgconf \

@@ -4,6 +4,7 @@
 
 - Add `make musl-console`, `musl-console-audit`, and `musl-all`, with guided
   Linux build choices and x64 musl KMS/fbdev packaging.
+- Include Git in the musl builder so BUILD-INFO records source revisions.
 - Share the musl bundler/launcher with SDL3; bundle libdrm and ALSA with private
   direct-hardware audio configuration, metadata, and dependency notices.
 - Audit relocation, dependencies, and ALSA null PCM without taking over a display.

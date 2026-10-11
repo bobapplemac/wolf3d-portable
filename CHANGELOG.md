@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased - 2026-10-11 - Microsoft toolset version vocabulary
+
+- Correct legacy toolset labels in the support matrices while retaining compiler versions.
+- Explain IDE, toolset, compiler macro and runtime numbering in the shared naming guide.
+
 ## Unreleased - 2026-10-09 - Generated and mirrored asset checks
 
 - Inventory mirrored helpers and manual/dynamic support assets; add read-only

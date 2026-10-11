@@ -39,7 +39,12 @@ presets, package contents, and dependency setup.
 
 ## Windows wrapper/compiler matrix
 
-| Compiler environment | Toolset | Architectures | Win32/GDI | SDL3 | Build entry point | Destination validation |
+Microsoft entries list the toolset generation first, then the compiler version.
+`v60`, `v70`, and `v71` are project shorthand for legacy VC generations;
+see [Microsoft version vocabulary](BUILD-NAMING.md#microsoft-version-vocabulary)
+for the mapping and the distinction from MSBuild toolset selection.
+
+| Compiler environment | Toolset / compiler | Architectures | Win32/GDI | SDL3 | Build entry point | Destination validation |
 | --- | --- | --- | --- | --- | --- | --- |
 | MSYS2 UCRT64 | MinGW-w64 GCC 16.2 | x64 | Validated | Validated | `build.ps1`, CMake presets | Both packaged wrappers validated with WL1 data on Windows 11 x64; dependency audit rejects MSYS2/Cygwin runtime leakage |
 | Linux Docker / Open Watcom | pinned Open Watcom 2 | x86 | Validated | Not supported | `make windows-win9x` | PE/import audit passed for Win9x profile; destination runtime pending |
@@ -57,10 +62,10 @@ presets, package contents, and dependency setup.
 | Visual Studio 2012 Update 5 | v110 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2012 solution, CMake presets | No legacy-OS minimum claimed |
 | Visual Studio 2010 SP1 | v100 | x86, x64 | Validated | Not supported | `build.ps1`, native VS2010 solution, CMake presets | No legacy-OS minimum claimed |
 | Visual Studio 2008 SP1 | v90 | x86, x64 | Validated | Not supported | `build.ps1`, CMake presets | No legacy-OS minimum claimed |
-| Visual Studio 2005 SP1 | MSVC 14.00 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Compile/package validated on XP SP3 x86 |
-| Visual Studio .NET 2003 SP1 | MSVC 13.10 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Compile/package validated on XP SP3 x86 |
-| Visual Studio .NET 2002 SP1 | MSVC 13.00 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Compile/package validated on XP SP3 x86 |
-| Visual C++ 6.0 SP6 | MSVC 12.00 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Game runtime validated on XP SP3 x86 with WL1 and on Windows 11 x64 under WOW64 |
+| Visual Studio 2005 SP1 | v80 / MSVC 14.00 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Compile/package validated on XP SP3 x86 |
+| Visual Studio .NET 2003 SP1 | v71 / MSVC 13.10 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Compile/package validated on XP SP3 x86 |
+| Visual Studio .NET 2002 SP1 | v70 / MSVC 13.00 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Compile/package validated on XP SP3 x86 |
+| Visual C++ 6.0 SP6 | v60 / MSVC 12.00 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Game runtime validated on XP SP3 x86 with WL1 and on Windows 11 x64 under WOW64 |
 
 SDL3 is deliberately a modern wrapper. Historical Windows reach belongs to
 the dependency-free Win32/GDI host; the project will not backport SDL3 or add

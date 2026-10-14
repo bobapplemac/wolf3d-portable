@@ -18,14 +18,10 @@ static uint8_t WG_DOSAdLibStatus(void)
     return (uint8_t)inp(WG_DOS_ADLIB_ADDRESS_PORT);
 }
 
-void WG_DOSAdLibWrite(uint16_t register_number, uint8_t value)
+static void WG_DOSAdLibWritePort(uint16_t address_port,
+                                  uint8_t register_number, uint8_t value)
 {
     unsigned delay;
-
-    if (register_number > 0xffU)
-    {
-        return;
-    }
 
     /* Preserve the original Wolfenstein 3-D alOut delays. The six address
        reads exceed the YM3812's 3.3 us address delay; the 35 data reads
@@ -33,18 +29,27 @@ void WG_DOSAdLibWrite(uint16_t register_number, uint8_t value)
 #ifndef WG_WIN9X
     _disable();
 #endif
-    outp(WG_DOS_ADLIB_ADDRESS_PORT, (uint8_t)register_number);
+    outp(address_port, register_number);
     for (delay = 0U; delay < 6U; ++delay)
     {
         (void)inp(WG_DOS_ADLIB_ADDRESS_PORT);
     }
-    outp(WG_DOS_ADLIB_DATA_PORT, value);
+    outp(address_port + 1U, value);
 #ifndef WG_WIN9X
     _enable();
 #endif
     for (delay = 0U; delay < 35U; ++delay)
     {
         (void)inp(WG_DOS_ADLIB_ADDRESS_PORT);
+    }
+}
+
+void WG_DOSAdLibWrite(uint16_t register_number, uint8_t value)
+{
+    if (register_number <= 0xffU)
+    {
+        WG_DOSAdLibWritePort(WG_DOS_ADLIB_ADDRESS_PORT,
+                            (uint8_t)register_number, value);
     }
 }
 
@@ -78,6 +83,23 @@ int WG_DOSAdLibInit(void)
     if ((status_before & 0xe0U) != 0U || (status_after & 0xe0U) != 0xc0U)
     {
         return 0;
+    }
+
+    /* OPL2 status bits 1/2 read as one; OPL3 reads them as zero.
+       Windows MIDI drivers can leave OPL3 mode enabled. Original AdLib C0
+       values have no OPL3 output-routing bits, so they would then be silent.
+       Silence the extra bank and return detected OPL3 hardware to OPL2 mode.
+       Do not touch the second address port on an original OPL2 device. */
+    if ((status_before & 0x06U) == 0U)
+    {
+        for (register_number = 0xb0U; register_number <= 0xb8U;
+             ++register_number)
+        {
+            WG_DOSAdLibWritePort(WG_DOS_ADLIB_ADDRESS_PORT + 2U,
+                                (uint8_t)register_number, 0U);
+        }
+        WG_DOSAdLibWritePort(WG_DOS_ADLIB_ADDRESS_PORT + 2U, 4U, 0U);
+        WG_DOSAdLibWritePort(WG_DOS_ADLIB_ADDRESS_PORT + 2U, 5U, 0U);
     }
 
     for (register_number = 1U;

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased - 2026-10-14 - Native OPL3 compatibility initialization
+
+- Switch detected OPL3 hardware to OPL2-compatible mode before playing original
+  AdLib data, including when a Windows MIDI driver previously enabled OPL3 mode.
+- Add register-I/O regressions for inherited OPL3 mode, original OPL2 hardware,
+  missing hardware and the Windows NT port-access guard.
+
+
 ## Unreleased - 2026-10-14 - DOS Sound Blaster compatibility
 
 - Add DSP 2.x/3.x 8-bit mono DMA output for SB2/SB Pro-compatible cards while

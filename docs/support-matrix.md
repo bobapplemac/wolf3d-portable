@@ -131,7 +131,7 @@ Original game data is not included.
 
 | Compiler environment | Architecture | Host facilities | Build entry point | Validation |
 | --- | --- | --- | --- | --- |
-| Official Open Watcom v2 2026-10-01 snapshot in Docker | 32-bit x86, Pentium+ | VGA mode 13h, IRQ 1 keyboard, 700 Hz PIT, SB16 44.1 kHz 16-bit stereo or SB2/Pro 8-bit mono DMA with timed null fallback, runtime DBOPL/silent/native AdLib by default with optional Nuked, DOS/32A | `make dos` or guided `./build.sh` | Warning-clean compile/package validated; DOSBox 0.74 startup smokes cover all four OPL choices and SB16/null audio; interactive DOSBox gameplay confirms native AdLib, DBOPL, and silent operation; physical Yamaha testing exposed missing SB Pro digital support; the new SB2/Pro path passes DOSBox DMA/IRQ checks but awaits physical retesting |
+| Official Open Watcom v2 2026-10-01 snapshot in Docker | 32-bit x86, Pentium+ | VGA mode 13h, IRQ 1 keyboard, 700 Hz PIT, SB16 44.1 kHz 16-bit stereo or SB2/Pro 8-bit mono DMA with timed null fallback, runtime DBOPL/silent/native AdLib by default with optional Nuked, DOS/32A | `make dos` or guided `./build.sh` | Warning-clean compile/package validated; DOSBox 0.74 startup smokes cover all four OPL choices and SB16/null audio; interactive DOSBox gameplay confirms native AdLib, DBOPL, and silent operation; physical Pentium III/Yamaha SAx testing confirms DSP 3.01 SB Pro mono digital output, native AdLib and DBOPL playback in reboot-to-DOS mode; INT 43h exit warning remains |
 
 The Open Watcom snapshot, Linux builder base, and downloaded toolchain hash are
 pinned by `wolf3d-lib`. The package does not redistribute the proprietary

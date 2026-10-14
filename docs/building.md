@@ -471,3 +471,11 @@ rates can be overridden with `DOS_SAMPLE_RATE`; use
 Win9x default for compatibility with existing build commands. Modern targets
 retain their 48000 Hz default. Native OPL pitch and tempo do not depend on the
 PCM rate when the audio clock is correctly paced.
+
+Run `python tests/WG_ADLIB_INIT_TEST.py --cc gcc` to verify native AdLib register
+initialization in DOS and Win9x builds. It simulates OPL3 hardware left in
+extended mode, an original OPL2 chip, absent hardware and the NT I/O guard.
+The companion `tests/WG_ADLIB_INIT_TEST.c` checks that only detected OPL3
+hardware receives second-bank reset writes. Physical Win9x playback remains
+a separate test; a passing register test does not establish mixer routing or
+exclusive access against the Windows sound driver.

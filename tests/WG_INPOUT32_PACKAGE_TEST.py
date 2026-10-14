@@ -16,7 +16,9 @@ class InpOutPackageTests(unittest.TestCase):
             root = Path(temporary)
             vendor = root / 'third_party/InpOut32'
             shutil.copytree(ROOT / 'third_party/InpOut32', vendor)
-            cases = [('win2k', 'x86', 'gdi', 'ON', 'ON', True),
+            cases = [('win2k', 'x86', 'sdl1', 'ON', 'ON', True),
+                     ('win2k', 'x86', 'sdl1', 'ON', 'OFF', False),
+                     ('win2k', 'x86', 'gdi', 'ON', 'ON', True),
                      ('winxp', 'x86', 'gdi', 'ON', 'ON', True),
                      ('win2k', 'x86', 'gdi', 'OFF', 'ON', False),
                      ('winxp', 'x86', 'gdi', 'ON', 'OFF', False),

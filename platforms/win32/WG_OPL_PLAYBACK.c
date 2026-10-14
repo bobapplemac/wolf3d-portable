@@ -236,6 +236,7 @@ int WG_OPLPlaybackSubmitFrames(size_t frames, uint64_t queued)
     ok = !wg_opl_failed && frames <= 0xffffffffU && QueryPerformanceCounter(&now);
     if (ok)
     {
+        if (!wg_timeline.started) wg_trace_start = (uint64_t)now.QuadPart;
         WG_OPLTimelineSubmit(&wg_timeline, (unsigned)frames, (uint64_t)now.QuadPart);
         if (queued <= wg_timeline.submitted)
             WG_OPLTimelineObserve(&wg_timeline, (uint32_t)(wg_timeline.submitted - queued), (uint64_t)now.QuadPart);

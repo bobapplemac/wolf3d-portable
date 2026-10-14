@@ -1,11 +1,11 @@
-# Portable GDI-only package finalizer. Run after WGPackageDocs.cmake.
+# Portable Windows package finalizer. Run after WGPackageDocs.cmake.
 if(NOT ENABLED OR NOT ADLIB)
     return()
 endif()
 file(READ "${DIST}/DOCS/BUILD.TXT" info)
 if(NOT info MATCHES "Platform baseline: (win2k|winxp)\n"
    OR NOT info MATCHES "Architecture: x86\n"
-   OR NOT info MATCHES "Backend: gdi\n")
+   OR NOT info MATCHES "Backend: (gdi|sdl1)\n")
     return()
 endif()
 set(source "${ROOT}/third_party/InpOut32")

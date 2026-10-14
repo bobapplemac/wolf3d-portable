@@ -2,11 +2,38 @@
 #include "../WG_HELP.h"
 #include "../WG_TEXT_OUTPUT.h"
 #include <SDL/SDL.h>
+#ifdef _WIN32
+#undef main
+#include <windows.h>
+static void ui_shutdown(void);
+#define HOST_SHUTDOWN ui_shutdown
+#else
+#define HOST_SHUTDOWN shutdown_host
+#endif
+#ifdef WG_INPOUT32
+#include "../win32/WG_INPOUT32.h"
+#include "../win32/WG_OPL_PLAYBACK.h"
+#include "../dos/WG_DOS_ADLIB.h"
+static unsigned pcm_rate;
+static void opl_shutdown(void) {WG_OPLPlaybackStop();WG_DOSAdLibShutdown();}
+static int opl_init(void) {
+    if(!WG_DOSAdLibInit())return 0;
+    if(WG_OPLPlaybackStart(NULL,pcm_rate))return 1;
+    WG_DOSAdLibShutdown();return 0;
+}
+#endif
 #ifdef WG_LINUX_OPL
 #include "../linux/WG_LINUX_OPL.h"
 #define WG_SDL1_OPL_NOTE "Native OPL: direct ports 0x388-0x38b; RH9 elapsed-time waits, hardware confirmation pending"
+#elif defined(WG_INPOUT32)
+#define WG_SDL1_OPL_NOTE "Native OPL: InpOut32, timestamped playback"
 #else
 #define WG_SDL1_OPL_NOTE "Native OPL: not compiled"
+#endif
+#ifdef _WIN32
+#define WG_SDL1_VIDEO_HELP "Windows: --sdl-video windib|directx (default windib).\n"
+#else
+#define WG_SDL1_VIDEO_HELP "Linux: X11 software video and OSS PCM.\n"
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,6 +105,9 @@ static int video(int width, int height)
 }
 static void pcm_shutdown(void)
 {
+#ifdef WG_INPOUT32
+    opl_shutdown();pcm_rate=0;
+#endif
 #ifdef WG_LINUX_OPL
     WG_LinuxOPLShutdown();
     WG_LinuxOPLSetRate(0);
@@ -98,7 +128,7 @@ static void shutdown_host(void)
 static int init(void)
 {
     unsigned i;
-    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) return 0;
+    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) {fprintf(stderr,"SDL 1.2 initialization: %s\n",SDL_GetError());return 0;}
     if(!video(320*scale,240*scale)) { shutdown_host(); return 0; }
     SDL_WM_SetCaption("wolf3d", "wolf3d");
     SDL_EnableKeyRepeat(0,0);
@@ -138,7 +168,7 @@ static void message(const char *text) { fprintf(stdout,"%s\n",text); }
 static void error(const char *text) { fprintf(stderr,"wolf3d: %s\n",text); }
 static void text_screen(const uint8_t *cells,uint16_t columns,uint16_t rows)
 {
-    shutdown_host();
+    HOST_SHUTDOWN();
     WG_WriteTextScreen(stdout,cells,columns,rows,WG_TextOutputSupportsColor(stdout));
 }
 static uint32_t devices(void)
@@ -223,6 +253,9 @@ static int pcm_init_ex(const wolf3d_pcm_format_t *request,wolf3d_pcm_format_t *o
 #ifdef WG_LINUX_OPL
     WG_LinuxOPLSetRate(obtained->sample_rate);
 #endif
+#ifdef WG_INPOUT32
+    pcm_rate=obtained->sample_rate;
+#endif
     SDL_PauseAudio(0);return 1;
 }
 static int pcm_init(uint32_t rate,uint16_t channels)
@@ -249,21 +282,39 @@ static int submit(const int16_t *samples,size_t frames)
         SDL_UnlockAudio();return 0;
     }
 #endif
+#ifdef WG_INPOUT32
+    if(!WG_OPLPlaybackSubmitFrames(frames,pcm_count)) {SDL_UnlockAudio();return 0;}
+#endif
     SDL_UnlockAudio();return 1;
 }
+#ifdef _WIN32
+#include "WG_SDL1_WINDOWS.h"
+#endif
 int WG_InstallPlatform(void)
 {
     const wolf3d_platform_api_t api={WOLF3D_PLATFORM_API_VERSION,sizeof(api),
+#ifdef _WIN32
+        ui_init,ui_shutdown,ui_present,ticks,sleep_ms,ui_poll,interactive,ui_set_title,message,error,text_screen,
+#else
         init,shutdown_host,present,ticks,sleep_ms,poll_event,interactive,title,message,error,text_screen,
+#endif
         pcm_init,pcm_shutdown,writable,submit,pcm_init_ex,
 #ifdef WG_LINUX_OPL
         WG_LinuxOPLInit,WG_LinuxOPLShutdown,WG_LinuxOPLWrite,
+#elif defined(WG_INPOUT32)
+        opl_init,opl_shutdown,WG_DOSAdLibWrite,
 #else
         NULL,NULL,NULL,
 #endif
+#ifdef _WIN32
+        ui_get_devices,ui_set_capture,
+#else
         devices,mouse_capture,
+#endif
 #ifdef WG_LINUX_OPL
         WG_LinuxOPLWriteTimed
+#elif defined(WG_INPOUT32)
+        WG_OPLPlaybackWrite
 #else
         NULL
 #endif
@@ -271,17 +322,24 @@ int WG_InstallPlatform(void)
     return wolf3d_SetPlatform(&api)==WOLF3D_RESULT_OK;
 }
 #ifndef WG_SDL1_TEST
-int main(int argc,char **argv)
+static int run_main(int argc,char **argv)
 {
     wg_launcher_arguments_t launcher;wg_game_arguments_t game;
     char problem[2048];int i,ok;wolf3d_result_t result;
     if(!WG_LoadLauncherArguments(argc,argv,&launcher,problem,sizeof(problem))) {WG_PrintLauncherError(problem);return 1;}
     argc=launcher.argc;argv=launcher.argv;
     if(WG_CommandLineHelpRequested(argc,argv)) {
-        WG_PrintCommandLineHelp(argv[0],"SDL 1.2 options:\n  --window-scale N     Initial 4:3 window scale (1-4; default 2)\n  --fullscreen         SDL fullscreen video mode\n  --windowed           Windowed mode (default)\n","F11 toggles fullscreen. This legacy host uses SDL 1.2 X11 and OSS PCM.\n" WG_SDL1_OPL_NOTE "\n");
+        WG_PrintCommandLineHelp(argv[0],"SDL 1.2 options:\n  --window-scale N     Initial 4:3 window scale (1-4; default 2)\n  --fullscreen         SDL fullscreen video mode\n  --windowed           Windowed mode (default)\n","F11 toggles fullscreen.\n" WG_SDL1_VIDEO_HELP WG_SDL1_OPL_NOTE "\n");
         WG_FreeLauncherArguments(&launcher);return 0;
     }
     for(i=1;i<argc;++i) {
+#ifdef _WIN32
+        if(!strcmp(argv[i],"--sdl-video")) {
+            static char driver[64];
+            if(++i>=argc || (strcmp(argv[i],"directx") && strcmp(argv[i],"windib"))) {error("--sdl-video requires directx or windib");WG_FreeLauncherArguments(&launcher);return 1;}
+            sprintf(driver,"SDL_VIDEODRIVER=%s",argv[i]);SDL_putenv(driver);
+        }
+#endif
         if(!strcmp(argv[i],"--fullscreen"))fullscreen=1;
         if(!strcmp(argv[i],"--windowed"))fullscreen=0;
         if(!strcmp(argv[i],"--nomouse"))mouse=0;
@@ -295,13 +353,29 @@ int main(int argc,char **argv)
     }
     if(!WG_InstallPlatform()) {WG_FreeLauncherArguments(&launcher);return 1;}
     if(WG_CommandLineDiagnosticsRequested(argc,argv)) {
-        ok=WG_PrintDiagnostics(argc,argv,launcher.config_path,"  SDL 1.2 host: X11 software video / OSS PCM\n  CPU baseline: i586; RH9 runtime confirmation pending\n  " WG_SDL1_OPL_NOTE "\n");
-        shutdown_host();WG_FreeLauncherArguments(&launcher);return ok?0:1;
+        ok=WG_PrintDiagnostics(argc,argv,launcher.config_path,"  SDL 1.2 host: platform SDL video and PCM; physical validation pending\n  " WG_SDL1_OPL_NOTE "\n");
+        HOST_SHUTDOWN();WG_FreeLauncherArguments(&launcher);return ok?0:1;
     }
     if(!WG_PrepareGameArguments(argc,argv,&game,problem,sizeof(problem))) {WG_PrintLauncherError(problem);WG_FreeLauncherArguments(&launcher);return 1;}
     result=wolf3d_Create(game.argc,game.argv);WG_FreeGameArguments(&game);WG_FreeLauncherArguments(&launcher);
     if(result==WOLF3D_RESULT_OK) {result=wolf3d_Run();wolf3d_Shutdown();}
-    shutdown_host();
+    HOST_SHUTDOWN();
     return result==WOLF3D_RESULT_QUIT || result==WOLF3D_RESULT_NOT_IMPLEMENTED ? 0:1;
+}
+#ifdef _WIN32
+#include "../win32/WG_WIN32_CONSOLE.h"
+#endif
+int main(int argc,char **argv)
+{
+    int result;
+#ifdef _WIN32
+    int owned=WG_OwnConsole();
+    SDL_SetModuleHandle(GetModuleHandle(NULL));
+#endif
+    result=run_main(argc,argv);
+#ifdef _WIN32
+    WG_PauseConsole(owned,WG_NoPause(argc,argv));
+#endif
+    return result;
 }
 #endif

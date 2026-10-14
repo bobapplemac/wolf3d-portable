@@ -121,6 +121,7 @@ help:
 		'' \
 		'Linux-hosted Windows cross-builds (Docker):' \
 		'  make windows-win9x          Open Watcom Win9x x86 GDI package.' \
+		'  make windows-win2k-sdl1   Experimental Windows 2000 SDL 1.2 package.' \
 		'  make windows-win2k        MinGW GCC/MSVCRT Windows 2000 x86 package.' \
 		'  make windows-xp             MinGW GCC/MSVCRT XP x86 GDI package.' \
 		'  make windows-win7           MinGW GCC/MSVCRT Win7 x86/x64 GDI + SDL3.' \
@@ -434,3 +435,13 @@ rh9-sdl1: rh9-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" -v "$(CURDIR):/src" -w /src \
 		-e RH9_NUKED=$(RH9_NUKED) -e RH9_ADLIB=$(RH9_ADLIB) -e RH9_DBOPL=$(RH9_DBOPL) -e RH9_OPL_DEFAULT=$(RH9_OPL_DEFAULT) \
 		-e JOBS=$(if $(JOBS),$(JOBS),4) $(DOCKER_RUN_ARGS) "$(RH9_BUILD_IMAGE)" sh scripts/linux/build-rh9.sh
+
+# Experimental Windows SDL 1.2 profile; independent of the existing GDI package.
+WINDOWS_SDL1_IMAGE ?= wolf3d-portable-build-windows-sdl1
+.PHONY: windows-sdl1-image windows-win2k-sdl1
+windows-sdl1-image: windows-mingw-image
+	$(DOCKER) build -t "$(WINDOWS_SDL1_IMAGE)" packaging/windows-sdl1
+windows-win2k-sdl1: windows-sdl1-image
+	$(DOCKER) run --rm -v "$(CURDIR):/src" -w /src \
+		-e WIN2K_OPL_DRIVERS="$(WIN2K_OPL_DRIVERS)" -e WIN2K_OPL_DEFAULT="$(WIN2K_OPL_DEFAULT)" \
+		-e JOBS=$(if $(JOBS),$(JOBS),4) $(DOCKER_RUN_ARGS) "$(WINDOWS_SDL1_IMAGE)" sh scripts/linux/build-windows-sdl1.sh

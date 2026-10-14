@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - Windows SDL 1.2 and GDI optimization
+
+- Add an experimental Win2k SDL 1.2 Docker target with selectable windib/DirectDraw video, PCM, timestamped native OPL, and verified InpOut32 redistribution.
+- Isolate SDL window/input/presentation work from the engine, with regression coverage for slow presentation and replacement of pending frames.
+- Cache GDI scaling maps, clear borders only when geometry changes, use recognized 16-bit desktop formats, and offer an opt-in compatible-bitmap upload for hardware comparison.
+- Keep Win9x/WinXP SDL1 and legacy Visual Studio integration as follow-up work after Win2k hardware validation.
+
 ## Unreleased - Asynchronous GDI presentation
 
 - Move GDI presentation to a worker with a single replaceable pending frame, keeping expensive drawing off the engine/audio thread.

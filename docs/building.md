@@ -630,3 +630,5 @@ and packaged help/DBOPL diagnostics using dummy audio/video. These tests run
 
 `make rh9-sdl1` builds the separate SDL 1.2 host against the RH9 sysroot.
 See [RH9/i586 instructions](linux-rh9.md) for options, dependencies and validation limits.
+
+Experimental Windows SDL 1.2: see [Windows SDL1](windows-sdl1.md) for the Win2k Docker target, validation limits and GDI comparison switches.

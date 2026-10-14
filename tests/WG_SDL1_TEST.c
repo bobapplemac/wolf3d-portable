@@ -66,6 +66,11 @@ int main(void)
 #endif
     assert(pcm_init_ex(&request,&got));pcm_shutdown();
     shutdown_host();
+#ifdef _WIN32
+    /* Also exercise the real SDL lifecycle on the isolated window thread. */
+    assert(ui_init());ui_present(pixels,palette);ui_set_capture(0);
+    ui_set_title("SDL1 worker lifecycle test");SDL_Delay(30);ui_shutdown();ui_shutdown();
+#endif
     puts("SDL1: input, aspect ratio, PCM order/wrap/underrun/overflow and restart passed.");
     return 0;
 }

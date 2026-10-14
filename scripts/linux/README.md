@@ -13,3 +13,6 @@ the root Makefile owns image construction and safe cleanup.
 `openwatcom/build-windows.sh` emits the Win9x Win32/GDI package, while
 `windows-cross/build-portable.sh` handles the XP, Win7, and Win10 MinGW and
 LLVM-MinGW profiles. All are Linux-hosted native PE builds; none uses Wine.
+
+`build-windows-sdl1.sh` builds the experimental Win2k SDL1 profile. Use
+`make windows-win2k-sdl1`; see [Windows SDL1](../../docs/windows-sdl1.md).

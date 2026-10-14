@@ -8,6 +8,7 @@ reference evidence and preserved historical material.
 - [building](building.md) — Build requirements, commands, IDEs and toolchain options.
 - [source-updates](source-updates.md) — Confirmed source updates, dependency selection and offline builds.
 - [running](running.md) — Game data, launch options, configuration precedence, input and audio.
+- [windows-sdl1](windows-sdl1.md) — Experimental Windows SDL 1.2 and GDI comparison builds.
 - [linux-rh9](linux-rh9.md) — Experimental RH9/i586 SDL 1.2 Docker build and validation.
 - [native-opl](native-opl.md) — Native ISA OPL on Linux x86/x64 and Windows 2000/XP; setup and validation limits.
 - [support-matrix](support-matrix.md) — Supported build/runtime matrix and validation limits.

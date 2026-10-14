@@ -4,7 +4,8 @@ The experimental Win2k x86 SDL1 target uses genuine SDL 1.2.15. It is built
 with MinGW GCC/MSVCRT on Linux; it does not require a Windows build VM.
 Both windib and directx video have run successfully on the Windows 2000 test machine.
 DirectDraw hardware scaling has also been confirmed fast on the Win2k/Nvidia test machine.
-The latest border-flicker fix and automatic fallbacks await physical confirmation. Win9x and WinXP SDL1
+The border-flicker fix is confirmed. Borderless fullscreen and the joystick-disable
+fix await physical confirmation. Win9x and WinXP SDL1
 packages, including applicable Visual Studio builds on the XP/Win7 build hosts,
 are follow-up work after Win2k validation. This is separate from the existing
 RH9 SDL1 target and does not change its Linux runtime requirements.
@@ -47,8 +48,11 @@ block engine simulation or PCM submission. Input waits for the window thread
 while the OS is running its modal move/resize loop. Presentation is uncapped;
 CPU percentage alone does not compare SDL and GDI frame rates.
 The cursor is hidden whenever the fullscreen window has focus, independently of
-mouse capture or whether mouse input is enabled. F11/`--fullscreen` uses SDL's
-display-mode fullscreen, not the GDI host's borderless fullscreen.
+mouse capture or whether mouse input is enabled. F11/`--fullscreen` uses
+borderless desktop-sized fullscreen on Windows, preserving the desktop resolution
+and the normal-cooperative-level DirectDraw hardware path. Exclusive SDL fullscreen
+previously conflicted with that path and could force slow software fallback.
+The Linux SDL1 host retains SDL display-mode fullscreen.
 
 ## DirectDraw hardware scaling
 
@@ -100,7 +104,8 @@ Maintainer tests cover native-size DirectDraw uploads, pitch, 16/24/32-bit pixel
 formats, non-integer/letterbox/pillarbox rectangles, border-only clearing,
 video-driver fallback and CLI selection, failed-blit/surface-loss fallback, blocked GDI
 and SDL presentation, immutable frames and worker shutdown. The shared SDL tests
-cover palette changes, software stretch, cursor/focus and Windows text routing.
+cover palette changes, software stretch, cursor/focus, Windows text routing,
+joystick-disabled polling and borderless fullscreen flags/dimensions.
 Windows SDK syntax checks, Win2k/Win9x PE import audits and RH9 tests also pass.
 Physical testing confirmed a large performance improvement from hardware scaling;
 filtering and acceleration still depend on the installed display driver.

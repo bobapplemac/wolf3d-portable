@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased - SDL1 joystick disable and borderless fullscreen
+
+- Skip joystick updates when the SDL joystick subsystem was not initialized, including `--nojoy` and initialization failure.
+- Use borderless desktop-sized fullscreen for Windows SDL1, preserving display resolution and the normal DirectDraw hardware-scaling path instead of conflicting with SDL exclusive fullscreen.
+- Add disabled/enabled joystick polling and fullscreen-mode regression checks; retain Linux SDL1 display-mode fullscreen.
+
 ## Unreleased - SDL1 defaults and border flicker
 
 - Default Windows SDL1 to DirectDraw, retrying windib if initialization or initial video-mode setup fails. `--sdl-video windib` selects GDI directly.

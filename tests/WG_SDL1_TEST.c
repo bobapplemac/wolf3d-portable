@@ -20,6 +20,14 @@ int WG_LinuxOPLSubmit(size_t frames,uint64_t queued)
 #ifdef _WIN32
 #define WG_WriteWindowsTextScreen test_windows_text
 #endif
+#include <SDL/SDL.h>
+static int joystick_updates;
+static void checked_joystick_update(void)
+{
+    assert(SDL_WasInit(SDL_INIT_JOYSTICK)&SDL_INIT_JOYSTICK);
+    ++joystick_updates;SDL_JoystickUpdate();
+}
+#define SDL_JoystickUpdate checked_joystick_update
 #include "../platforms/sdl1/WG_SDL1.c"
 #ifdef _WIN32
 static int native_text_calls,driver_attempts,accept_directx,accept_windib;
@@ -58,7 +66,16 @@ int main(void)
     assert(!start_video_with_fallback("directx",fake_start_driver) && driver_attempts==2);
     driver_attempts=0;assert(!start_video_with_fallback("windib",fake_start_driver) && driver_attempts==1);
 #endif
-    assert(init());
+    joy=0;assert(init());
+    assert(!(SDL_WasInit(SDL_INIT_JOYSTICK)&SDL_INIT_JOYSTICK));
+    while(poll_event(&out)) {}
+    assert(!joystick_updates && !(devices()&WOLF3D_INPUT_DEVICE_JOYSTICK));
+#ifdef _WIN32
+    fullscreen=1;assert(video(640,480));
+    assert(!(screen->flags&SDL_FULLSCREEN) && (screen->flags&SDL_NOFRAME));
+    assert(screen->w==GetSystemMetrics(SM_CXSCREEN) && screen->h==GetSystemMetrics(SM_CYSCREEN));
+    fullscreen=0;assert(video(640,480));assert(!(screen->flags&SDL_FULLSCREEN));
+#endif
     fullscreen=1;mouse=0;mouse_capture(0);assert(SDL_ShowCursor(SDL_QUERY)==SDL_DISABLE);
     focused=0;mouse_capture(0);assert(SDL_ShowCursor(SDL_QUERY)==SDL_ENABLE);
     focused=1;mouse_capture(0);assert(SDL_ShowCursor(SDL_QUERY)==SDL_DISABLE);
@@ -113,6 +130,9 @@ int main(void)
 #endif
     assert(pcm_init_ex(&request,&got));pcm_shutdown();
     shutdown_host();
+    joy=1;assert(init());assert(SDL_WasInit(SDL_INIT_JOYSTICK)&SDL_INIT_JOYSTICK);
+    while(poll_event(&out)) {}
+    assert(joystick_updates>0);shutdown_host();joy=0;
 #ifdef _WIN32
     /* Also exercise the real SDL lifecycle on the isolated window thread. */
     assert(ui_init());ui_present(pixels,palette);ui_set_capture(0);

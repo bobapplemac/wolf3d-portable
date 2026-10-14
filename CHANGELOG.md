@@ -2,6 +2,8 @@
 
 ## Unreleased - Native OPL timing diagnostics
 
+- Extend opt-in Win2k GDI/native OPL logs with presentation and StretchDIBits durations, destination dimensions, and independently observed waveOut queue exhaustion counts/durations.
+
 - Reduce Windows native OPL device-position polling from roughly 1 ms to 20 ms while retaining QPC event scheduling; log total/longest estimated PCM refill starvation gaps.
 
 - Add opt-in `WOLF3D_OPL_TIMING=1` Win2k/XP playback counters written to `OPLTIME.TXT` on shutdown, to investigate native-versus-emulated tempo without adjusting playback speed.

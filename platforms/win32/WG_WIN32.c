@@ -143,6 +143,7 @@ static int WG_NTAdLibInit(void)
     {
         if (WG_OPLPlaybackStart(wg_wave_out, wg_wave_rate))
         {
+            WG_OPLPlaybackTrackBuffers(wg_wave_headers, WG_PCM_BUFFER_COUNT);
             wg_native_playback = 1; return 1;
         }
         WG_DOSAdLibShutdown();
@@ -1035,6 +1036,11 @@ static void WG_Win32Present(const uint8_t *pixels, const uint8_t *palette)
     RECT presentation;
     HDC device_context;
     size_t index;
+#ifdef WG_INPOUT32
+    LARGE_INTEGER trace_start, trace_blit, trace_blit_end, trace_end;
+    int trace=WG_OPLPlaybackTraceEnabled() && QueryPerformanceCounter(&trace_start);
+    int blit_trace=0;
+#endif
 
     if (wg_window == NULL)
     {
@@ -1073,12 +1079,26 @@ static void WG_Win32Present(const uint8_t *pixels, const uint8_t *palette)
            client.right - presentation.right,
            presentation.bottom - presentation.top, BLACKNESS);
     SetStretchBltMode(device_context, COLORONCOLOR);
+#ifdef WG_INPOUT32
+    blit_trace=trace && QueryPerformanceCounter(&trace_blit);
+#endif
     StretchDIBits(device_context, presentation.left, presentation.top,
                   presentation.right - presentation.left,
                   presentation.bottom - presentation.top,
                   0, 0, WOLF3D_SCREEN_WIDTH, WOLF3D_SCREEN_HEIGHT, wg_pixels,
                   &bitmap_info, DIB_RGB_COLORS, SRCCOPY);
+#ifdef WG_INPOUT32
+    blit_trace=blit_trace && QueryPerformanceCounter(&trace_blit_end);
+#endif
     ReleaseDC(wg_window, device_context);
+#ifdef WG_INPOUT32
+    if(trace && QueryPerformanceCounter(&trace_end) && trace_end.QuadPart>=trace_start.QuadPart)
+        WG_OPLPlaybackPresentTicks((uint64_t)(trace_end.QuadPart-trace_start.QuadPart),
+            blit_trace && trace_blit_end.QuadPart>=trace_blit.QuadPart ?
+                (uint64_t)(trace_blit_end.QuadPart-trace_blit.QuadPart) : 0,
+            (unsigned)(presentation.right-presentation.left),
+            (unsigned)(presentation.bottom-presentation.top));
+#endif
 }
 
 static uint32_t WG_Win32GetTicksMs(void)

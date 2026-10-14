@@ -262,3 +262,19 @@ also report total and longest **estimated** PCM starvation durations for gaps
 ending at successful refills. These derive from the current timeline anchor;
 they are not hardware underrun measurements and exclude any unrefilled tail at
 shutdown. A zero-duration restart can occur exactly at the published queue end.
+
+For GDI scaling comparisons, repeat with `--windowed --window-scale 1`, `2`,
+and `3`, keeping the song, sample rate and duration the same. Save each run's
+`OPLTIME.TXT` separately. New reports include destination pixel dimensions,
+presentation count/total/average/maximum and separate `StretchDIBits` API time.
+Presentation time includes palette expansion and the surrounding GDI calls;
+no forced GDI flush is added, so it is not a measurement of GPU completion.
+
+The OPL worker also samples all waveOut header flags independently of the music
+timeline, and submission checks them before refilling. Once playback has started,
+no header still in flight means the driver queue was observed empty. Each transition
+is counted once, with the observed empty duration until refill and the longest gap.
+Durations are sampled lower bounds, not exact hardware-silence measurements;
+short gaps between observations can be missed. An unrefilled shutdown tail is
+marked `open` and excluded from completed durations. These counters distinguish
+observed driver-queue exhaustion from the earlier timeline-derived estimates.

@@ -3,6 +3,7 @@
 #include <conio.h>
 #include <dos.h>
 #include <i86.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -34,6 +35,19 @@ static const uint16_t wg_sb16_dma_page_ports[3] =
 static uint16_t wg_sb16_base;
 static uint8_t wg_sb16_irq;
 static uint8_t wg_sb16_dma;
+static uint8_t wg_sb16_low_dma;
+static uint8_t wg_sb16_high_dma;
+static uint8_t wg_sb16_8bit;
+static uint8_t wg_sb16_dsp_major;
+static uint8_t wg_sb16_mixer_saved;
+static uint8_t wg_sb16_mixer_output;
+static unsigned wg_sb16_half_bytes;
+static char wg_sb16_status[160] = "not initialized";
+
+const char *WG_DOSSB16Status(void)
+{
+    return wg_sb16_status;
+}
 static uint8_t wg_sb16_vector;
 static uint8_t wg_sb16_master_mask;
 static uint8_t wg_sb16_slave_mask;
@@ -48,32 +62,30 @@ static uint8_t wg_sb16_active;
 
 static int WG_SB16Write(uint8_t value)
 {
-    unsigned wait = WG_SB16_IO_TIMEOUT;
-
-    while ((inp(wg_sb16_base + 0x0cU) & 0x80U) != 0U && wait-- != 0U)
+    unsigned wait;
+    for (wait = 0U; wait < WG_SB16_IO_TIMEOUT; ++wait)
     {
+        if ((inp(wg_sb16_base + 0x0cU) & 0x80U) == 0U)
+        {
+            outp(wg_sb16_base + 0x0cU, value);
+            return 1;
+        }
     }
-    if (wait == 0U)
-    {
-        return 0;
-    }
-    outp(wg_sb16_base + 0x0cU, value);
-    return 1;
+    return 0;
 }
 
 static int WG_SB16Read(uint8_t *value)
 {
-    unsigned wait = WG_SB16_IO_TIMEOUT;
-
-    while ((inp(wg_sb16_base + 0x0eU) & 0x80U) == 0U && wait-- != 0U)
+    unsigned wait;
+    for (wait = 0U; wait < WG_SB16_IO_TIMEOUT; ++wait)
     {
+        if ((inp(wg_sb16_base + 0x0eU) & 0x80U) != 0U)
+        {
+            *value = (uint8_t)inp(wg_sb16_base + 0x0aU);
+            return 1;
+        }
     }
-    if (wait == 0U)
-    {
-        return 0;
-    }
-    *value = (uint8_t)inp(wg_sb16_base + 0x0aU);
-    return 1;
+    return 0;
 }
 
 static int WG_SB16ResetDSP(void)
@@ -95,11 +107,13 @@ static int WG_SB16ParseBLASTER(void)
     const char *text = getenv("BLASTER");
     int have_base = 0;
     int have_irq = 0;
-    int have_dma = 0;
+
 
     wg_sb16_base = 0U;
     wg_sb16_irq = 0U;
-    wg_sb16_dma = 0U;
+    wg_sb16_dma = 0xffU;
+    wg_sb16_low_dma = 0xffU;
+    wg_sb16_high_dma = 0xffU;
     while (text != NULL && *text != '\0')
     {
         char setting;
@@ -128,18 +142,25 @@ static int WG_SB16ParseBLASTER(void)
         }
         if (setting == 'A' || setting == 'a')
         {
+            if (value > 0xffffUL) return 0;
             wg_sb16_base = (uint16_t)value;
             have_base = 1;
         }
         else if (setting == 'I' || setting == 'i')
         {
+            if (value > 255UL) return 0;
             wg_sb16_irq = (uint8_t)value;
             have_irq = 1;
         }
+        else if (setting == 'D' || setting == 'd')
+        {
+            if (value > 3UL || value == 2UL) return 0;
+            wg_sb16_low_dma = (uint8_t)value;
+        }
         else if (setting == 'H' || setting == 'h')
         {
-            wg_sb16_dma = (uint8_t)value;
-            have_dma = 1;
+            if (value < 5UL || value > 7UL) return 0;
+            wg_sb16_high_dma = (uint8_t)value;
         }
         text = end;
     }
@@ -147,13 +168,13 @@ static int WG_SB16ParseBLASTER(void)
     {
         wg_sb16_irq = 9U;
     }
-    return have_base && have_irq && have_dma
+    return have_base && have_irq
         && wg_sb16_base >= 0x0200U && wg_sb16_base <= 0x0280U
         && (wg_sb16_base & 0x000fU) == 0U
         && (wg_sb16_irq == 5U || wg_sb16_irq == 7U
             || wg_sb16_irq == 9U || wg_sb16_irq == 10U
             || wg_sb16_irq == 11U)
-        && wg_sb16_dma >= 5U && wg_sb16_dma <= 7U;
+        && (wg_sb16_low_dma != 0xffU || wg_sb16_high_dma != 0xffU);
 }
 
 static uint8_t *WG_SB16AllocateDOSBlock(uint32_t bytes,
@@ -203,7 +224,8 @@ static int WG_SB16AllocateDMA(void)
         {
             wg_sb16_buffer = buffer;
             wg_sb16_buffer_physical = physical;
-            memset(wg_sb16_buffer, 0, WG_SB16_DMA_BYTES);
+            memset(wg_sb16_buffer, wg_sb16_8bit ? 0x80 : 0,
+                   WG_SB16_DMA_BYTES);
             return 1;
         }
     }
@@ -234,7 +256,9 @@ static uint8_t WG_SB16MixerRead(uint8_t index)
 
 static void __interrupt __far WG_SB16Interrupt(void)
 {
-    if ((WG_SB16MixerRead(0x82U) & 0x02U) == 0U)
+    /* DSP 2/3 has no SB16 IRQ-status register: its IRQ must be dedicated. */
+    if (wg_sb16_dsp_major >= 4U
+        && (WG_SB16MixerRead(0x82U) & (wg_sb16_8bit ? 1U : 2U)) == 0U)
     {
         wg_sb16_old_interrupt();
         return;
@@ -242,7 +266,7 @@ static void __interrupt __far WG_SB16Interrupt(void)
 
     wg_sb16_half_free[wg_sb16_play_half] = 1U;
     wg_sb16_play_half ^= 1U;
-    (void)inp(wg_sb16_base + 0x0fU);
+    (void)inp(wg_sb16_base + (wg_sb16_8bit ? 0x0eU : 0x0fU));
     if (wg_sb16_irq >= 8U)
     {
         outp(0x00a0U, 0x20U);
@@ -256,6 +280,23 @@ static void WG_SB16ProgramDMA(void)
     uint32_t word_address = wg_sb16_buffer_physical >> 1;
     uint16_t word_count = (uint16_t)(WG_SB16_DMA_BYTES / 2U - 1U);
 
+    if (wg_sb16_8bit)
+    {
+        static const uint16_t pages[4] = { 0x87U, 0x83U, 0x81U, 0x82U };
+        uint16_t address = (uint16_t)wg_sb16_buffer_physical;
+        uint16_t count = (uint16_t)(wg_sb16_half_bytes * 2U - 1U);
+        outp(0x0aU, 4U | wg_sb16_dma);
+        outp(0x0cU, 0U);
+        outp(0x0bU, 0x58U | wg_sb16_dma);
+        outp(wg_sb16_dma * 2U, address & 0xffU);
+        outp(wg_sb16_dma * 2U, address >> 8);
+        outp(pages[wg_sb16_dma], (wg_sb16_buffer_physical >> 16) & 0xffU);
+        outp(0x0cU, 0U);
+        outp(wg_sb16_dma * 2U + 1U, count & 0xffU);
+        outp(wg_sb16_dma * 2U + 1U, count >> 8);
+        outp(0x0aU, wg_sb16_dma);
+        return;
+    }
     outp(0x00d4U, 0x04U | (wg_sb16_dma & 0x03U));
     outp(0x00d8U, 0U);
     outp(0x00d6U, 0x58U | (wg_sb16_dma & 0x03U));
@@ -312,25 +353,42 @@ int WG_DOSSB16Init(const wolf3d_pcm_format_t *requested,
     uint16_t block_samples =
         (uint16_t)(WG_SB16_HALF_BYTES / sizeof(int16_t) - 1U);
 
+    WG_DOSSB16Shutdown();
+    strcpy(wg_sb16_status, "BLASTER invalid, DSP not responding, or DSP older than 2.0");
     if (requested == NULL || obtained == NULL
         || requested->channels != WG_SB16_CHANNELS
         || requested->bits_per_sample != WG_SB16_BITS
         || !WG_SB16ParseBLASTER() || !WG_SB16ResetDSP()
         || !WG_SB16Write(0xe1U) || !WG_SB16Read(&major)
-        || !WG_SB16Read(&minor) || major < 4U)
+        || !WG_SB16Read(&minor) || major < 2U)
     {
         return 0;
     }
-    (void)minor;
+    wg_sb16_dsp_major = major;
+    wg_sb16_8bit = major < 4U || wg_sb16_high_dma == 0xffU;
+    wg_sb16_dma = wg_sb16_8bit ? wg_sb16_low_dma : wg_sb16_high_dma;
+    if (wg_sb16_dma == 0xffU)
+    {
+        strcpy(wg_sb16_status, "DSP requires a valid BLASTER D channel");
+        return 0;
+    }
+    wg_sb16_half_bytes = wg_sb16_8bit ? WG_SB16_HALF_FRAMES : WG_SB16_HALF_BYTES;
     sample_rate = requested->sample_rate > 44100U
                     ? 44100U : (uint16_t)requested->sample_rate;
-    if (sample_rate < 5000U)
+    if (sample_rate < 5000U) sample_rate = 5000U;
+    if (wg_sb16_8bit)
     {
-        sample_rate = 5000U;
+        /* Normal-speed mono auto-init works on DSP 2.x and 3.x. Round
+           the period UP to stay within 22050 Hz; report the actual rate. */
+        unsigned period;
+        if (sample_rate > 22050U) sample_rate = 22050U;
+        period = (1000000UL + sample_rate - 1U) / sample_rate;
+        sample_rate = (uint16_t)(1000000UL / period);
     }
     if (!WG_SB16AllocateDMA() || !WG_SB16InstallInterrupt())
     {
         WG_DOSSB16Shutdown();
+        strcpy(wg_sb16_status, "unable to allocate DMA buffer or install IRQ");
         return 0;
     }
 
@@ -338,23 +396,47 @@ int WG_DOSSB16Init(const wolf3d_pcm_format_t *requested,
     wg_sb16_half_free[0] = 0U;
     wg_sb16_half_free[1] = 1U;
     WG_SB16ProgramDMA();
-    if (!WG_SB16Write(0xd1U)
-        || !WG_SB16Write(0x41U)
+    if (wg_sb16_8bit && major == 3U)
+    {
+        /* Preserve the SB Pro filter/mode register, but select mono. */
+        wg_sb16_mixer_output = WG_SB16MixerRead(0x0eU);
+        wg_sb16_mixer_saved = 1U;
+        outp(wg_sb16_base + 4U, 0x0eU);
+        outp(wg_sb16_base + 5U, wg_sb16_mixer_output & ~2U);
+    }
+    if (!WG_SB16Write(0xd1U)) goto start_failed;
+    if (wg_sb16_8bit)
+    {
+        unsigned period = (1000000UL + sample_rate / 2U) / sample_rate;
+        block_samples = WG_SB16_HALF_FRAMES - 1U;
+        if (!WG_SB16Write(0x40U)
+            || !WG_SB16Write((uint8_t)(256U - period))
+            || !WG_SB16Write(0x48U)
+            || !WG_SB16Write((uint8_t)block_samples)
+            || !WG_SB16Write((uint8_t)(block_samples >> 8))
+            || !WG_SB16Write(0x1cU)) goto start_failed;
+    }
+    else if (!WG_SB16Write(0x41U)
         || !WG_SB16Write((uint8_t)(sample_rate >> 8))
         || !WG_SB16Write((uint8_t)sample_rate)
         || !WG_SB16Write(0xb6U)
         || !WG_SB16Write(0x30U)
         || !WG_SB16Write((uint8_t)block_samples)
-        || !WG_SB16Write((uint8_t)(block_samples >> 8)))
-    {
-        WG_DOSSB16Shutdown();
-        return 0;
-    }
+        || !WG_SB16Write((uint8_t)(block_samples >> 8))) goto start_failed;
+    sprintf(wg_sb16_status, "DSP %u.%02u: %s, %u Hz, IRQ %u, DMA %u",
+            (unsigned)major, (unsigned)minor,
+            wg_sb16_8bit ? "8-bit mono" : "16-bit stereo",
+            (unsigned)sample_rate, (unsigned)wg_sb16_irq, (unsigned)wg_sb16_dma);
     wg_sb16_active = 1U;
     obtained->sample_rate = sample_rate;
     obtained->channels = WG_SB16_CHANNELS;
     obtained->bits_per_sample = WG_SB16_BITS;
     return 1;
+
+start_failed:
+    WG_DOSSB16Shutdown();
+    strcpy(wg_sb16_status, "DSP timed out while starting playback");
+    return 0;
 }
 
 void WG_DOSSB16Shutdown(void)
@@ -362,11 +444,20 @@ void WG_DOSSB16Shutdown(void)
     if (wg_sb16_old_interrupt != NULL)
     {
         (void)WG_SB16Write(0xd3U);
-        (void)WG_SB16Write(0xd5U);
-        (void)WG_SB16Write(0xd9U);
-        (void)WG_SB16Write(0xd5U);
+        (void)WG_SB16Write(wg_sb16_8bit ? 0xd0U : 0xd5U);
+        (void)WG_SB16ResetDSP();
+        if (wg_sb16_mixer_saved)
+        {
+            outp(wg_sb16_base + 4U, 0x0eU);
+            outp(wg_sb16_base + 5U, wg_sb16_mixer_output);
+            wg_sb16_mixer_saved = 0U;
+        }
     }
-    if (wg_sb16_dma >= 5U && wg_sb16_dma <= 7U)
+    if (wg_sb16_old_interrupt != NULL && wg_sb16_8bit && wg_sb16_dma <= 3U)
+    {
+        outp(0x0aU, 4U | wg_sb16_dma);
+    }
+    if (wg_sb16_old_interrupt != NULL && wg_sb16_dma >= 5U && wg_sb16_dma <= 7U)
     {
         outp(0x00d4U, 0x04U | (wg_sb16_dma & 0x03U));
     }
@@ -416,8 +507,21 @@ int WG_DOSSB16Submit(const int16_t *samples, size_t frame_count)
         _enable();
         return 0;
     }
-    memcpy(wg_sb16_buffer + (size_t)half * WG_SB16_HALF_BYTES,
-           samples, WG_SB16_HALF_BYTES);
+    if (wg_sb16_8bit)
+    {
+        size_t index;
+        uint8_t *destination = wg_sb16_buffer + (size_t)half * wg_sb16_half_bytes;
+        for (index = 0U; index < frame_count; ++index)
+        {
+            long sum = (long)samples[index * 2U] + samples[index * 2U + 1U];
+            destination[index] = (uint8_t)((sum + 65536L) / 512L);
+        }
+    }
+    else
+    {
+        memcpy(wg_sb16_buffer + (size_t)half * wg_sb16_half_bytes,
+               samples, WG_SB16_HALF_BYTES);
+    }
     wg_sb16_half_free[half] = 0U;
     _enable();
     return 1;

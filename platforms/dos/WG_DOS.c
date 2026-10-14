@@ -2,6 +2,7 @@
 #include "../WG_HELP.h"
 #include "WG_DOS_ADLIB.h"
 #include "WG_DOS_SB16.h"
+#include "WG_DOS_AUDIO_CLOCK.h"
 
 #include <conio.h>
 #include <dos.h>
@@ -37,6 +38,7 @@ static uint8_t wg_palette_valid;
 static uint8_t wg_null_pcm;
 static uint32_t wg_null_pcm_rate;
 static uint32_t wg_null_pcm_ready_at;
+static uint32_t wg_null_pcm_fraction;
 
 static int WG_DOSPCMInitEx(const wolf3d_pcm_format_t *requested,
                            wolf3d_pcm_format_t *obtained);
@@ -176,6 +178,7 @@ static void WG_DOSShutdown(void)
     wg_null_pcm = 0U;
     wg_null_pcm_rate = 0U;
     wg_null_pcm_ready_at = 0U;
+    wg_null_pcm_fraction = 0U;
     _disable();
     WG_DOSProgramTimer(0U);
     if (wg_old_timer_interrupt != NULL)
@@ -382,6 +385,7 @@ static int WG_DOSPCMInitEx(const wolf3d_pcm_format_t *requested,
     wg_null_pcm = 1U;
     wg_null_pcm_rate = requested->sample_rate;
     wg_null_pcm_ready_at = WG_DOSGetTicksMs();
+    wg_null_pcm_fraction = 0U;
     return 1;
 }
 
@@ -391,6 +395,7 @@ static void WG_DOSPCMShutdown(void)
     wg_null_pcm = 0U;
     wg_null_pcm_rate = 0U;
     wg_null_pcm_ready_at = 0U;
+    wg_null_pcm_fraction = 0U;
 }
 
 static size_t WG_DOSPCMWritableFrames(void)
@@ -411,9 +416,9 @@ static int WG_DOSPCMSubmit(const int16_t *samples, size_t frame_count)
         {
             return 0;
         }
-        wg_null_pcm_ready_at = WG_DOSGetTicksMs()
-            + (uint32_t)((frame_count * 1000U + wg_null_pcm_rate - 1U)
-                         / wg_null_pcm_rate);
+        WG_DOSAudioClockAdvance(&wg_null_pcm_ready_at,
+                                &wg_null_pcm_fraction, wg_null_pcm_rate,
+                                (uint32_t)frame_count);
         return 1;
     }
     return WG_DOSSB16Submit(samples, frame_count);
@@ -456,6 +461,9 @@ static void WG_DOSDiagnosticReport(char *report, size_t report_size)
     union REGS registers;
     const char *blaster = getenv("BLASTER");
     int adlib;
+    int pcm;
+    wolf3d_pcm_format_t requested;
+    wolf3d_pcm_format_t obtained;
 
     memset(&registers, 0, sizeof(registers));
     registers.w.ax = 0U;
@@ -465,15 +473,22 @@ static void WG_DOSDiagnosticReport(char *report, size_t report_size)
     {
         WG_DOSAdLibShutdown();
     }
+    requested.sample_rate = 22050U;
+    requested.channels = 2U;
+    requested.bits_per_sample = 16U;
+    pcm = WG_DOSSB16Init(&requested, &obtained);
+    WG_DOSSB16Shutdown();
     (void)sprintf(report,
         "  Video: VGA BIOS mode 13h output\n"
         "  AdLib: %s\n"
-        "  Sound Blaster: %s\n"
+        "  BLASTER: %s\n"
+        "  PCM probe: %s (%s)\n"
         "  Mouse driver: %s\n"
         "  Joystick: not implemented by the DOS host\n",
         adlib ? "detected" : "not detected",
         blaster != NULL && blaster[0] != '\0' ? blaster
                                                : "BLASTER is not configured",
+        WG_DOSSB16Status(), pcm ? "initialized" : "silent fallback",
         registers.w.ax != 0U ? "present" : "not detected");
     (void)report_size;
 }
@@ -497,7 +512,7 @@ int main(int argc, char **argv)
     {
         WG_PrintCommandLineHelp(
             argc > 0 ? argv[0] : "WOLF3D.EXE", NULL,
-            "The DOS host defaults to native AdLib OPL and SB16 PCM output.\n");
+            "The DOS host defaults to native AdLib OPL and SB2/Pro or SB16 PCM output.\n");
         WG_FreeLauncherArguments(&launcher_arguments);
         return 0;
     }

@@ -443,3 +443,31 @@ preserves all build options plus the bundle's ALSA configuration and launcher.
 Custom directories/settings use `MUSL_CONSOLE_BUILD_DIR`,
 `MUSL_CONSOLE_STAGE_ROOT`, `MUSL_CONSOLE_DIST_DIR`, and
 `MUSL_CONSOLE_CMAKE_ARGS`. `make clean-musl` clears both musl backend build trees.
+
+## DOS audio regression checks
+
+Run `python tests/WG_DOS_AUDIO_TEST.py --cc gcc` with a native GCC compiler.
+The test compiles the production DOS driver against simulated ISA port I/O,
+DSP responses, DMA allocation and interrupt vectors. It checks SB2/Pro and
+SB16 selection, sample conversion, rate negotiation, DMA commands, interrupt
+acknowledgement, teardown, invalid settings, timeouts and fallback clock drift.
+It does not establish physical card compatibility; follow it with `make dos`
+and real-hardware music and digitized-effect testing. Python is a maintainer
+test dependency only, not a build or game requirement.
+
+`tests/WG_DOS_PCM_SMOKE.c` is the complementary DOS hardware/emulator test.
+Build it with Open Watcom, linking `platforms/dos/WG_DOS_SB16.c` and using
+`-bt=dos -l=dos4g -dWOLF3D_STATIC -i=lib/wolf3d/include -i=platforms/dos`.
+Place DOS/32A's `DOS4GW.EXE` beside the executable. It plays a quiet test tone,
+requires 32 successful DMA block submissions within ten seconds, and shuts
+playback down. A failure with no sound card is expected. SB Pro 2 and SB16
+DOSBox runs passed this test; this does not replace physical Yamaha testing.
+
+DOS and Open Watcom Win9x packages default to 22050 Hz PCM to reduce CPU cost
+on period hardware. `--sample-rate HZ` accepts integer requests from 8000 to
+192000; the host may negotiate a lower or rounded hardware rate. DOS build
+rates can be overridden with `DOS_SAMPLE_RATE`; use
+`WIN9X_SAMPLE_RATE` for Win9x only. Explicit `SAMPLE_RATE` also overrides the
+Win9x default for compatibility with existing build commands. Modern targets
+retain their 48000 Hz default. Native OPL pitch and tempo do not depend on the
+PCM rate when the audio clock is correctly paced.

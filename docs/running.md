@@ -74,6 +74,25 @@ WOLF3D.EXE --game WL1
 WOLF3D.EXE --game WL1 --opl dbopl
 ```
 
+Run `WOLF3D.EXE --diag` to probe the DSP and print the selected PCM format,
+actual rate, IRQ and DMA, or the reason for silent fallback. The probe briefly
+starts a silent DMA buffer and shuts it down. It uses a 22050 Hz request.
+
+Initialize ISA/PnP cards using their DOS utility before launching. The driver
+uses the actual `BLASTER` settings and DSP version:
+
+- DSP 4.x with `H5`, `H6`, or `H7`: 16-bit stereo, up to 44100 Hz.
+- DSP 2.x/3.x, or DSP 4.x without `H`: 8-bit mono using `D0`, `D1`, or `D3`,
+  up to 22050 Hz. The DSP timer's rounded rate is used by the engine.
+- DSP 1.x, WSS output and SB Pro stereo are not implemented. DSP 2.x/3.x
+  playback requires a dedicated IRQ; shared-IRQ source detection is unavailable.
+
+For example, `A220 I5 D1 T4` selects the 8-bit path when the DSP supports it.
+A Yamaha card's 16-bit WSS interface is separate from its SB Pro interface;
+do not invent an `H` setting to request SB16 playback. Native AdLib FM is
+independent of PCM bit depth. If PCM initialization fails, native FM can still
+play using a timed silent sink, but digitized effects and software OPL are silent.
+
 ## Game selection and input
 
 Executable names beginning with `wolf` prefer `WL6`, then `WL1`; the exact

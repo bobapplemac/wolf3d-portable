@@ -8,7 +8,7 @@ build_dir=${W3P_OPENWATCOM_BUILD_DIR:-$root/build/openwatcom-dos32}
 dist_dir=${W3P_OPENWATCOM_DIST_DIR:-$root/dist/wolf3d-portable_${version}_dos32_x86_vga_${toolchain}}
 drivers=${W3P_OPENWATCOM_OPL_DRIVERS:-dbopl,silent,adlib}
 default_driver=${W3P_OPENWATCOM_DEFAULT_OPL:-adlib}
-sample_rate=${W3P_OPENWATCOM_SAMPLE_RATE:-44100}
+sample_rate=${W3P_OPENWATCOM_SAMPLE_RATE:-22050}
 library_build="$build_dir/wolf3d-lib"
 library_dist="$build_dir/wolf3d-lib-dist"
 
@@ -93,10 +93,15 @@ WOLF3D.EXE or in nested subdirectories, then run WOLF3D. The launcher scans
 recursively; WOLF* prefers WL6/WL1 and exact SPEAR prefers SOD/SDM, with
 cross-family fallback. Use -WL1/-WL6/-SDM/-SOD for an exact set; mission packs
 require -SD1/-SD2/-SD3. The DOS host provides VGA mode 13h,
-keyboard input, original-style 700 Hz PIT timing, and SB16 44.1 kHz 16-bit
-stereo PCM output. It reads the base port, IRQ, and high-DMA channel from the
-BLASTER environment variable. Without a compatible card it uses a timed null
-sink so the engine's audio clocks continue to advance. A Pentium-class or
+keyboard input, original-style 700 Hz PIT timing, and Sound Blaster PCM.
+DSP 4.x with BLASTER H5/H6/H7 uses up to 44.1 kHz 16-bit stereo. DSP 2.x/3.x,
+or DSP 4.x without H, uses BLASTER D0/D1/D3 for 8-bit mono at up to 22.05 kHz
+(the actual DSP timer rate is reported to the engine). SB Pro stereo, DSP 1.x,
+and WSS playback are not implemented. Initialize ISA/PnP cards with their DOS
+setup utility first; use the actual BLASTER port/IRQ/DMA settings. Older DSPs
+require a dedicated IRQ. WOLF3D --diag probes PCM and reports the DSP, format,
+rate, IRQ and DMA or the fallback reason. Without compatible PCM hardware a
+timed silent sink keeps native AdLib music running; digitized sound is silent. A Pentium-class or
 newer x86 system is the supported baseline.
 
 Optional defaults may be stored in WOLF3D.ini (or SPEAR.ini when renamed)

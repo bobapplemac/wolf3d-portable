@@ -8,7 +8,7 @@ build_dir=${W3P_OPENWATCOM_WINDOWS_BUILD_DIR:-$root/build/openwatcom-win9x-x86}
 dist_dir=${W3P_OPENWATCOM_WINDOWS_DIST_DIR:-$root/dist/wolf3d-portable_${version}_win9x_x86_gdi_${toolchain}}
 drivers=${W3P_OPENWATCOM_WINDOWS_OPL_DRIVERS:-dbopl,silent,adlib}
 default_driver=${W3P_OPENWATCOM_WINDOWS_DEFAULT_OPL:-adlib}
-sample_rate=${W3P_OPENWATCOM_WINDOWS_SAMPLE_RATE:-48000}
+sample_rate=${W3P_OPENWATCOM_WINDOWS_SAMPLE_RATE:-22050}
 library_build="$build_dir/wolf3d-lib"
 library_dist="$build_dir/wolf3d-lib-dist"
 

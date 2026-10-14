@@ -119,7 +119,7 @@ drivers, device permissions, or a sound server.
 | Windows SDL3 | `wolf3d.exe` | `wolf3d.dll`, SDL3 DLLs; `Nuked-OPL3.dll` for the default backend |
 | Linux SDL3 | `wolf3d` (native/glibc package) or top-level `wolf3d` launcher (musl bundle) | `libwolf3d.so`, pinned SDL3 when selected, and default Nuked-OPL3 shared object |
 | Linux console | `wolf3d` | `libwolf3d.so`, system DRM/ALSA libraries, and default Nuked-OPL3 shared object |
-| 32-bit DOS | `WOLF3D.EXE` | DOS/32A loader staged as `DOS4GW.EXE`; SB16 PCM uses `BLASTER`; native AdLib (default), DBOPL, and silent are runtime selectable; Nuked is an opt-in build and its packages include `RELINK/` materials |
+| 32-bit DOS | `WOLF3D.EXE` | DOS/32A loader staged as `DOS4GW.EXE`; SB2/Pro and SB16 PCM use `BLASTER`; native AdLib (default), DBOPL, and silent are runtime selectable; Nuked is an opt-in build and its packages include `RELINK/` materials |
 
 Each staged folder contains `README.TXT` and `DOCS/` with full licenses,
 component notices and `BUILD.TXT`, which records the exact portable commit plus the engine
@@ -131,7 +131,7 @@ Original game data is not included.
 
 | Compiler environment | Architecture | Host facilities | Build entry point | Validation |
 | --- | --- | --- | --- | --- |
-| Official Open Watcom v2 2026-10-01 snapshot in Docker | 32-bit x86, Pentium+ | VGA mode 13h, IRQ 1 keyboard, 700 Hz PIT, SB16 44.1 kHz 16-bit stereo DMA with timed null fallback, runtime DBOPL/silent/native AdLib by default with optional Nuked, DOS/32A | `make dos` or guided `./build.sh` | Warning-clean compile/package validated; DOSBox 0.74 startup smokes cover all four OPL choices and SB16/null audio; interactive DOSBox gameplay confirms native AdLib, DBOPL, and silent operation; physical DOS hardware remains untested |
+| Official Open Watcom v2 2026-10-01 snapshot in Docker | 32-bit x86, Pentium+ | VGA mode 13h, IRQ 1 keyboard, 700 Hz PIT, SB16 44.1 kHz 16-bit stereo or SB2/Pro 8-bit mono DMA with timed null fallback, runtime DBOPL/silent/native AdLib by default with optional Nuked, DOS/32A | `make dos` or guided `./build.sh` | Warning-clean compile/package validated; DOSBox 0.74 startup smokes cover all four OPL choices and SB16/null audio; interactive DOSBox gameplay confirms native AdLib, DBOPL, and silent operation; physical Yamaha testing exposed missing SB Pro digital support; the new SB2/Pro path passes DOSBox DMA/IRQ checks but awaits physical retesting |
 
 The Open Watcom snapshot, Linux builder base, and downloaded toolchain hash are
 pinned by `wolf3d-lib`. The package does not redistribute the proprietary

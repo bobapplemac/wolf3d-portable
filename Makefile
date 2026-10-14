@@ -42,7 +42,7 @@ DOS_DIST_DIR ?=
 DOS_BUILD_IMAGE ?= wolf3d-portable-build-openwatcom-20261001
 DOS_OPL_DRIVERS ?= dbopl,silent,adlib
 DOS_OPL_DEFAULT ?= adlib
-DOS_SAMPLE_RATE ?= 44100
+DOS_SAMPLE_RATE ?= 22050
 WINDOWS_MINGW_BUILD_IMAGE ?= wolf3d-portable-build-windows-mingw-debian12
 WINDOWS_LLVM_MINGW_MSVC_IMAGE ?= wolf3d-portable-build-llvm-mingw-20260908-msvcrt
 WINDOWS_LLVM_MINGW_UCRT_IMAGE ?= wolf3d-portable-build-llvm-mingw-20260908-ucrt
@@ -52,6 +52,7 @@ WINDOWS_LLVM_MINGW_UCRT_SHA256 ?= 2258c745e3155870c80793f3e8c80b28fbde11b9ff73c4
 # Win9x defaults follow DOS; explicit OPL_* overrides still apply.
 WIN9X_OPL_DRIVERS ?= $(if $(filter file default undefined,$(origin OPL_DRIVERS)),dbopl$(comma)silent$(comma)adlib,$(OPL_DRIVERS))
 WIN9X_OPL_DEFAULT ?= $(if $(filter file default undefined,$(origin OPL_DEFAULT)),adlib,$(OPL_DEFAULT))
+WIN9X_SAMPLE_RATE ?= $(if $(filter file default undefined,$(origin SAMPLE_RATE)),22050,$(SAMPLE_RATE))
 WINDOWS_OPENWATCOM_BUILD_DIR ?= build/openwatcom-win9x-x86
 WINDOWS_OPENWATCOM_DIST_DIR ?=
 MUSL_SDL3_CMAKE_ARGS ?= -DW3P_DIST_ROOT=/src/$(MUSL_STAGE_ROOT) \
@@ -128,11 +129,12 @@ help:
 		'  OPL_DRIVERS=nuked,dbopl,silent Drivers compiled into wolf3d (default: all).' \
 		'  OPL_DEFAULT=nuked|dbopl|silent Runtime default (default: nuked).' \
 		'  SAMPLE_RATE=Hz               Preferred PCM rate (default: 48000).' \
+		'  WIN9X_SAMPLE_RATE=Hz        Win9x preferred PCM rate (default: 22050).' \
 		'  CMAKE_ARGS="..."             Additional CMake definitions.' \
 		'  DOCKER_RUN_ARGS="..."        Additional Docker run arguments.' \
 		'  DOS_OPL_DRIVERS=...          DOS drivers (default: dbopl,silent,adlib).' \
 		'  DOS_OPL_DEFAULT=...          DOS runtime default (default: adlib).' \
-		'  DOS_SAMPLE_RATE=Hz           DOS preferred PCM rate (default: 44100).' \
+		'  DOS_SAMPLE_RATE=Hz           DOS preferred PCM rate (default: 22050).' \
 		'' \
 		'Cleanup:' \
 		'  make clean                   Remove build trees and project builder images.' \
@@ -312,7 +314,7 @@ windows-win9x: dos-image
 		--env W3P_OPENWATCOM_WINDOWS_DIST_DIR="$(if $(WINDOWS_OPENWATCOM_DIST_DIR),/src/$(WINDOWS_OPENWATCOM_DIST_DIR))" \
 		--env W3P_OPENWATCOM_WINDOWS_OPL_DRIVERS="$(WIN9X_OPL_DRIVERS)" \
 		--env W3P_OPENWATCOM_WINDOWS_DEFAULT_OPL="$(WIN9X_OPL_DEFAULT)" \
-		--env W3P_OPENWATCOM_WINDOWS_SAMPLE_RATE="$(SAMPLE_RATE)" \
+		--env W3P_OPENWATCOM_WINDOWS_SAMPLE_RATE="$(WIN9X_SAMPLE_RATE)" \
 		"$(DOS_BUILD_IMAGE)" sh scripts/linux/openwatcom/build-windows.sh
 
 windows-xp: windows-mingw-image

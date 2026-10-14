@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased - 2026-10-14 - DOS Sound Blaster compatibility
+
+- Add DSP 2.x/3.x 8-bit mono DMA output for SB2/SB Pro-compatible cards while
+  retaining SB16 16-bit stereo and reporting the actual negotiated PCM rate.
+- Default DOS and Win9x builds to 22050 Hz, retaining explicit rate overrides.
+- Fix silent-fallback clock drift and DSP I/O timeout handling.
+- Probe and report the DOS PCM path with `--diag`; add simulated hardware regressions.
+
 ## Unreleased - 2026-10-11 - Microsoft toolset version vocabulary
 
 - Correct legacy toolset labels in the support matrices while retaining compiler versions.

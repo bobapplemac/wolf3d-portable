@@ -3,6 +3,7 @@
 
 #include "WOLF3D.h"
 
+const char *WG_DOSSB16Status(void);
 int WG_DOSSB16Init(const wolf3d_pcm_format_t *requested,
                    wolf3d_pcm_format_t *obtained);
 void WG_DOSSB16Shutdown(void);

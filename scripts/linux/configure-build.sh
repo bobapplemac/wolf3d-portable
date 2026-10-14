@@ -106,7 +106,7 @@ sample_rate=48000
 if [[ $target == dos-* || $target == windows-win9x ]]; then
     drivers=dos-default
     default_opl=adlib
-    sample_rate=44100
+    sample_rate=22050
 elif [[ $target != clean ]]; then
     drivers=$(choose 'Compiled OPL drivers' all nuked-dbopl nuked-silent dbopl-silent nuked dbopl silent)
     if [ "$drivers" = all ]; then
@@ -139,7 +139,7 @@ else
           "SAMPLE_RATE=$sample_rate")
 fi
 if [[ $target == windows-cross ]]; then
-    args+=("WIN9X_OPL_DRIVERS=dbopl,silent,adlib" "WIN9X_OPL_DEFAULT=adlib")
+    args+=("WIN9X_OPL_DRIVERS=dbopl,silent,adlib" "WIN9X_OPL_DEFAULT=adlib" "WIN9X_SAMPLE_RATE=22050")
 fi
 [ -n "$jobs" ] && args+=("JOBS=$jobs")
 

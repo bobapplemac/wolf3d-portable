@@ -25,11 +25,11 @@ class LegacyOplChoices(unittest.TestCase):
                 stub.write_text('#!/bin/sh\nexit ' + ('1' if name == 'git' else '0') + '\n')
                 stub.chmod(0o755)
             env = dict(os.environ, PATH=str(bin_dir) + ':' + os.environ['PATH'])
-            for selection, target, default in ((11, 'dos-release', 'adlib'), (12, 'windows-win9x', 'adlib'),
-                                                (13, 'windows-win2k', 'dbopl'), (14, 'windows-xp', 'dbopl')):
+            for selection, target, default in ((11, 'dos-release', 'auto'), (12, 'windows-win9x', 'auto'),
+                                                (13, 'windows-win2k', 'auto'), (14, 'windows-xp', 'auto')):
                 for choice, expected in (('', 'dbopl,silent,adlib'), ('2', 'nuked,dbopl,silent,adlib')):
                     with self.subTest(target=target, drivers=expected):
-                        answers = [str(selection), choice, '', '']
+                        answers = [str(selection), choice, '']
                         if selection >= 13:
                             answers.append('')  # parallel jobs
                         answers.append('n')
@@ -43,8 +43,8 @@ class LegacyOplChoices(unittest.TestCase):
                         self.assertIn(prefix + 'OPL_DEFAULT=' + default, command)
 
     def test_make_defaults_and_overrides(self):
-        for target, prefix, default in (('windows-win2k', 'WIN2K_', 'dbopl'), ('windows-xp', 'WINXP_', 'dbopl'),
-                                         ('windows-win9x', 'WIN9X_', 'adlib')):
+        for target, prefix, default in (('windows-win2k', 'WIN2K_', 'auto'), ('windows-xp', 'WINXP_', 'auto'),
+                                         ('windows-win9x', 'WIN9X_', 'auto')):
             for drivers in (None, 'nuked,dbopl,silent,adlib'):
                 args = ['make', '-n', target]
                 if drivers:

@@ -1,5 +1,5 @@
 /* Optional NT transport. Loading InpOut32 may install its embedded driver;
-   only an explicit native AdLib request reaches WG_InpOutOpen. */
+   native AdLib selection (explicit or auto) reaches WG_InpOutOpen. */
 #include <windows.h>
 #include <string.h>
 #include "WG_INPOUT32.h"
@@ -26,7 +26,8 @@ int WG_InpOutOpen(void)
 {
     char path[MAX_PATH];
     char *slash;
-    DWORD length;
+    DWORD length, load_error;
+    UINT error_mode;
     FARPROC proc;
     wg_open_fn driver_open;
     LARGE_INTEGER counter;
@@ -56,10 +57,21 @@ int WG_InpOutOpen(void)
     }
     strcpy(slash + 1, "inpout32.dll");
     /* Absolute path: never search the current directory or PATH for this DLL. */
+    error_mode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+    SetErrorMode(error_mode | SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
     wg_io_module = LoadLibraryA(path);
+    load_error = wg_io_module ? ERROR_SUCCESS : GetLastError();
+    SetErrorMode(error_mode);
     if (!wg_io_module)
     {
-        WG_InpOutError("cannot load inpout32.dll beside wolf3d.exe (or a DLL dependency is missing)");
+        if (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES)
+            WG_InpOutError("inpout32.dll is missing or inaccessible beside wolf3d.exe");
+        else if (load_error == ERROR_BAD_EXE_FORMAT)
+            WG_InpOutError("inpout32.dll is incompatible or invalid (32-bit DLL required)");
+        else if (load_error == ERROR_MOD_NOT_FOUND)
+            WG_InpOutError("inpout32.dll could not load: a DLL dependency is missing");
+        else
+            WG_InpOutError("inpout32.dll could not load (Windows loader failure)");
         return 0;
     }
     proc = GetProcAddress(wg_io_module, "Inp32");

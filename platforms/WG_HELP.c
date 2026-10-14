@@ -1505,7 +1505,7 @@ void WG_FreeGameArguments(wg_game_arguments_t *prepared)
     }
 }
 
-void WG_PrintDiagnostics(int argc, char **argv,
+int WG_PrintDiagnostics(int argc, char **argv,
                          const char *config_path,
                          const char *host_report)
 {
@@ -1516,10 +1516,11 @@ void WG_PrintDiagnostics(int argc, char **argv,
     char number[32];
     char *root;
     size_t index;
+    int audio_ok = 0;
 
     if (!WG_HelpStreamValid(&stream))
     {
-        return;
+        return 0;
     }
     WG_HelpWrite(&stream, "wolf3d portable diagnostics\n\nExecutable: ");
     WG_HelpWrite(&stream, argc > 0 ? argv[0] : "(unknown)");
@@ -1605,24 +1606,32 @@ void WG_PrintDiagnostics(int argc, char **argv,
         }
         WG_HelpWrite(&stream, wolf3d_GetOPLDriverName(index));
     }
-    WG_HelpWrite(&stream, ")\n  Requested OPL driver (not probed): ");
+    WG_HelpWrite(&stream, ")\n");
     {
-        const char *requested = wolf3d_GetSelectedOPLDriver();
+        const char *requested = NULL;
+        const char *rate = "auto";
+
         for (index = 1U; index + 1U < (size_t)argc; ++index)
         {
-            if (strcmp(argv[index], "--opl") == 0)
-            {
-                if (strcmp(argv[index + 1U], "auto") != 0)
-                {
-                    requested = argv[index + 1U];
-                }
-                break;
-            }
+            if (strcmp(argv[index], "--opl") == 0) requested = argv[index + 1U];
+            if (strcmp(argv[index], "--sample-rate") == 0) rate = argv[index + 1U];
         }
-        WG_HelpWrite(&stream, requested);
+        WG_HelpWrite(&stream, "  Requested OPL: ");
+        WG_HelpWrite(&stream, requested != NULL ? requested : wolf3d_GetSelectedOPLDriver());
+        WG_HelpWrite(&stream, "\n  Requested sample rate: ");
+        WG_HelpWrite(&stream, rate);
         WG_HelpWrite(&stream, "\n");
+        audio_ok = wolf3d_ProbeAudio(requested, rate);
+        WG_HelpWrite(&stream, wolf3d_GetAudioDiagnostics());
+        if (!audio_ok)
+        {
+            WG_HelpWrite(&stream, "  Audio initialization failed: ");
+            WG_HelpWrite(&stream, wolf3d_GetAudioError());
+            WG_HelpWrite(&stream, "\n");
+        }
     }
     WG_CloseHelpStream(&stream);
+    return audio_ok;
 }
 
 void WG_PrintLauncherError(const char *message)

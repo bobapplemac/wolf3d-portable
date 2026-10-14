@@ -70,7 +70,7 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WOLF3D-LIB.txt"
     "wolf3d-lib commit: ${W3P_WOLF3D_COMMIT}\n"
     "OPL drivers: nuked=${WG_ENABLE_OPL_NUKED}, dbopl=${WG_ENABLE_OPL_DBOPL}, silent=${WG_ENABLE_OPL_SILENT}\n"
     "default OPL driver: ${WG_DEFAULT_OPL_DRIVER}\n"
-    "preferred sample rate: ${WG_DEFAULT_SAMPLE_RATE} Hz\n")
+    "sample rate: runtime auto\n")
 if(TARGET nuked-opl3)
     set(W3P_OPL_FILE_LINE
         "  Nuked-OPL3.dll          Replaceable LGPL-2.1-or-later OPL emulator")

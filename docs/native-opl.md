@@ -1,8 +1,8 @@
 # Native OPL on Windows 2000 and XP
 
 This experimental x86 GDI option uses the real ISA OPL chip at ports
-388h-38Bh through InpOut32. DBOPL remains the default; ordinary launches,
-help and diagnostics do not load the access DLL unless native AdLib is selected.
+388h-38Bh through InpOut32. Auto is the default; ordinary launches,
+help does not load the access DLL; diagnostics probes the selected policy.
 Digital effects still use Windows waveOut. This is not WSS or SB DMA support.
 
 ## Build
@@ -20,7 +20,7 @@ make windows-xp WINXP_OPL_DRIVERS=nuked,dbopl,silent,adlib
 For an x86 Windows GDI CMake build, set `W3P_ENABLE_INPOUT32=ON`.
 This enables the library's `WG_ENABLE_OPL_ADLIB` adapter. The win2k and winxp
 Docker profiles enable it by default, compiling DBOPL, silent and AdLib with
-DBOPL selected at runtime. Generic CMake builds keep this option off by default.
+auto selected at runtime. Generic CMake builds keep this option off by default.
 Other cross profiles reject AdLib selection for now. The guided Linux build
 lets DOS, Win9x, win2k and winxp users add Nuked and select their runtime default.
 
@@ -31,7 +31,7 @@ Highrez `inpout32.dll` beside `wolf3d.exe`. Keep it there. The DLL embeds its
 kernel drivers and can install/start the appropriate driver when loaded;
 initial installation requires Administrator privileges on the destination
 machine. No separate `InstallDriver.exe` or `.sys` download is required.
-DBOPL, help and ordinary diagnostics do not load it.
+Explicit DBOPL and help do not load it. Auto diagnostics may probe it.
 
 Other profiles do not bundle this DLL. For a custom supported x86 GDI build,
 obtain the Win32 DLL from the official

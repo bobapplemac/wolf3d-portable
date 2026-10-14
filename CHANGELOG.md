@@ -1,9 +1,19 @@
 # Changelog
 
-## Unreleased
+## 1.4.87 - 2026-10-14 - Legacy audio policy integration
+
+- Integrate the completed engine audio policy across legacy compiler targets.
+
+## 1.4.86 - 2026-10-14 - Automatic audio policy
+
+- Add quiet hardware/emulator/silent fallback for auto; explicit selections fail strictly.
+- Always include silent, resolve sample rates at runtime, and remove build-time rate choices.
+- Record candidate failures and negotiated rates in diagnostics; suppress optional DLL loader dialogs.
+
+
 
 - Default win2k/winxp Docker builds to DBOPL, silent and native AdLib (DBOPL
-  runtime default); offer optional Nuked and audio choices in guided legacy builds.
+  available for explicit selection); offer optional Nuked and audio choices in guided legacy builds.
 
 - Bundle verified Highrez InpOut32 for win2k/winxp x86 GDI native-AdLib packages,
   with SHA-256 enforcement, verbatim MIT license, notices and build provenance.
@@ -41,21 +51,21 @@
 - Add explicit native diagnostics, mocked transport/timing regression coverage,
   and driver setup documentation. Physical NT hardware testing is pending.
 
-## Unreleased - 2026-10-14 - Private-console exit pause
+ - 2026-10-14 - Private-console exit pause
 
 - Preserve Win9x/win2k exit cards and CLI output in newly created interactive
   consoles with a fresh-keypress prompt; add CLI/INI `--no-pause` opt-out.
 - Skip pauses for redirected streams and ordinary command-prompt launches;
   document the legacy console-detection heuristic and discard stale input.
 
-## Unreleased - 2026-10-14 - Win2k console inheritance
+ - 2026-10-14 - Win2k console inheritance
 
 - Use a Unicode console entry point for win2k so CMD.EXE waits for the game and
   help, diagnostics and B800 exit/error screens use the inherited console.
 - Retain graphical gameplay and the GUI subsystem on newer Windows targets.
 - Confirm physical win2k window scaling, display switching and desktop restoration.
 
-## Unreleased - 2026-10-14 - GDI display sizing
+ - 2026-10-14 - GDI display sizing
 
 - Add `--window-scale` for aspect-corrected 320x240 multiples (1-8, default 3).
 - Add opt-in `--fullscreen-resolution` primary-display mode switching with
@@ -94,12 +104,12 @@
   AdLib and DBOPL playback are also confirmed on that machine.
 - Update the recorded engine dependency to 1.4.80; no public API change.
 
-## Unreleased - 2026-10-11 - Microsoft toolset version vocabulary
+ - 2026-10-11 - Microsoft toolset version vocabulary
 
 - Correct legacy toolset labels in the support matrices while retaining compiler versions.
 - Explain IDE, toolset, compiler macro and runtime numbering in the shared naming guide.
 
-## Unreleased - 2026-10-09 - Generated and mirrored asset checks
+ - 2026-10-09 - Generated and mirrored asset checks
 
 - Inventory mirrored helpers and manual/dynamic support assets; add read-only
   reference, ownership and mirror checks with explicit peer selection.
@@ -108,7 +118,7 @@
   auditor with the shared implementation.
 - Document generator ownership, external regeneration inputs and retained manual tests.
 
-## Unreleased - 2026-10-09 - Repository documentation review
+ - 2026-10-09 - Repository documentation review
 
 - Condense the root README into a quick start and link to indexed topic guides.
 - Document every source-directory responsibility and separate source layout
@@ -117,7 +127,7 @@
 - Add a maintainer audit for local documentation links, anchors, tables and
   documentation-index coverage.
 
-## Unreleased - 2026-10-09 - Consistent distribution documentation
+ - 2026-10-09 - Consistent distribution documentation
 
 - Standardize distributed executables as wolf3d / wolf3d.exe, with WOLF3D.EXE
   for DOS and Win9x; backend identity stays in the distribution folder name.
@@ -128,7 +138,7 @@
 - Apply the layout to CMake, legacy Visual Studio and Open Watcom packages,
   retain functional relinking materials, and add documentation regression tests.
 
-## Unreleased - 2026-10-09 - Relocatable musl KMS/fbdev distribution
+ - 2026-10-09 - Relocatable musl KMS/fbdev distribution
 
 - Add `make musl-console`, `musl-console-audit`, and `musl-all`, with guided
   Linux build choices and x64 musl KMS/fbdev packaging.
@@ -706,7 +716,7 @@
   exclusively in this repository.
 - Added explicit line-ending policy for Linux build and audit scripts.
 
-## Unreleased - Repository split
+ - Repository split
 
 - Created `wolf3d-portable` from a path-filtered copy of the original
   `wolf3dgeneric` history so host work retains authorship and context.

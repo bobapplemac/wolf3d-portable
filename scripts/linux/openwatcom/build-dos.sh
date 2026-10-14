@@ -7,8 +7,8 @@ build_dir=${W3P_OPENWATCOM_BUILD_DIR:-$root/build/openwatcom-dos32}
 . "$root/scripts/dist-openwatcom.sh"
 dist_dir=${W3P_OPENWATCOM_DIST_DIR:-$root/dist/wolf3d-portable_${version}_dos32_x86_vga_${toolchain}}
 drivers=${W3P_OPENWATCOM_OPL_DRIVERS:-dbopl,silent,adlib}
-default_driver=${W3P_OPENWATCOM_DEFAULT_OPL:-adlib}
-sample_rate=${W3P_OPENWATCOM_SAMPLE_RATE:-22050}
+case ",$drivers," in *,silent,*) ;; *) drivers="$drivers,silent" ;; esac
+default_driver=${W3P_OPENWATCOM_DEFAULT_OPL:-auto}
 library_build="$build_dir/wolf3d-lib"
 library_dist="$build_dir/wolf3d-lib-dist"
 
@@ -19,7 +19,6 @@ WG_OPENWATCOM_BUILD_DIR="$library_build" \
 WG_OPENWATCOM_DIST_DIR="$library_dist" \
 WG_OPENWATCOM_OPL_DRIVERS="$drivers" \
 WG_OPENWATCOM_DEFAULT_OPL="$default_driver" \
-WG_OPENWATCOM_SAMPLE_RATE="$sample_rate" \
 sh "$root/lib/wolf3d/scripts/linux/openwatcom/build-library.sh"
 
 echo "Open Watcom C: platforms/WG_HELP.c"

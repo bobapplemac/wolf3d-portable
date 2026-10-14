@@ -82,7 +82,7 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WOLF3D-LIB.txt"
     "wolf3d-lib commit: ${W3P_WOLF3D_COMMIT}\n"
     "OPL drivers: nuked=${WG_ENABLE_OPL_NUKED}, dbopl=${WG_ENABLE_OPL_DBOPL}, silent=${WG_ENABLE_OPL_SILENT}, adlib=${WG_ENABLE_OPL_ADLIB}\n"
     "default OPL driver: ${WG_DEFAULT_OPL_DRIVER}\n"
-    "preferred sample rate: ${WG_DEFAULT_SAMPLE_RATE} Hz\n")
+    "sample rate: runtime auto\n")
 
 if(TARGET nuked-opl3)
     set(W3P_OPL_FILE_LINE
@@ -98,7 +98,7 @@ endif()
 set(W3P_NATIVE_OPL_NOTE "")
 if(W3P_ENABLE_INPOUT32)
     set(W3P_NATIVE_OPL_NOTE
-        "Optional native AdLib: use --opl adlib. DBOPL remains the default.\nThe win2k/winxp x86 GDI native-AdLib distributions bundle inpout32.dll.\nFor other profiles, obtain the official Highrez 1.5.0.1 Win32 DLL and place\nit beside wolf3d.exe. First use may install/start its embedded kernel driver;\nrun as Administrator on the destination computer for initial installation.\nInstructions: https://vps.highrez.co.uk/downloads/InpOut32/default.htm\nFirst run: wolf3d.exe --no-config --diag --opl adlib\nClose other FM/MIDI playback applications. Digital effects use waveOut.\n")
+        "Optional native AdLib: use --opl adlib. Auto is the default.\nThe win2k/winxp x86 GDI native-AdLib distributions bundle inpout32.dll.\nFor other profiles, obtain the official Highrez 1.5.0.1 Win32 DLL and place\nit beside wolf3d.exe. First use may install/start its embedded kernel driver;\nrun as Administrator on the destination computer for initial installation.\nInstructions: https://vps.highrez.co.uk/downloads/InpOut32/default.htm\nFirst run: wolf3d.exe --no-config --diag --opl adlib\nClose other FM/MIDI playback applications. Digital effects use waveOut.\n")
 endif()
 configure_file(packaging/WIN32-README.txt.in
                ${CMAKE_CURRENT_BINARY_DIR}/WIN32-README.txt @ONLY)

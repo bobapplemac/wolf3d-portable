@@ -211,11 +211,12 @@ int main(int argc, char **argv)
         char report[1024];
 
         WG_LinuxConsoleDiagnosticReport(report, sizeof(report));
-        WG_PrintDiagnostics(argc, argv, launcher_arguments.config_path,
+        (void)WG_InstallPlatform();
+        result = WG_PrintDiagnostics(argc, argv, launcher_arguments.config_path,
                             report);
         free(game_argv);
         WG_FreeLauncherArguments(&launcher_arguments);
-        return 0;
+        return result ? 0 : 1;
     }
 
     if (success

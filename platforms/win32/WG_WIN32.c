@@ -148,7 +148,7 @@ static int WG_NTAdLibInit(void)
         WG_DOSAdLibShutdown();
         WG_InpOutError("cannot start native OPL playback worker");
     }
-    WG_PrintLauncherError(WG_InpOutStatus()); return 0;
+    wolf3d_SetOPLError(WG_InpOutStatus()); return 0;
 }
 static void WG_NTAdLibShutdown(void)
 {
@@ -1697,31 +1697,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
                           wg_display_mode.width, wg_display_mode.height);
             if (strlen(report) + strlen(options) < sizeof(report)) strcat(report, options);
         }
-#ifdef WG_INPOUT32
-        {
-            const char *selected = NULL;
-            for (index = 1; index + 1 < launcher_argc; ++index)
-                if (strcmp(launcher_argv[index], "--opl") == 0)
-                    selected = launcher_argv[++index];
-            if (selected && strcmp(selected, "adlib") == 0)
-            {
-                if (WG_DOSAdLibInit())
-                {
-                    WG_InpOutError("OPL detected at 0x388; timestamped playback, waits (4/24 us)");
-                    WG_DOSAdLibShutdown();
-                }
-            }
-            if (strlen(report) + strlen(WG_InpOutStatus()) + 20 < sizeof(report))
-            {
-                strcat(report, "  Native OPL: ");
-                strcat(report, WG_InpOutStatus());
-                strcat(report, "\n");
-            }
-        }
-#endif
-        WG_PrintDiagnostics(launcher_argc, launcher_argv,
-                            launcher_arguments.config_path, report);
-        result = WOLF3D_RESULT_QUIT;
+
+        result = WG_PrintDiagnostics(launcher_argc, launcher_argv,
+                            launcher_arguments.config_path, report)
+            ? WOLF3D_RESULT_QUIT : WOLF3D_RESULT_PLATFORM_ERROR;
     }
     else
     {

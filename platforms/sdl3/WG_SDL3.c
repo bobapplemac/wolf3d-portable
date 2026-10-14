@@ -849,10 +849,12 @@ int main(int argc, char **argv)
         char report[1024];
 
         WG_SDLDiagnosticReport(report, sizeof(report));
-        WG_PrintDiagnostics(argc, argv, launcher_arguments.config_path,
+        (void)SDL_InitSubSystem(SDL_INIT_AUDIO);
+        (void)WG_InstallPlatform();
+        result = WG_PrintDiagnostics(argc, argv, launcher_arguments.config_path,
                             report);
         WG_FreeLauncherArguments(&launcher_arguments);
-        return 0;
+        return result ? 0 : 1;
     }
     if (!WG_InstallPlatform())
     {

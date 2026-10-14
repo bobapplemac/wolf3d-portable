@@ -5,11 +5,11 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
 profile=${W3P_WINDOWS_CROSS_PROFILE:?set W3P_WINDOWS_CROSS_PROFILE}
 jobs=${W3P_WINDOWS_CROSS_JOBS:-}
 drivers=${W3P_WINDOWS_CROSS_OPL_DRIVERS:-nuked,dbopl,silent}
-default_driver=${W3P_WINDOWS_CROSS_DEFAULT_OPL:-nuked}
-sample_rate=${W3P_WINDOWS_CROSS_SAMPLE_RATE:-48000}
+case ",$drivers," in *,silent,*) ;; *) drivers="$drivers,silent" ;; esac
+default_driver=${W3P_WINDOWS_CROSS_DEFAULT_OPL:-auto}
 if [ "$profile" = mingw-win2k-x86 ] || [ "$profile" = mingw-xp-x86 ]; then
     drivers=${W3P_WINDOWS_CROSS_OPL_DRIVERS:-dbopl,silent,adlib}
-    default_driver=${W3P_WINDOWS_CROSS_DEFAULT_OPL:-dbopl}
+    default_driver=${W3P_WINDOWS_CROSS_DEFAULT_OPL:-auto}
 fi
 version=$(sed -n '1p' "$root/lib/wolf3d/VERSION")
 
@@ -112,8 +112,7 @@ cmake -S "$root" -B "$build_dir" -G Ninja \
     -DWG_ENABLE_OPL_NUKED=$(case ",$drivers," in *,nuked,*) echo ON;; *) echo OFF;; esac) \
     -DWG_ENABLE_OPL_DBOPL=$(case ",$drivers," in *,dbopl,*) echo ON;; *) echo OFF;; esac) \
     -DWG_ENABLE_OPL_SILENT=$(case ",$drivers," in *,silent,*) echo ON;; *) echo OFF;; esac) \
-    -DWG_DEFAULT_OPL_DRIVER="$default_driver" \
-    -DWG_DEFAULT_SAMPLE_RATE="$sample_rate"
+    -DWG_DEFAULT_OPL_DRIVER="$default_driver"
 
 for target in $release_targets; do
     if [ -n "$jobs" ]; then

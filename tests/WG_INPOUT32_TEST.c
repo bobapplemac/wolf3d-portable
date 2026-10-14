@@ -8,6 +8,10 @@ static unsigned address[2], regs[512], timer;
 static LONGLONG clock_ticks, last_write;
 static unsigned last_port;
 static DWORD coarse;
+static UINT error_mode = SEM_NOGPFAULTERRORBOX;
+static UINT WINAPI test_error_mode(UINT value) { UINT old = error_mode; error_mode = value; return old; }
+static DWORD WINAPI test_error(void) { return mode == 10 ? ERROR_BAD_EXE_FORMAT : ERROR_MOD_NOT_FOUND; }
+static DWORD WINAPI test_attributes(LPCSTR path) { (void)path; return mode == 1 ? INVALID_FILE_ATTRIBUTES : FILE_ATTRIBUTE_NORMAL; }
 static short __stdcall mock_in(short port)
 {
     assert(port == 0x388); ++reads;
@@ -34,7 +38,10 @@ static DWORD WINAPI test_path(HMODULE module, LPSTR path, DWORD length)
 static HMODULE WINAPI test_load(LPCSTR path)
 {
     assert(!strcmp(path, "C:\\Games\\inpout32.dll"));
-    return mode == 1 ? NULL : (HMODULE)1;
+    assert((error_mode & (SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX)) ==
+           (SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX));
+    assert(error_mode & SEM_NOGPFAULTERRORBOX);
+    return mode == 1 || mode == 10 || mode == 11 ? NULL : (HMODULE)1;
 }
 static BOOL WINAPI test_free(HMODULE module) { assert(module); ++closes; return TRUE; }
 static FARPROC WINAPI test_proc(HMODULE module, LPCSTR name)
@@ -58,6 +65,9 @@ static void WINAPI test_sleep(DWORD ms) { coarse += ms; ++sleeps; }
 #define GetVersion test_version
 #define GetModuleFileNameA test_path
 #define LoadLibraryA test_load
+#define SetErrorMode test_error_mode
+#define GetLastError test_error
+#define GetFileAttributesA test_attributes
 #define FreeLibrary test_free
 #define GetProcAddress test_proc
 #define QueryPerformanceFrequency test_frequency
@@ -83,6 +93,10 @@ int main(void)
         if (i != 4) assert(!writes && !reads);
         if (i == 4) assert(strstr(WG_InpOutStatus(), "chip did not respond"));
     }
+    assert(error_mode == SEM_NOGPFAULTERRORBOX);
+    reset(10); assert(!WG_DOSAdLibInit()); assert(strstr(WG_InpOutStatus(), "incompatible"));
+    reset(11); assert(!WG_DOSAdLibInit()); assert(strstr(WG_InpOutStatus(), "dependency"));
+    assert(error_mode == SEM_NOGPFAULTERRORBOX);
     reset(0); assert(WG_DOSAdLibInit());
     assert(reads == 2); /* All recovery delays use elapsed time, not port reads. */
     assert(regs[0x105] == 0 && regs[0x104] == 0 && regs[1] == 0x20);

@@ -7,8 +7,8 @@ build_dir=${W3P_OPENWATCOM_WINDOWS_BUILD_DIR:-$root/build/openwatcom-win9x-x86}
 . "$root/scripts/dist-openwatcom.sh"
 dist_dir=${W3P_OPENWATCOM_WINDOWS_DIST_DIR:-$root/dist/wolf3d-portable_${version}_win9x_x86_gdi_${toolchain}}
 drivers=${W3P_OPENWATCOM_WINDOWS_OPL_DRIVERS:-dbopl,silent,adlib}
-default_driver=${W3P_OPENWATCOM_WINDOWS_DEFAULT_OPL:-adlib}
-sample_rate=${W3P_OPENWATCOM_WINDOWS_SAMPLE_RATE:-22050}
+case ",$drivers," in *,silent,*) ;; *) drivers="$drivers,silent" ;; esac
+default_driver=${W3P_OPENWATCOM_WINDOWS_DEFAULT_OPL:-auto}
 library_build="$build_dir/wolf3d-lib"
 library_dist="$build_dir/wolf3d-lib-dist"
 
@@ -19,7 +19,6 @@ WG_OPENWATCOM_WINDOWS_BUILD_DIR="$library_build" \
 WG_OPENWATCOM_WINDOWS_DIST_DIR="$library_dist" \
 WG_OPENWATCOM_WINDOWS_OPL_DRIVERS="$drivers" \
 WG_OPENWATCOM_WINDOWS_DEFAULT_OPL="$default_driver" \
-WG_OPENWATCOM_WINDOWS_SAMPLE_RATE="$sample_rate" \
 sh "$root/lib/wolf3d/scripts/linux/openwatcom/build-windows-library.sh"
 
 for source in WG_HELP WG_TEXT_OUTPUT dos/WG_DOS_ADLIB; do

@@ -15,15 +15,14 @@ CMAKE_ARGS ?=
 JOBS ?=
 USE_SYSTEM_SDL3 ?= OFF
 OPL_DRIVERS ?= nuked,dbopl,silent
-OPL_DEFAULT ?= nuked
+OPL_DEFAULT ?= auto
 WIN2K_OPL_DRIVERS ?= dbopl,silent,adlib
-WIN2K_OPL_DEFAULT ?= dbopl
-SAMPLE_RATE ?= 48000
+WIN2K_OPL_DEFAULT ?= auto
 
 comma := ,
 # XP follows legacy NT defaults; preserve explicit generic OPL overrides.
 WINXP_OPL_DRIVERS ?= $(if $(filter file default undefined,$(origin OPL_DRIVERS)),dbopl$(comma)silent$(comma)adlib,$(OPL_DRIVERS))
-WINXP_OPL_DEFAULT ?= $(if $(filter file default undefined,$(origin OPL_DEFAULT)),dbopl,$(OPL_DEFAULT))
+WINXP_OPL_DEFAULT ?= $(if $(filter file default undefined,$(origin OPL_DEFAULT)),auto,$(OPL_DEFAULT))
 CONSOLE_BUILD_DIR ?= build/linux-console-$(COMPILER_NAME)
 SDL3_BUILD_DIR ?= build/linux-sdl3-$(COMPILER_NAME)
 PORTABLE_CONSOLE_BUILD_DIR ?= build/linux-console-portable-debian10-gcc
@@ -46,8 +45,7 @@ DOS_BUILD_DIR ?= build/openwatcom-dos32
 DOS_DIST_DIR ?=
 DOS_BUILD_IMAGE ?= wolf3d-portable-build-openwatcom-20261001
 DOS_OPL_DRIVERS ?= dbopl,silent,adlib
-DOS_OPL_DEFAULT ?= adlib
-DOS_SAMPLE_RATE ?= 22050
+DOS_OPL_DEFAULT ?= auto
 WINDOWS_MINGW_BUILD_IMAGE ?= wolf3d-portable-build-windows-mingw-debian12
 WINDOWS_LLVM_MINGW_MSVC_IMAGE ?= wolf3d-portable-build-llvm-mingw-20260908-msvcrt
 WINDOWS_LLVM_MINGW_UCRT_IMAGE ?= wolf3d-portable-build-llvm-mingw-20260908-ucrt
@@ -56,8 +54,7 @@ WINDOWS_LLVM_MINGW_MSVC_SHA256 ?= 4d905bae713182f1a2b4d33875fe5aa544ce9fc04cc153
 WINDOWS_LLVM_MINGW_UCRT_SHA256 ?= 2258c745e3155870c80793f3e8c80b28fbde11b9ff73c4c78783635b3440b092
 # Win9x defaults follow DOS; explicit OPL_* overrides still apply.
 WIN9X_OPL_DRIVERS ?= $(if $(filter file default undefined,$(origin OPL_DRIVERS)),dbopl$(comma)silent$(comma)adlib,$(OPL_DRIVERS))
-WIN9X_OPL_DEFAULT ?= $(if $(filter file default undefined,$(origin OPL_DEFAULT)),adlib,$(OPL_DEFAULT))
-WIN9X_SAMPLE_RATE ?= $(if $(filter file default undefined,$(origin SAMPLE_RATE)),22050,$(SAMPLE_RATE))
+WIN9X_OPL_DEFAULT ?= $(if $(filter file default undefined,$(origin OPL_DEFAULT)),auto,$(OPL_DEFAULT))
 WINDOWS_OPENWATCOM_BUILD_DIR ?= build/openwatcom-win9x-x86
 WINDOWS_OPENWATCOM_DIST_DIR ?=
 MUSL_SDL3_CMAKE_ARGS ?= -DW3P_DIST_ROOT=/src/$(MUSL_STAGE_ROOT) \
@@ -69,9 +66,9 @@ CMAKE_COMPILER_ARG := -DCMAKE_C_COMPILER="$(CC)"
 CMAKE_AUDIO_ARGS := \
 	-DWG_ENABLE_OPL_NUKED=$(if $(findstring nuked,$(OPL_DRIVERS)),ON,OFF) \
 	-DWG_ENABLE_OPL_DBOPL=$(if $(findstring dbopl,$(OPL_DRIVERS)),ON,OFF) \
-	-DWG_ENABLE_OPL_SILENT=$(if $(findstring silent,$(OPL_DRIVERS)),ON,OFF) \
-	-DWG_DEFAULT_OPL_DRIVER="$(OPL_DEFAULT)" \
-	-DWG_DEFAULT_SAMPLE_RATE="$(SAMPLE_RATE)"
+	-DWG_ENABLE_OPL_SILENT=ON \
+	-DWG_DEFAULT_OPL_DRIVER="$(OPL_DEFAULT)"
+
 PARALLEL_ARG := --parallel $(JOBS)
 
 .DEFAULT_GOAL := all
@@ -133,18 +130,15 @@ help:
 		'  BUILD_TYPE=Release|Debug     Build type (default: Release).' \
 		'  USE_SYSTEM_SDL3=ON|OFF       Installed SDL >= 3.2 or pinned SDL (default).' \
 		'  OPL_DRIVERS=nuked,dbopl,silent Drivers compiled into wolf3d (default: all).' \
-		'  OPL_DEFAULT=nuked|dbopl|silent Runtime default (default: nuked).' \
-		'  SAMPLE_RATE=Hz               Preferred PCM rate (default: 48000).' \
+		'  OPL_DEFAULT=auto|nuked|dbopl|silent Runtime default (default: auto).' \
 		'  WIN2K_OPL_DRIVERS=...       Windows 2000 drivers (default: dbopl,silent,adlib).' \
 		'  WINXP_OPL_DRIVERS=...       Windows XP drivers (default: dbopl,silent,adlib).' \
 		'  WIN2K_OPL_DEFAULT=...      Windows 2000 runtime default (default: dbopl).' \
 		'  WINXP_OPL_DEFAULT=...      Windows XP runtime default (default: dbopl).' \
-		'  WIN9X_SAMPLE_RATE=Hz        Win9x preferred PCM rate (default: 22050).' \
 		'  CMAKE_ARGS="..."             Additional CMake definitions.' \
 		'  DOCKER_RUN_ARGS="..."        Additional Docker run arguments.' \
 		'  DOS_OPL_DRIVERS=...          DOS drivers (default: dbopl,silent,adlib).' \
 		'  DOS_OPL_DEFAULT=...          DOS runtime default (default: adlib).' \
-		'  DOS_SAMPLE_RATE=Hz           DOS preferred PCM rate (default: 22050).' \
 		'' \
 		'Cleanup:' \
 		'  make clean                   Remove build trees and project builder images.' \
@@ -162,7 +156,7 @@ print-config:
 		'MUSL_SDL3_BUILD_DIR=$(MUSL_SDL3_BUILD_DIR)' \
 		'DOS_BUILD_DIR=$(DOS_BUILD_DIR)' 'DOS_DIST_DIR=$(DOS_DIST_DIR)' \
 		'USE_SYSTEM_SDL3=$(USE_SYSTEM_SDL3)' 'OPL_DRIVERS=$(OPL_DRIVERS)' \
-		'OPL_DEFAULT=$(OPL_DEFAULT)' 'SAMPLE_RATE=$(SAMPLE_RATE)' \
+		'OPL_DEFAULT=$(OPL_DEFAULT)' \
 		'JOBS=$(JOBS)' 'CMAKE_ARGS=$(CMAKE_ARGS)'
 
 dependencies:
@@ -211,7 +205,7 @@ portable-sdl3-release: portable-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		"$(PORTABLE_BUILD_IMAGE)" make sdl3-release CC=gcc \
-		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" SAMPLE_RATE="$(SAMPLE_RATE)" \
+		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" \
 		SDL3_BUILD_DIR="$(PORTABLE_SDL3_BUILD_DIR)" JOBS="$(JOBS)" USE_SYSTEM_SDL3=OFF
 	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
 		$(DOCKER_RUN_ARGS) "$(PORTABLE_BUILD_IMAGE)" sh tools/WG_GLIBC_AUDIT.sh \
@@ -221,7 +215,7 @@ portable-console-release: portable-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		"$(PORTABLE_BUILD_IMAGE)" make console-release CC=gcc \
-		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" SAMPLE_RATE="$(SAMPLE_RATE)" \
+		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" \
 		CONSOLE_BUILD_DIR="$(PORTABLE_CONSOLE_BUILD_DIR)" JOBS="$(JOBS)"
 	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
 		$(DOCKER_RUN_ARGS) "$(PORTABLE_BUILD_IMAGE)" sh tools/WG_GLIBC_AUDIT.sh \
@@ -241,7 +235,7 @@ musl-sdl3-release: musl-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		"$(MUSL_BUILD_IMAGE)" make sdl3-release CC="$(CC)" \
-		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" SAMPLE_RATE="$(SAMPLE_RATE)" \
+		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" \
 		SDL3_BUILD_DIR="$(MUSL_SDL3_BUILD_DIR)" JOBS="$(JOBS)" \
 		USE_SYSTEM_SDL3=OFF CMAKE_ARGS="-DWG_LINUX_LIBC=musl $(MUSL_SDL3_CMAKE_ARGS)"
 	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
@@ -259,7 +253,7 @@ musl-console-release: musl-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		"$(MUSL_BUILD_IMAGE)" make console-release CC="$(CC)" \
-		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" SAMPLE_RATE="$(SAMPLE_RATE)" \
+		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" \
 		CONSOLE_BUILD_DIR="$(MUSL_CONSOLE_BUILD_DIR)" JOBS="$(JOBS)" \
 		CMAKE_ARGS="$(MUSL_CONSOLE_CMAKE_ARGS)"
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
@@ -294,7 +288,6 @@ dos-release: dos-image
 		--env W3P_OPENWATCOM_DIST_DIR="$(if $(DOS_DIST_DIR),/src/$(DOS_DIST_DIR))" \
 		--env W3P_OPENWATCOM_OPL_DRIVERS="$(DOS_OPL_DRIVERS)" \
 		--env W3P_OPENWATCOM_DEFAULT_OPL="$(DOS_OPL_DEFAULT)" \
-		--env W3P_OPENWATCOM_SAMPLE_RATE="$(DOS_SAMPLE_RATE)" \
 		"$(DOS_BUILD_IMAGE)" sh scripts/linux/openwatcom/build-dos.sh
 
 dos: dos-release
@@ -324,7 +317,6 @@ windows-win9x: dos-image
 		--env W3P_OPENWATCOM_WINDOWS_DIST_DIR="$(if $(WINDOWS_OPENWATCOM_DIST_DIR),/src/$(WINDOWS_OPENWATCOM_DIST_DIR))" \
 		--env W3P_OPENWATCOM_WINDOWS_OPL_DRIVERS="$(WIN9X_OPL_DRIVERS)" \
 		--env W3P_OPENWATCOM_WINDOWS_DEFAULT_OPL="$(WIN9X_OPL_DEFAULT)" \
-		--env W3P_OPENWATCOM_WINDOWS_SAMPLE_RATE="$(WIN9X_SAMPLE_RATE)" \
 		"$(DOS_BUILD_IMAGE)" sh scripts/linux/openwatcom/build-windows.sh
 
 windows-win2k: windows-mingw-image
@@ -334,7 +326,6 @@ windows-win2k: windows-mingw-image
 		--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
 		--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(WIN2K_OPL_DRIVERS)" \
 		--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(WIN2K_OPL_DEFAULT)" \
-		--env W3P_WINDOWS_CROSS_SAMPLE_RATE="$(SAMPLE_RATE)" \
 		"$(WINDOWS_MINGW_BUILD_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh
 
 windows-xp: windows-mingw-image
@@ -344,7 +335,6 @@ windows-xp: windows-mingw-image
 		--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
 		--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(WINXP_OPL_DRIVERS)" \
 		--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(WINXP_OPL_DEFAULT)" \
-		--env W3P_WINDOWS_CROSS_SAMPLE_RATE="$(SAMPLE_RATE)" \
 		"$(WINDOWS_MINGW_BUILD_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh
 
 windows-win7: windows-mingw-image
@@ -355,7 +345,6 @@ windows-win7: windows-mingw-image
 			--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
 			--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(OPL_DRIVERS)" \
 			--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(OPL_DEFAULT)" \
-			--env W3P_WINDOWS_CROSS_SAMPLE_RATE="$(SAMPLE_RATE)" \
 			"$(WINDOWS_MINGW_BUILD_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh || exit $$?; \
 	done
 
@@ -367,7 +356,6 @@ windows-llvm-win7: windows-llvm-msvcrt-image
 			--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
 			--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(OPL_DRIVERS)" \
 			--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(OPL_DEFAULT)" \
-			--env W3P_WINDOWS_CROSS_SAMPLE_RATE="$(SAMPLE_RATE)" \
 			"$(WINDOWS_LLVM_MINGW_MSVC_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh || exit $$?; \
 	done
 
@@ -378,7 +366,6 @@ windows-win10: windows-llvm-ucrt-image
 		--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
 		--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(OPL_DRIVERS)" \
 		--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(OPL_DEFAULT)" \
-		--env W3P_WINDOWS_CROSS_SAMPLE_RATE="$(SAMPLE_RATE)" \
 		"$(WINDOWS_LLVM_MINGW_UCRT_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh
 
 windows-cross: windows-win9x windows-win2k windows-xp windows-win7 windows-llvm-win7 windows-win10

@@ -23,4 +23,4 @@ file(APPEND "${DIST}/DOCS/NOTICES.TXT" "${notice}")
 file(APPEND "${DIST}/DOCS/BUILD.TXT"
     "\nInpOut32 release: 1.5.0.1\nInpOut32 DLL file version: 1.5.0.0\nInpOut32 SHA-256: ${actual}\nInpOut32 origin: official Highrez Win32 binary, unmodified\n")
 file(APPEND "${DIST}/README.TXT"
-    "\nNative AdLib runtime\n--------------------\nThis package includes inpout32.dll. Keep it beside wolf3d.exe.\nUse --opl adlib to select native FM; DBOPL remains the default.\nInitial use can install/start its embedded kernel driver and requires\nAdministrator privileges on the destination machine. No separate installer\nor SYS file is needed. See DOCS/NOTICES.TXT and DOCS/LICENSES/INPOUT32.TXT.\n")
+    "\nNative AdLib runtime\n--------------------\nThis package includes inpout32.dll. Keep it beside wolf3d.exe.\nUse --opl adlib to select native FM; Auto is the default.\nInitial use can install/start its embedded kernel driver and requires\nAdministrator privileges on the destination machine. No separate installer\nor SYS file is needed. See DOCS/NOTICES.TXT and DOCS/LICENSES/INPOUT32.TXT.\n")

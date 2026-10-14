@@ -101,17 +101,12 @@ if [[ $target == sdl3-release || $target == releases ]]; then
     [ "$source" = 'system SDL3 >= 3.2' ] && system_sdl=ON
 fi
 drivers=all
-default_opl=nuked
-sample_rate=48000
+default_opl=auto
 if [[ $target == dos-* || $target == windows-win9x || $target == windows-win2k || $target == windows-xp ]]; then
-    default_opl=dbopl
-    if [[ $target == dos-* || $target == windows-win9x ]]; then
-        default_opl=adlib
-        sample_rate=22050
-    fi
-    drivers=$(choose 'Compiled OPL drivers' dbopl-silent-adlib nuked-dbopl-silent-adlib dbopl-silent adlib silent)
+    default_opl=auto
+    drivers=$(choose 'Compiled OPL drivers' dbopl-silent-adlib nuked-dbopl-silent-adlib dbopl-silent adlib-silent silent)
     IFS=- read -r -a compiled <<< "$drivers"
-    defaults=()
+    defaults=(auto)
     for driver in "${compiled[@]}"; do
         [ "$driver" = "$default_opl" ] && defaults+=("$driver")
     done
@@ -119,20 +114,15 @@ if [[ $target == dos-* || $target == windows-win9x || $target == windows-win2k |
         [ "$driver" != "$default_opl" ] && defaults+=("$driver")
     done
     default_opl=$(choose 'Default OPL driver' "${defaults[@]}")
-    if [ "$sample_rate" = 22050 ]; then
-        sample_rate=$(choose 'Preferred PCM sample rate' 22050 44100 48000 11025)
-    else
-        sample_rate=$(choose 'Preferred PCM sample rate' 48000 44100 22050 11025)
-    fi
 elif [[ $target != clean ]]; then
-    drivers=$(choose 'Compiled OPL drivers' all nuked-dbopl nuked-silent dbopl-silent nuked dbopl silent)
+    drivers=$(choose 'Compiled OPL drivers' all nuked-silent dbopl-silent silent)
     if [ "$drivers" = all ]; then
-        default_opl=$(choose 'Default OPL driver' nuked dbopl silent)
+        default_opl=$(choose 'Default OPL driver' auto nuked dbopl silent)
     else
         IFS=- read -r -a defaults <<< "$drivers"
+        defaults=(auto "${defaults[@]}")
         default_opl=$(choose 'Default OPL driver' "${defaults[@]}")
     fi
-    sample_rate=$(choose 'Preferred PCM sample rate' 48000 44100)
 fi
 opl_drivers=${drivers//-/,}
 [ "$drivers" = all ] && opl_drivers=nuked,dbopl,silent
@@ -143,20 +133,19 @@ fi
 if [[ $target == dos-* ]]; then
     compiler='Open Watcom 2 (2026-10-01)'
     args=("$target" "DOS_OPL_DRIVERS=$opl_drivers" \
-          "DOS_OPL_DEFAULT=$default_opl" "DOS_SAMPLE_RATE=$sample_rate")
+          "DOS_OPL_DEFAULT=$default_opl")
 elif [[ $target == windows-win9x ]]; then
     compiler='Open Watcom 2 (2026-10-01)'
     args=("$target" "OPL_DRIVERS=$opl_drivers" \
-          "OPL_DEFAULT=$default_opl" "SAMPLE_RATE=$sample_rate")
+          "OPL_DEFAULT=$default_opl")
 else
     args=("$target" "CC=$compiler" "USE_SYSTEM_SDL3=$system_sdl" \
-          "OPL_DRIVERS=$opl_drivers" "OPL_DEFAULT=$default_opl" \
-          "SAMPLE_RATE=$sample_rate")
+          "OPL_DRIVERS=$opl_drivers" "OPL_DEFAULT=$default_opl")
 fi
 if [[ $target == windows-cross ]]; then
-    args+=("WIN9X_OPL_DRIVERS=dbopl,silent,adlib" "WIN9X_OPL_DEFAULT=adlib" "WIN9X_SAMPLE_RATE=22050"
-           "WIN2K_OPL_DRIVERS=dbopl,silent,adlib" "WIN2K_OPL_DEFAULT=dbopl"
-           "WINXP_OPL_DRIVERS=dbopl,silent,adlib" "WINXP_OPL_DEFAULT=dbopl")
+    args+=("WIN9X_OPL_DRIVERS=dbopl,silent,adlib" "WIN9X_OPL_DEFAULT=auto"
+           "WIN2K_OPL_DRIVERS=dbopl,silent,adlib" "WIN2K_OPL_DEFAULT=auto"
+           "WINXP_OPL_DRIVERS=dbopl,silent,adlib" "WINXP_OPL_DEFAULT=auto")
 fi
 if [[ $target == windows-win2k ]]; then
     args+=("WIN2K_OPL_DRIVERS=$opl_drivers" "WIN2K_OPL_DEFAULT=$default_opl")
@@ -170,7 +159,7 @@ compiler_display=$compiler
 if [[ $target == windows-* && $target != windows-win9x ]]; then
     compiler_display='selected Docker profile (see package above)'
 fi
-printf '\nBuild plan:\n  Package:     %s\n  Compiler:    %s\n  SDL3:        %s\n  OPL drivers: %s (default: %s)\n  Sample rate: %s Hz\n' "$label" "$compiler_display" "$system_sdl" "$opl_drivers" "$default_opl" "$sample_rate"
+printf '\nBuild plan:\n  Package:     %s\n  Compiler:    %s\n  SDL3:        %s\n  OPL drivers: %s (default: %s)\n  Sample rate: runtime auto\n' "$label" "$compiler_display" "$system_sdl" "$opl_drivers" "$default_opl"
 printf '\nReproducible command:\n  ./scripts/linux/invoke-build.sh'
 printf ' %q' "${args[@]}"
 printf '\n\n'

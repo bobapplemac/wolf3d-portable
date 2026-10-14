@@ -140,7 +140,7 @@ dry-run mode:
 .\build.ps1 -Compiler mingw-ucrt64 -Wrapper all
 .\build.ps1 -Compiler mingw-ucrt64 -Wrapper all -Publish
 .\build.ps1 -Action build -Configuration Debug -Runtime dynamic -Wrapper all
-.\build.ps1 -Wrapper sdl3 -DefaultOpl dbopl -SampleRate 44100
+.\build.ps1 -Wrapper sdl3 -DefaultOpl dbopl
 .\build.ps1 -Wrapper win32 -Drivers silent -DefaultOpl silent
 .\build.ps1 -Compiler vs2022 -Wrapper win32 -DryRun
 ```
@@ -228,14 +228,13 @@ make clean
 GCC is the default. Select Clang with `CC=clang`. Set
 `USE_SYSTEM_SDL3=ON` to use the installed SDL package. `OPL_DRIVERS` is a
 comma-separated subset of `nuked,dbopl,silent`; `OPL_DEFAULT` chooses one
-included driver and `SAMPLE_RATE` sets the preferred application PCM rate.
+included driver or `auto`. Silent is always included. Sample rate is selected
+at runtime through `--sample-rate auto` or a numeric override.
 `CMAKE_ARGS` passes additional definitions through to configuration, and
 `JOBS=N` limits build parallelism.
 
-The canonical all-driver/Nuked/48 kHz configuration retains the short package
-name. Any reduced driver set, non-Nuked default, or non-48 kHz preferred rate
-is encoded as a deterministic directory suffix so multiple configurations can
-coexist under `dist/`.
+Distribution names follow BUILD-NAMING.md. Audio choices are recorded in
+DOCS/BUILD.TXT rather than added to the folder name.
 
 The console host requires libdrm and ALSA development packages. At runtime it
 prefers a connected DRM/KMS display and falls back to the kernel framebuffer
@@ -463,14 +462,10 @@ requires 32 successful DMA block submissions within ten seconds, and shuts
 playback down. A failure with no sound card is expected. SB Pro 2 and SB16
 DOSBox runs passed this test; this does not replace physical Yamaha testing.
 
-DOS and Open Watcom Win9x packages default to 22050 Hz PCM to reduce CPU cost
-on period hardware. `--sample-rate HZ` accepts integer requests from 8000 to
-192000; the host may negotiate a lower or rounded hardware rate. DOS build
-rates can be overridden with `DOS_SAMPLE_RATE`; use
-`WIN9X_SAMPLE_RATE` for Win9x only. Explicit `SAMPLE_RATE` also overrides the
-Win9x default for compatibility with existing build commands. Modern targets
-retain their 48000 Hz default. Native OPL pitch and tempo do not depend on the
-PCM rate when the audio clock is correctly paced.
+Sample rates are runtime-only: `--sample-rate auto` chooses 22050 Hz for native
+AdLib, 22050 Hz for legacy DBOPL/silent, 44100 Hz for legacy Nuked, and 48000 Hz
+for modern software drivers. Numeric 8000..192000 Hz overrides are supported;
+the device may negotiate a different rate. Native OPL pitch/tempo remain fixed.
 
 Run `python tests/WG_ADLIB_INIT_TEST.py --cc gcc` to verify native AdLib register
 initialization in DOS and Win9x builds. It simulates OPL3 hardware left in
@@ -495,7 +490,7 @@ no Windows development VM is required. The target is included in
 `make windows-cross`. The portable package uses GDI and legacy mouse input,
 without the XP-only Raw Input imports. SDL3 is not supported on this target.
 
-Defaults include DBOPL, silent and AdLib, with DBOPL selected. Nuked is opt-in. The target-specific
+Defaults include DBOPL, silent and AdLib, with auto selected. Nuked is opt-in. The target-specific
 `WIN2K_OPL_DRIVERS` and `WIN2K_OPL_DEFAULT` Make variables override these;
 general OPL settings for other targets do not change them. Windows XP uses the
 same defaults, overridden with `WINXP_OPL_DRIVERS` / `WINXP_OPL_DEFAULT`
@@ -504,9 +499,8 @@ The guided Linux menus offer Nuked for DOS, Win9x, win2k and winxp; runtime
 defaults remain AdLib for DOS/Win9x and DBOPL for win2k/winxp.
 Maintainers can run `python3 tests/WG_LEGACY_OPL_CHOICES_TEST.py` on Linux.
 [native AdLib access](native-opl.md) is available for x86 GDI
-through Highrez InpOut32 1.5.0.1. Physical access and correctly timed playback are confirmed on Windows 2000. The existing `SAMPLE_RATE` override is
-supported (default 48000 Hz); use the runtime `--sample-rate` option to compare
-rates on slower hardware. Other platform defaults are unchanged.
+through Highrez InpOut32 1.5.0.1. Physical access and correctly timed playback are confirmed on Windows 2000. Sample rates are runtime-only; use `--sample-rate auto` (default) or a numeric
+override to compare rates on slower hardware.
 
 The PE audit checks x86 architecture, runtime dependencies, known post-2000
 imports and the subsystem version of each staged EXE/DLL. This is not a full

@@ -8,6 +8,6 @@ Unmodified official prebuilt DLL, including its embedded kernel drivers.
 Upstream: https://vps.highrez.co.uk/downloads/InpOut32/default.htm
 DLL source: https://www.highrez.co.uk/scripts/download.asp?package=Inpout32_dll_source
 Driver source links are on the upstream page.
-Loaded only when native AdLib is explicitly selected. Loading may install/start
+Loaded when native AdLib is selected explicitly or attempted by auto. Loading may install/start
 its embedded driver; initial installation requires Administrator privileges on
 the destination computer. No separate InstallDriver.exe or SYS file is needed.

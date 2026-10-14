@@ -493,7 +493,7 @@ int main(int argc, char **argv)
     {
         WG_PrintCommandLineHelp(
             argc > 0 ? argv[0] : "WOLF3D.EXE", NULL,
-            "The DOS host defaults to native AdLib OPL and SB2/Pro or SB16 PCM output.\n");
+            "The DOS host automatically selects native AdLib or emulated OPL and SB2/Pro or SB16 PCM output.\n");
         WG_FreeLauncherArguments(&launcher_arguments);
         return 0;
     }
@@ -502,10 +502,11 @@ int main(int argc, char **argv)
         char report[1024];
 
         WG_DOSDiagnosticReport(report, sizeof(report));
-        WG_PrintDiagnostics(argc, argv, launcher_arguments.config_path,
+        (void)WG_DOSInstallPlatform();
+        result = WG_PrintDiagnostics(argc, argv, launcher_arguments.config_path,
                             report);
         WG_FreeLauncherArguments(&launcher_arguments);
-        return 0;
+        return result ? 0 : 1;
     }
     if (!WG_DOSInstallPlatform())
     {

@@ -27,7 +27,7 @@ int WG_LoadLauncherArguments(int argc, char **argv,
                              wg_launcher_arguments_t *prepared,
                              char *error, size_t error_size);
 void WG_FreeLauncherArguments(wg_launcher_arguments_t *prepared);
-void WG_PrintDiagnostics(int argc, char **argv,
+int WG_PrintDiagnostics(int argc, char **argv,
                          const char *config_path,
                          const char *host_report);
 int WG_PrepareGameArguments(int argc, char **argv,

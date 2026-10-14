@@ -479,3 +479,10 @@ The companion `tests/WG_ADLIB_INIT_TEST.c` checks that only detected OPL3
 hardware receives second-bank reset writes. Physical Win9x playback remains
 a separate test; a passing register test does not establish mixer routing or
 exclusive access against the Windows sound driver.
+
+Run `python tests/WG_DOS_VIDEO_TEST.py --cc gcc` for DOS exit cleanup regressions.
+The companion `tests/WG_DOS_VIDEO_TEST.c` checks real-mode INT 43h save/restore,
+DPMI failure handling, artwork preservation, prompt attributes, narrow screens
+and full-height cards. Confirm final DOS/32A shutdown and COMMAND.COM prompt
+colors on physical hardware as well.
+`tests/WG_DOS_VIDEO_SMOKE.c` also exercises the production helpers under DOS/32A: BIOS graphics/text mode switches, B800 text attributes, and exact real-mode vector restoration. Its result is written to `VIDEO.TXT`.

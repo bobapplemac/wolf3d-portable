@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased - 2026-10-14 - DOS exit video cleanup
+
+- Preserve and restore the real-mode INT 43h BIOS font pointer after the final
+  video mode change, addressing DOS/32A warning 9003.
+- Clear trailing exit-card cells to normal white-on-black spaces so DOS prompts
+  do not inherit colored attributes; reserve a prompt row for full-height cards.
+- Add mocked DPMI and text-framebuffer regression coverage.
+
 ## Unreleased - 2026-10-14 - Native OPL3 compatibility initialization
 
 - Switch detected OPL3 hardware to OPL2-compatible mode before playing original

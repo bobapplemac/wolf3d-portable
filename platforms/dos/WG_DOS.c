@@ -3,6 +3,7 @@
 #include "WG_DOS_ADLIB.h"
 #include "WG_DOS_SB16.h"
 #include "WG_DOS_AUDIO_CLOCK.h"
+#include "WG_DOS_VIDEO_STATE.h"
 
 #include <conio.h>
 #include <dos.h>
@@ -31,6 +32,7 @@ static volatile uint8_t wg_key_write;
 static uint8_t wg_keyboard_e0;
 static uint8_t wg_keyboard_pause_bytes;
 static uint8_t wg_old_video_mode = 3U;
+static wg_dos_font_vector_t wg_old_font_vector;
 static uint8_t wg_graphics_active;
 static uint8_t wg_text_presented;
 static uint8_t wg_palette_cache[WOLF3D_PALETTE_COLORS * 3U];
@@ -149,6 +151,11 @@ static void __interrupt __far WG_DOSKeyboardInterrupt(void)
 
 static int WG_DOSInit(void)
 {
+    if (!WG_DOSSaveFontVector(&wg_old_font_vector))
+    {
+        fprintf(stderr, "Unable to save the DOS video font pointer.\n");
+        return 0;
+    }
     wg_old_video_mode = WG_DOSGetVideoMode();
     wg_old_timer_interrupt = _dos_getvect(8);
     wg_old_keyboard_interrupt = _dos_getvect(9);
@@ -194,6 +201,12 @@ static void WG_DOSShutdown(void)
     if (!wg_text_presented)
     {
         WG_DOSSetVideoMode(wg_old_video_mode);
+    }
+    /* Mode switches (including the exit card) can replace INT 43h. Restore
+       only after the last BIOS video operation so DOS/32A sees the entry value. */
+    if (!WG_DOSRestoreFontVector(&wg_old_font_vector))
+    {
+        fprintf(stderr, "Unable to restore the DOS video font pointer.\n");
     }
     wg_graphics_active = 0U;
 }
@@ -308,48 +321,15 @@ static void WG_DOSReportError(const char *message)
 static void WG_DOSPresentText(const uint8_t *cells, uint16_t columns,
                               uint16_t rows)
 {
-    uint16_t content_rows = 0U;
     uint16_t row;
 
-    if (cells == NULL || columns > WOLF3D_TEXT_COLUMNS
-        || rows > WOLF3D_TEXT_ROWS)
+    if (cells == NULL || columns == 0U || rows == 0U
+        || columns > WOLF3D_TEXT_COLUMNS || rows > WOLF3D_TEXT_ROWS)
     {
         return;
     }
     WG_DOSSetVideoMode(3U);
-    memset(WG_DOS_TEXT_MEMORY, 0,
-           WOLF3D_TEXT_COLUMNS * WOLF3D_TEXT_ROWS
-           * WOLF3D_TEXT_CELL_BYTES);
-    for (row = 0U; row < rows; ++row)
-    {
-        uint16_t column;
-
-        memcpy(WG_DOS_TEXT_MEMORY
-                   + (size_t)row * WOLF3D_TEXT_COLUMNS
-                     * WOLF3D_TEXT_CELL_BYTES,
-               cells + (size_t)row * columns * WOLF3D_TEXT_CELL_BYTES,
-               (size_t)columns * WOLF3D_TEXT_CELL_BYTES);
-        for (column = 0U; column < columns; ++column)
-        {
-            uint8_t character =
-                cells[((size_t)row * columns + column)
-                      * WOLF3D_TEXT_CELL_BYTES];
-
-            if (character != 0U && character != ' ')
-            {
-                content_rows = (uint16_t)(row + 1U);
-                break;
-            }
-        }
-    }
-    /* COMMAND.COM advances once before printing its prompt. Start on the
-       final content row so the prompt follows screens of every height, while
-       reserving the last row to prevent a full-page scroll. */
-    row = content_rows != 0U ? (uint16_t)(content_rows - 1U) : 0U;
-    if (row >= WOLF3D_TEXT_ROWS - 1U)
-    {
-        row = WOLF3D_TEXT_ROWS - 2U;
-    }
+    row = WG_DOSComposeExitText(WG_DOS_TEXT_MEMORY, cells, columns, rows);
     WG_DOSSetCursor((uint8_t)row, 0U);
     wg_text_presented = 1U;
     wg_graphics_active = 0U;

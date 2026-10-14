@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4.84 - 2026-10-14 - Native OPL playback scheduling
+
+- Adapt all hosts to platform API v7; queue NT native writes by PCM frame and
+  dispatch them from a waveOut/QPC-paced worker, retaining DBOPL defaults.
+- Continue audio production during GDI move/resize and system-menu modal loops
+  on the engine thread. Keep native port delivery on the playback worker.
+- Cancel pending events before shutdown/reset; cover queue overflow, underruns,
+  clock correction, event order, worker restart and modal pumping with tests.
+- Record successful physical Highrez InpOut32 1.5.0.1 access on Windows 2000;
+  the corrected scheduling needs physical listening validation.
+
 ## 1.4.83 - 2026-10-14 - Optional native OPL on NT
 
 - Add opt-in x86 win2k/XP GDI AdLib access through an executable-local

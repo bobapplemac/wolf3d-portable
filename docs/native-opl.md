@@ -64,7 +64,10 @@ DOS/Win9x retain their tested direct-I/O delay loops pending separate review.
 
 `tests/WG_INPOUT32_TEST.c` uses mocked Windows loading, timing and port I/O;
 it never loads a real access driver. Compile it with MinGW GCC and run it
-on Windows. Hardware playback on win2k/XP remains pending physical testing.
+on Windows. Physical Windows 2000/Yamaha testing confirms access with Highrez
+1.5.0.1; the original Logix4U DLL lacks the required IsInpOutDriverOpen export.
+The first implementation played notes but exposed burst scheduling. The
+sample-positioned playback revision requires another physical listening test.
 
 For an integration check, cross-compile `tests/WG_INPOUT32_FAKE.c` with
 `i686-w64-mingw32-gcc -shared -Wl,--kill-at` and pass that fake DLL to
@@ -73,3 +76,38 @@ The fixture performs no port I/O and must never be distributed. This checks
 real DLL loading/calling conventions and verifies that help, ordinary
 diagnostics and DBOPL do not load the DLL. Never use the genuine driver DLL
 with this test.
+
+## Playback scheduling and window dragging
+
+Platform API v7 supplies a 64-bit PCM-frame timestamp for each native register
+write. The Windows host preserves event order in a bounded queue and dispatches
+it from a dedicated worker, separate from rendering. The worker follows waveOut's
+sample position, interpolated with QueryPerformanceCounter between device updates.
+If the device cannot report sample positions, the QPC timeline remains active.
+It never advances beyond accepted PCM; an underrun rebases the timeline when
+new samples arrive. Queue overflow or a failed clock stops audio with an error
+rather than silently discarding register writes. Shutdown joins the worker and
+cancels queued events before resetting the chip or closing waveOut.
+
+The worker requests 1-ms timer resolution and uses short waits (not continuous
+CPU spinning between notes). Windows is not a hard real-time operating system;
+driver latency and scheduling can still introduce jitter. The 4/24-us chip
+recovery waits remain separate from musical event timestamps.
+
+Dragging/resizing a GDI window or opening its system menu enters a Windows
+modal loop. A window timer continues producing audio on the engine thread in
+that loop; the worker continues delivering the queued native writes. This
+avoids racing the engine mixer against gameplay state on another thread.
+A blocked UI thread outside those modal loops can still exhaust the audio queue.
+
+Maintainer tests (MinGW GCC, no native port-access DLL):
+
+```text
+gcc -std=c99 -Wall -Wextra -Werror tests/WG_OPL_TIMELINE_TEST.c -o build/opl-timeline-test.exe
+gcc -std=c99 -Wall -Wextra -Werror tests/WG_OPL_PLAYBACK_TEST.c -lwinmm -o build/opl-playback-test.exe
+gcc -std=c99 -Wall -Wextra -Werror tests/WG_MODAL_AUDIO_TEST.c -o build/modal-audio-test.exe
+```
+
+Run the three executables on Windows. They cover event spacing/order, timestamp
+wrap and clock correction, underruns, queue limits, worker cancellation/restart,
+and nested modal loops. Keep DOS/Win9x timing changes as a separate follow-up.

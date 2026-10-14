@@ -430,6 +430,7 @@ static int WG_DOSInstallPlatform(void)
         WG_DOSAdLibShutdown,
         WG_DOSAdLibWrite,
         NULL,
+        NULL,
         NULL
     };
 

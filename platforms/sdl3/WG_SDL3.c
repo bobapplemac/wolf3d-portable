@@ -703,7 +703,8 @@ int WG_InstallPlatform(void)
         NULL,
         NULL,
         WG_SDLInputDevices,
-        WG_SDLRequestMouseCapture
+        WG_SDLRequestMouseCapture,
+        NULL
     };
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;
 }

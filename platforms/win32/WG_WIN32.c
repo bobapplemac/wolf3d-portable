@@ -19,18 +19,16 @@
 
 #ifdef WG_INPOUT32
 #include "WG_INPOUT32.h"
-static int WG_NTAdLibInit(void)
-{
-    if (WG_DOSAdLibInit()) return 1;
-    WG_PrintLauncherError(WG_InpOutStatus());
-    return 0;
-}
+#include "WG_OPL_PLAYBACK.h"
+static int WG_NTAdLibInit(void);
+static void WG_NTAdLibShutdown(void);
 #endif
 
 #include <windows.h>
 #include <mmsystem.h>
 #include <shellapi.h>
 #include "WG_WIN32_DISPLAY.h"
+#include "WG_MODAL_AUDIO.h"
 
 /* Older Platform SDK headers omit this GetSystemMetrics index. */
 #ifndef SM_CMONITORS
@@ -136,6 +134,29 @@ static int16_t wg_wave_samples[WG_PCM_BUFFER_COUNT]
 static uint8_t wg_wave_used[WG_PCM_BUFFER_COUNT];
 
 static void WG_Win32PCMShutdown(void);
+#ifdef WG_INPOUT32
+static uint32_t wg_wave_rate;
+static int wg_native_playback;
+static int WG_NTAdLibInit(void)
+{
+    if (WG_DOSAdLibInit())
+    {
+        if (WG_OPLPlaybackStart(wg_wave_out, wg_wave_rate))
+        {
+            wg_native_playback = 1; return 1;
+        }
+        WG_DOSAdLibShutdown();
+        WG_InpOutError("cannot start native OPL playback worker");
+    }
+    WG_PrintLauncherError(WG_InpOutStatus()); return 0;
+}
+static void WG_NTAdLibShutdown(void)
+{
+    WG_OPLPlaybackStop(); wg_native_playback = 0;
+    WG_DOSAdLibShutdown();
+}
+#endif
+
 
 static int wg_attach_parent_console(void)
 {
@@ -548,6 +569,22 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
 {
     switch (message)
     {
+        case WM_ENTERSIZEMOVE:
+        case WM_ENTERMENULOOP:
+            WG_ModalAudioEnter(window);
+            return 0;
+        case WM_EXITSIZEMOVE:
+        case WM_EXITMENULOOP:
+            WG_ModalAudioLeave(window);
+            return 0;
+        case WM_TIMER:
+            if (!WG_ModalAudioTick(wparam))
+            {
+                WG_PrintLauncherError("Audio failed during window move/resize.");
+                wg_quit_pending = 1;
+                KillTimer(window, WG_MODAL_AUDIO_TIMER);
+            }
+            return 0;
         case WM_SETCURSOR:
             if ((wg_fullscreen || wg_mouse_captured)
                 && LOWORD(lparam) == HTCLIENT)
@@ -1264,6 +1301,9 @@ static int WG_Win32PCMInit(uint32_t sample_rate, uint16_t channels)
             return 0;
         }
     }
+#ifdef WG_INPOUT32
+    wg_wave_rate = sample_rate;
+#endif
     return 1;
 }
 
@@ -1284,6 +1324,9 @@ static void WG_Win32PCMShutdown(void)
 {
     size_t index;
 
+#ifdef WG_INPOUT32
+    WG_OPLPlaybackStop(); wg_native_playback = 0; wg_wave_rate = 0;
+#endif
     if (wg_wave_out == NULL)
     {
         return;
@@ -1344,6 +1387,16 @@ static int WG_Win32PCMSubmit(const int16_t *samples, size_t frame_count)
             memcpy(wg_wave_samples[index], samples, byte_count);
             wg_wave_headers[index].dwBufferLength = (DWORD)byte_count;
             wg_wave_headers[index].dwFlags &= ~WHDR_DONE;
+#ifdef WG_INPOUT32
+            if (wg_native_playback)
+            {
+                if (!WG_OPLPlaybackSubmit(samples, frame_count, &wg_wave_headers[index]))
+                {
+                    WG_PrintLauncherError(WG_InpOutStatus()); return 0;
+                }
+            }
+            else
+#endif
             if (waveOutWrite(wg_wave_out, &wg_wave_headers[index],
                              sizeof(wg_wave_headers[index]))
                 != MMSYSERR_NOERROR)
@@ -1385,7 +1438,11 @@ int WG_InstallPlatform(void)
 #else
         WG_DOSAdLibInit,
 #endif
+#ifdef WG_INPOUT32
+        WG_NTAdLibShutdown,
+#else
         WG_DOSAdLibShutdown,
+#endif
         WG_DOSAdLibWrite,
 #else
         NULL,
@@ -1393,7 +1450,12 @@ int WG_InstallPlatform(void)
         NULL,
 #endif
         WG_Win32InputDevices,
-        WG_Win32RequestMouseCapture
+        WG_Win32RequestMouseCapture,
+#ifdef WG_INPOUT32
+        WG_OPLPlaybackWrite
+#else
+        NULL
+#endif
     };
 
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;
@@ -1645,7 +1707,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
             {
                 if (WG_DOSAdLibInit())
                 {
-                    WG_InpOutError("OPL detected at 0x388; elapsed-time waits (4/24 us)");
+                    WG_InpOutError("OPL detected at 0x388; timestamped playback, waits (4/24 us)");
                     WG_DOSAdLibShutdown();
                 }
             }

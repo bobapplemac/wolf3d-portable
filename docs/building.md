@@ -498,7 +498,8 @@ without the XP-only Raw Input imports. SDL3 is not supported on this target.
 Defaults include only DBOPL and silent, with DBOPL selected. The target-specific
 `WIN2K_OPL_DRIVERS` and `WIN2K_OPL_DEFAULT` Make variables override these;
 general OPL settings for other targets do not change them. Optional [native AdLib access](native-opl.md) is available for x86 GDI
-through InpOut32, with physical testing pending. The existing `SAMPLE_RATE` override is
+through Highrez InpOut32 1.5.0.1. Physical access is confirmed; the new
+playback scheduler is awaiting listening validation. The existing `SAMPLE_RATE` override is
 supported (default 48000 Hz); use the runtime `--sample-rate` option to compare
 rates on slower hardware. Other platform defaults are unchanged.
 

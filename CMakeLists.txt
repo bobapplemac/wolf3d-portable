@@ -189,7 +189,8 @@ if(W3P_BUILD_WIN32)
         platforms/win32/WG_WIN32.c)
     if(W3P_ENABLE_INPOUT32)
         target_sources(wolf3d-win32 PRIVATE
-            platforms/dos/WG_DOS_ADLIB.c platforms/win32/WG_INPOUT32.c)
+            platforms/dos/WG_DOS_ADLIB.c platforms/win32/WG_INPOUT32.c
+            platforms/win32/WG_OPL_PLAYBACK.c)
         target_compile_definitions(wolf3d-win32 PRIVATE WG_INPOUT32=1)
     endif()
     w3p_configure_host(wolf3d-win32)

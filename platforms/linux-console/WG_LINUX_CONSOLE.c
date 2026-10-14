@@ -1428,6 +1428,7 @@ int WG_InstallPlatform(void)
         NULL,
         NULL,
         WG_LinuxConsoleInputDevices,
+        NULL,
         NULL
     };
 

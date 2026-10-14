@@ -22,7 +22,13 @@ int WG_LinuxOPLSubmit(size_t frames,uint64_t queued)
 #endif
 #include "../platforms/sdl1/WG_SDL1.c"
 #ifdef _WIN32
-static int native_text_calls;
+static int native_text_calls,driver_attempts,accept_directx,accept_windib;
+static int fake_start_driver(const char *driver)
+{
+    ++driver_attempts;
+    if(!strcmp(driver,"directx"))return accept_directx;
+    assert(!strcmp(driver,"windib"));return accept_windib;
+}
 void test_windows_text(const uint8_t *cells,uint16_t columns,uint16_t rows)
 {
     assert(!ui_thread); /* Window/video must be shut down before the exit card. */
@@ -39,6 +45,19 @@ int main(void)
     int i;
     assert(scan(SDLK_a)==0x1e && scan(SDLK_KP8)==WOLF3D_KEY_UP);
     assert(scan(SDLK_UNKNOWN)==0);
+#ifdef _WIN32
+    assert(set_video_driver("directx") && !strcmp(requested_video_driver(),"directx"));
+    assert(set_video_driver("windib") && !strcmp(requested_video_driver(),"windib"));
+    assert(!set_video_driver("invalid"));video_driver_choice=NULL;
+    assert(!dd_software_requested && set_scaling("software") && dd_software_requested);
+    assert(set_scaling("hardware") && !dd_software_requested && !set_scaling("invalid"));
+    accept_directx=1;assert(start_video_with_fallback("directx",fake_start_driver) && driver_attempts==1);
+    driver_attempts=0;accept_directx=0;accept_windib=1;
+    assert(start_video_with_fallback("directx",fake_start_driver) && driver_attempts==2);
+    driver_attempts=0;accept_windib=0;
+    assert(!start_video_with_fallback("directx",fake_start_driver) && driver_attempts==2);
+    driver_attempts=0;assert(!start_video_with_fallback("windib",fake_start_driver) && driver_attempts==1);
+#endif
     assert(init());
     fullscreen=1;mouse=0;mouse_capture(0);assert(SDL_ShowCursor(SDL_QUERY)==SDL_DISABLE);
     focused=0;mouse_capture(0);assert(SDL_ShowCursor(SDL_QUERY)==SDL_ENABLE);

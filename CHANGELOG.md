@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - SDL1 defaults and border flicker
+
+- Default Windows SDL1 to DirectDraw, retrying windib if initialization or initial video-mode setup fails. `--sdl-video windib` selects GDI directly.
+- Default DirectDraw to hardware scaling with software fallback; expose `--sdl-scale hardware|software` in CLI/config, replacing the experimental scaling environment variable.
+- Clear only letterbox/pillarbox borders instead of flashing the whole client area black before each hardware blit; test non-integer window dimensions and fallback selection.
+- Document driver-dependent hardware filtering and successful Win2k hardware-acceleration testing.
+
 ## Unreleased - DirectDraw hardware scaling
 
 - Try hardware-only DirectDraw stretching for SDL1 `directx`, uploading only the original 320x200 frame in the display's RGB format. Clip output to the game window and preserve 4:3 output.

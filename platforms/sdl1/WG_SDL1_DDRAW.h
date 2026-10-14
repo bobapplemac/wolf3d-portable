@@ -12,7 +12,7 @@ static LPDIRECTDRAWSURFACE dd_primary,dd_frame;
 static LPDIRECTDRAWCLIPPER dd_clipper;
 static HWND dd_window;
 static DDPIXELFORMAT dd_format;
-static int dd_disabled,dd_announced;
+static int dd_disabled,dd_announced,dd_software_requested;
 static const char *dd_reason="not initialized";
 static void dd_close(void)
 {
@@ -51,9 +51,8 @@ static int dd_open(void)
     typedef HRESULT (WINAPI *create_t)(GUID *,LPDIRECTDRAW *,IUnknown *);
     create_t create;FARPROC address;SDL_SysWMinfo wm;
     DDSURFACEDESC desc;DDCAPS caps;char name[32];
-    const char *policy=getenv("WOLF3D_SDL1_SCALE");
     dd_reason="software requested";
-    if(policy && !strcmp(policy,"software"))return 0;
+    if(dd_software_requested)return 0;
     dd_reason="SDL video driver is not directx";
     if(!SDL_VideoDriverName(name,sizeof(name)) || strcmp(name,"directx"))return 0;
     dd_reason="SDL window unavailable";
@@ -95,7 +94,7 @@ fail:
 /* Return zero to render this same frame through the software fallback. */
 static int dd_present(const uint8_t *pixels,const uint8_t *palette,int left,int top,int width,int height)
 {
-    DDSURFACEDESC lock;RECT dst,client,source={0,0,320,200};POINT origin={0,0};DDBLTFX fill;
+    DDSURFACEDESC lock;RECT dst,client,source={0,0,320,200};POINT origin={0,0};DDBLTFX fill;RECT borders[4];int i;
     if(dd_disabled)return 0;
     if(!dd_device && !dd_open())goto fail;
     dd_reason="surface lock failed (possibly lost surface)";
@@ -110,9 +109,15 @@ static int dd_present(const uint8_t *pixels,const uint8_t *palette,int left,int 
     dst.left=origin.x+left;dst.top=origin.y+top;dst.right=dst.left+width;dst.bottom=dst.top+height;
     /* Clip to this window so borders and stretched pixels cannot cover other windows. */
     dd_reason="border blit failed";
-    if(left || top) {
-        memset(&fill,0,sizeof(fill));fill.dwSize=sizeof(fill);
-        if(FAILED(IDirectDrawSurface_Blt(dd_primary,&client,NULL,NULL,DDBLT_COLORFILL|DDBLT_WAIT,&fill)))goto fail;
+    /* Never clear the game rectangle: clearing the whole client between blits
+       caused visible black flashes whenever maximize introduced letterboxing. */
+    borders[0]=client;borders[0].bottom=dst.top;
+    borders[1]=client;borders[1].top=dst.bottom;
+    borders[2]=client;borders[2].top=dst.top;borders[2].bottom=dst.bottom;borders[2].right=dst.left;
+    borders[3]=client;borders[3].top=dst.top;borders[3].bottom=dst.bottom;borders[3].left=dst.right;
+    memset(&fill,0,sizeof(fill));fill.dwSize=sizeof(fill);
+    for(i=0;i<4;++i)if(borders[i].right>borders[i].left && borders[i].bottom>borders[i].top) {
+        if(FAILED(IDirectDrawSurface_Blt(dd_primary,&borders[i],NULL,NULL,DDBLT_COLORFILL|DDBLT_WAIT,&fill)))goto fail;
     }
     dd_reason="hardware stretch blit failed";
     if(FAILED(IDirectDrawSurface_Blt(dd_primary,&dst,dd_frame,&source,DDBLT_WAIT,NULL)))goto fail;

@@ -31,7 +31,7 @@ static int opl_init(void) {
 #define WG_SDL1_OPL_NOTE "Native OPL: not compiled"
 #endif
 #ifdef _WIN32
-#define WG_SDL1_VIDEO_HELP "Windows: --sdl-video windib|directx (default windib).\nDirectx tries hardware scaling; WOLF3D_SDL1_SCALE=software forces software.\n"
+#define WG_SDL1_VIDEO_HELP "Windows options:\n  --sdl-video directx|windib  Default directx; falls back to windib\n  --sdl-scale hardware|software  Default hardware; falls back to software\n"
 #else
 #define WG_SDL1_VIDEO_HELP "Linux: X11 software video and OSS PCM.\n"
 #endif
@@ -55,6 +55,34 @@ static unsigned char joy_dirty[WOLF3D_MAX_JOYSTICKS], keys[256];
 
 #ifdef _WIN32
 #include "WG_SDL1_DDRAW.h"
+static const char *video_driver_choice;
+static int set_video_driver(const char *value)
+{
+    if(!strcmp(value,"directx"))video_driver_choice="directx";
+    else if(!strcmp(value,"windib"))video_driver_choice="windib";
+    else return 0;
+    return 1;
+}
+static int set_scaling(const char *value)
+{
+    if(!strcmp(value,"hardware"))dd_software_requested=0;
+    else if(!strcmp(value,"software"))dd_software_requested=1;
+    else return 0;
+    return 1;
+}
+static const char *requested_video_driver(void)
+{
+    const char *environment=getenv("SDL_VIDEODRIVER");
+    return video_driver_choice?video_driver_choice:
+        (environment && *environment?environment:"directx");
+}
+static int start_video_with_fallback(const char *driver,int (*start)(const char *))
+{
+    if(start(driver))return 1;
+    if(strcmp(driver,"directx"))return 0;
+    fprintf(stdout,"SDL1 video: DirectDraw unavailable; trying windib\n");
+    return start("windib");
+}
 #endif
 
 static uint16_t scan(SDLKey key)
@@ -143,11 +171,32 @@ static void shutdown_host(void)
     if(software_frame)SDL_FreeSurface(software_frame);
     software_frame=NULL;
 }
+#ifdef _WIN32
+static int try_video_driver(const char *driver)
+{
+    static char environment[96];
+    sprintf(environment,"SDL_VIDEODRIVER=%s",driver);SDL_putenv(environment);
+    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER)<0) {SDL_Quit();return 0;}
+    if(!video(320*scale,240*scale)) {shutdown_host();return 0;}
+    fprintf(stdout,"SDL1 video: %s\n",driver);
+    return 1;
+}
+#endif
 static int init(void)
 {
     unsigned i;
+#ifdef _WIN32
+    /* Copy before SDL_putenv replaces the environment backing store. */
+    char driver[64];const char *requested=requested_video_driver();
+    if(strlen(requested)>=sizeof(driver))return 0;
+    strcpy(driver,requested);
+    if(!start_video_with_fallback(driver,try_video_driver)) {
+        fprintf(stderr,"SDL 1.2 video initialization failed: %s\n",SDL_GetError());return 0;
+    }
+#else
     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) {fprintf(stderr,"SDL 1.2 initialization: %s\n",SDL_GetError());return 0;}
     if(!video(320*scale,240*scale)) { shutdown_host(); return 0; }
+#endif
     SDL_WM_SetCaption("wolf3d", "wolf3d");
     SDL_EnableKeyRepeat(0,0);
     memset(keys,0,sizeof(keys));
@@ -358,9 +407,10 @@ static int run_main(int argc,char **argv)
     for(i=1;i<argc;++i) {
 #ifdef _WIN32
         if(!strcmp(argv[i],"--sdl-video")) {
-            static char driver[64];
-            if(++i>=argc || (strcmp(argv[i],"directx") && strcmp(argv[i],"windib"))) {error("--sdl-video requires directx or windib");WG_FreeLauncherArguments(&launcher);return 1;}
-            sprintf(driver,"SDL_VIDEODRIVER=%s",argv[i]);SDL_putenv(driver);
+            if(++i>=argc || !set_video_driver(argv[i])) {error("--sdl-video requires directx or windib");WG_FreeLauncherArguments(&launcher);return 1;}
+        }
+        if(!strcmp(argv[i],"--sdl-scale")) {
+            if(++i>=argc || !set_scaling(argv[i])) {error("--sdl-scale requires hardware or software");WG_FreeLauncherArguments(&launcher);return 1;}
         }
 #endif
         if(!strcmp(argv[i],"--fullscreen"))fullscreen=1;

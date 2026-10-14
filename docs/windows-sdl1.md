@@ -3,7 +3,8 @@
 The experimental Win2k x86 SDL1 target uses genuine SDL 1.2.15. It is built
 with MinGW GCC/MSVCRT on Linux; it does not require a Windows build VM.
 Both windib and directx video have run successfully on the Windows 2000 test machine.
-Full validation, including the latest exit-card and cursor fixes, remains pending. Win9x and WinXP SDL1
+DirectDraw hardware scaling has also been confirmed fast on the Win2k/Nvidia test machine.
+The latest border-flicker fix and automatic fallbacks await physical confirmation. Win9x and WinXP SDL1
 packages, including applicable Visual Studio builds on the XP/Win7 build hosts,
 are follow-up work after Win2k validation. This is separate from the existing
 RH9 SDL1 target and does not change its Linux runtime requirements.
@@ -31,8 +32,10 @@ wolf3d.exe --sdl-video windib --window-scale 2 --opl adlib
 wolf3d.exe --sdl-video directx --window-scale 2 --opl adlib
 ```
 
-`windib` uses Windows GDI and is SDL 1.2's default. `directx` uses SDL's DirectDraw
-backend. Driver selection is explicit; an unavailable driver fails startup.
+The host defaults to `directx` (SDL's DirectDraw backend). If its initialization
+or initial video-mode setup fails, the host retries with `windib` (Windows GDI).
+This fallback also applies to explicit `--sdl-video directx`. Selecting `windib`
+skips DirectDraw; failure of the selected/fallback GDI driver ends startup.
 `SDL_VIDEODRIVER` also works; the CLI overrides it. Config-file argument lines
 accept the same option. Keep the OPL choice and sample rate identical when
 comparing performance. DirectDraw performance depends on the installed display
@@ -53,7 +56,10 @@ With `--sdl-video directx`, the host tries a hardware-only DirectDraw device and
 a 320x200 video-memory upload surface. The CPU converts only the original indexed
 frame to the display's 16/24/32-bit RGB format. DirectDraw stretches that surface
 to the 4:3 client rectangle, using a window clipper. No smoothing filter is
-requested. Successful presentation reports:
+requested, but the display driver controls hardware stretch filtering; this path
+does not guarantee nearest-neighbor output. Even integer window scales stretch
+the original 320x200 frame to a 4:3 rectangle (for example, 640x480). Black borders
+are cleared separately without blanking the game image. Successful presentation reports:
 
 ```text
 SDL1 scaling: DirectDraw hardware stretch (320x200 upload)
@@ -63,15 +69,15 @@ If capability checks, video-memory allocation, surface locking or the blit fail,
 the same frame falls back to SDL software presentation, with a reason printed.
 Surface loss also selects fallback; a resize or mode change permits a new attempt.
 The software path uses SDL's `SDL_SoftStretch`, not a custom scaling loop.
-`windib` always uses this software path. Actual hardware stretch behavior on the
-Win2k/Nvidia test system remains pending physical confirmation.
+`windib` always uses this software path. Hardware scaling is the default;
+`--sdl-scale hardware` explicitly selects the same hardware-with-fallback policy.
+`--sdl-scale software` skips hardware scaling. Both options also work in the
+launcher config file. The former `WOLF3D_SDL1_SCALE` variable is no longer used.
 
 To compare with software scaling while keeping the DirectDraw video driver:
 
 ```bat
-set WOLF3D_SDL1_SCALE=software
-wolf3d.exe --sdl-video directx --window-scale 2 --opl adlib
-set WOLF3D_SDL1_SCALE=
+wolf3d.exe --sdl-video directx --sdl-scale software --window-scale 2 --opl adlib
 ```
 
 Console output and the text exit card use the existing Windows text helpers.
@@ -91,8 +97,10 @@ longer used. Audio/engine isolation and `WOLF3D_OPL_TIMING=1` timing logs remain
 ## Validation
 
 Maintainer tests cover native-size DirectDraw uploads, pitch, 16/24/32-bit pixel
-formats, destination rectangles, failed-blit/surface-loss fallback, blocked GDI
+formats, non-integer/letterbox/pillarbox rectangles, border-only clearing,
+video-driver fallback and CLI selection, failed-blit/surface-loss fallback, blocked GDI
 and SDL presentation, immutable frames and worker shutdown. The shared SDL tests
 cover palette changes, software stretch, cursor/focus and Windows text routing.
 Windows SDK syntax checks, Win2k/Win9x PE import audits and RH9 tests also pass.
-Real hardware is still needed to confirm acceleration and measure performance.
+Physical testing confirmed a large performance improvement from hardware scaling;
+filtering and acceleration still depend on the installed display driver.

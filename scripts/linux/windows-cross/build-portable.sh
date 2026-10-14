@@ -7,16 +7,16 @@ jobs=${W3P_WINDOWS_CROSS_JOBS:-}
 drivers=${W3P_WINDOWS_CROSS_OPL_DRIVERS:-nuked,dbopl,silent}
 default_driver=${W3P_WINDOWS_CROSS_DEFAULT_OPL:-nuked}
 sample_rate=${W3P_WINDOWS_CROSS_SAMPLE_RATE:-48000}
-if [ "$profile" = mingw-win2000-x86 ]; then
+if [ "$profile" = mingw-win2k-x86 ]; then
     drivers=${W3P_WINDOWS_CROSS_OPL_DRIVERS:-dbopl,silent}
     default_driver=${W3P_WINDOWS_CROSS_DEFAULT_OPL:-dbopl}
 fi
 version=$(sed -n '1p' "$root/lib/wolf3d/VERSION")
 
 case "$profile" in
-    mingw-win2000-x86)
+    mingw-win2k-x86)
         toolchain=mingw-gcc-i686.cmake
-        compiler_label=mingw-gcc-win2000
+        compiler_label=mingw-gcc-win2k
         minimum_windows=0x0500
         arch=x86
         build_sdl=OFF
@@ -77,7 +77,7 @@ case "$profile" in
 esac
 
 case "$profile" in
-    *-win2000-*) dist_platform=win2000 ;;
+    *-win2k-*) dist_platform=win2k ;;
     *-xp-*) dist_platform=winxp ;;
     *-win7-*) dist_platform=win7 ;;
     *-win10-*) dist_platform=win10 ;;

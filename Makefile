@@ -16,8 +16,8 @@ JOBS ?=
 USE_SYSTEM_SDL3 ?= OFF
 OPL_DRIVERS ?= nuked,dbopl,silent
 OPL_DEFAULT ?= nuked
-WIN2000_OPL_DRIVERS ?= dbopl,silent
-WIN2000_OPL_DEFAULT ?= dbopl
+WIN2K_OPL_DRIVERS ?= dbopl,silent
+WIN2K_OPL_DEFAULT ?= dbopl
 SAMPLE_RATE ?= 48000
 
 comma := ,
@@ -78,7 +78,7 @@ PARALLEL_ARG := --parallel $(JOBS)
 	portable portable-sdl3 portable-sdl3-release portable-console \
 	portable-console-release portable-image portable-glibc-audit print-config \
 	musl-console musl-console-release musl-console-audit musl-all musl-sdl3 musl-sdl3-release musl-image musl-audit universal-sdl3 \
-	dos dos-release dos-image windows-cross windows-win9x windows-win2000 windows-xp \
+	dos dos-release dos-image windows-cross windows-win9x windows-win2k windows-xp \
 	windows-win7 windows-llvm-win7 windows-win10 windows-mingw-image \
 	windows-llvm-msvcrt-image windows-llvm-ucrt-image \
 	clean clean-sdl3 clean-console clean-portable clean-musl clean-dos \
@@ -117,7 +117,7 @@ help:
 		'' \
 		'Linux-hosted Windows cross-builds (Docker):' \
 		'  make windows-win9x          Open Watcom Win9x x86 GDI package.' \
-		'  make windows-win2000        MinGW GCC/MSVCRT Windows 2000 x86 package.' \
+		'  make windows-win2k        MinGW GCC/MSVCRT Windows 2000 x86 package.' \
 		'  make windows-xp             MinGW GCC/MSVCRT XP x86 GDI package.' \
 		'  make windows-win7           MinGW GCC/MSVCRT Win7 x86/x64 GDI + SDL3.' \
 		'  make windows-llvm-win7      LLVM-MinGW/MSVCRT Win7 x86/x64 GDI + SDL3.' \
@@ -320,13 +320,13 @@ windows-win9x: dos-image
 		--env W3P_OPENWATCOM_WINDOWS_SAMPLE_RATE="$(WIN9X_SAMPLE_RATE)" \
 		"$(DOS_BUILD_IMAGE)" sh scripts/linux/openwatcom/build-windows.sh
 
-windows-win2000: windows-mingw-image
+windows-win2k: windows-mingw-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
-		--env W3P_WINDOWS_CROSS_PROFILE=mingw-win2000-x86 \
+		--env W3P_WINDOWS_CROSS_PROFILE=mingw-win2k-x86 \
 		--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
-		--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(WIN2000_OPL_DRIVERS)" \
-		--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(WIN2000_OPL_DEFAULT)" \
+		--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(WIN2K_OPL_DRIVERS)" \
+		--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(WIN2K_OPL_DEFAULT)" \
 		--env W3P_WINDOWS_CROSS_SAMPLE_RATE="$(SAMPLE_RATE)" \
 		"$(WINDOWS_MINGW_BUILD_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh
 
@@ -374,7 +374,7 @@ windows-win10: windows-llvm-ucrt-image
 		--env W3P_WINDOWS_CROSS_SAMPLE_RATE="$(SAMPLE_RATE)" \
 		"$(WINDOWS_LLVM_MINGW_UCRT_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh
 
-windows-cross: windows-win9x windows-win2000 windows-xp windows-win7 windows-llvm-win7 windows-win10
+windows-cross: windows-win9x windows-win2k windows-xp windows-win7 windows-llvm-win7 windows-win10
 
 clean-sdl3:
 	$(CMAKE) -E remove_directory "$(SDL3_BUILD_DIR)"
@@ -403,7 +403,7 @@ clean-dos:
 		$(DOCKER) image rm "$(DOS_BUILD_IMAGE)" >/dev/null 2>&1 || true; fi
 clean-windows-cross:
 	$(CMAKE) -E remove_directory "$(WINDOWS_OPENWATCOM_BUILD_DIR)"
-	$(CMAKE) -E remove_directory build/windows-cross-mingw-win2000-x86
+	$(CMAKE) -E remove_directory build/windows-cross-mingw-win2k-x86
 	$(CMAKE) -E remove_directory build/windows-cross-mingw-xp-x86
 	$(CMAKE) -E remove_directory build/windows-cross-mingw-win7-x86
 	$(CMAKE) -E remove_directory build/windows-cross-mingw-win7-x64

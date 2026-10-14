@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)][string]$PackagePath,
-    [ValidateSet('win9x', 'win2000')][string]$Profile = 'win9x',
+    [ValidateSet('win9x', 'win2k')][string]$Profile = 'win9x',
     [string]$WorkRoot = (Join-Path $PSScriptRoot '../build/win9x-smoke')
 )
 $ErrorActionPreference = 'Stop'
@@ -51,7 +51,7 @@ if ($diagnostics -notmatch 'Config:.*[\\/]wolf3d\.ini') { throw 'INI was not loa
 $null = Check-Run '--diag --opl silent' 0 'Requested OPL driver \(not probed\): silent'
 $null = Check-Run '--no-config --diag' 0 "Requested OPL driver \(not probed\): $defaultDriver"
 $null = Check-Run '--no-config --opl dbpol' 1 'Unknown or unavailable OPL driver: dbpol'
-if ($Profile -eq 'win2000') {
+if ($Profile -eq 'win2k') {
     $null = Check-Run '--no-config --opl adlib' 1 'Unknown or unavailable OPL driver: adlib'
 }
 $null = Check-Run '--no-config --opl nuked' 1 'Unknown or unavailable OPL driver: nuked'

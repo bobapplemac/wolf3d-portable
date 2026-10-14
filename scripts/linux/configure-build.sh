@@ -73,7 +73,7 @@ if ready cmake && ready make; then
     labels+=('Linux SDL3 distribution (local toolchain)' 'Linux KMS/fbdev distribution (local toolchain)' 'Linux SDL3 + KMS/fbdev distributions (local toolchain)' 'clean local build outputs')
 fi
 if ready docker && ready make; then
-    targets+=(portable portable-sdl3 portable-console musl-sdl3 musl-console musl-all dos-release windows-win9x windows-win2000 windows-xp windows-win7 windows-llvm-win7 windows-win10 windows-cross)
+    targets+=(portable portable-sdl3 portable-console musl-sdl3 musl-console musl-all dos-release windows-win9x windows-win2k windows-xp windows-win7 windows-llvm-win7 windows-win10 windows-cross)
     labels+=('Linux glibc SDL3 + KMS/fbdev distributions (Docker)' 'Linux glibc SDL3 distribution (Docker)' 'Linux glibc KMS/fbdev distribution (Docker)' 'Linux musl SDL3 relocatable distribution (Docker)' 'Linux musl KMS/fbdev relocatable distribution (Docker)' 'Linux musl SDL3 + KMS/fbdev relocatable distributions (Docker)' 'DOS32 x86 VGA Open Watcom distribution (Docker)' 'Win9x x86 GDI Open Watcom package (Docker)' 'Windows 2000 x86 GDI MinGW GCC/MSVCRT package (Docker)' 'Windows XP x86 GDI MinGW GCC/MSVCRT package (Docker)' 'Windows 7 x86/x64 MinGW GCC/MSVCRT GDI + SDL3 packages (Docker)' 'Windows 7 x86/x64 LLVM-MinGW/MSVCRT GDI + SDL3 packages (Docker)' 'Windows 10 x64 LLVM-MinGW/UCRT GDI + SDL3 packages (Docker)' 'all Linux-hosted Windows packages (Docker)')
 fi
 if [ ${#targets[@]} -eq 0 ]; then
@@ -107,7 +107,7 @@ if [[ $target == dos-* || $target == windows-win9x ]]; then
     drivers=dos-default
     default_opl=adlib
     sample_rate=22050
-elif [[ $target == windows-win2000 ]]; then
+elif [[ $target == windows-win2k ]]; then
     drivers=dbopl-silent
     default_opl=dbopl
 elif [[ $target != clean ]]; then
@@ -144,8 +144,8 @@ fi
 if [[ $target == windows-cross ]]; then
     args+=("WIN9X_OPL_DRIVERS=dbopl,silent,adlib" "WIN9X_OPL_DEFAULT=adlib" "WIN9X_SAMPLE_RATE=22050")
 fi
-if [[ $target == windows-win2000 ]]; then
-    args+=("WIN2000_OPL_DRIVERS=dbopl,silent" "WIN2000_OPL_DEFAULT=dbopl")
+if [[ $target == windows-win2k ]]; then
+    args+=("WIN2K_OPL_DRIVERS=dbopl,silent" "WIN2K_OPL_DEFAULT=dbopl")
 fi
 [ -n "$jobs" ] && args+=("JOBS=$jobs")
 

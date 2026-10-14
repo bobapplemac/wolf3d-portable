@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased - Asynchronous GDI presentation
+
+- Move GDI presentation to a worker with a single replaceable pending frame, keeping expensive drawing off the engine/audio thread.
+- Use nearest-neighbor software scaling into a DIB section and an unscaled BitBlt; join the worker before window destruction.
+- Preserve PCM/OPL timing diagnostics and add whole-window worker timing/frame-replacement reports; test scaling, immutable in-flight frames, replacement, resize and shutdown.
+
 ## Unreleased - Native OPL timing diagnostics
 
 - Extend opt-in Win2k GDI/native OPL logs with presentation and StretchDIBits durations, destination dimensions, and independently observed waveOut queue exhaustion counts/durations.

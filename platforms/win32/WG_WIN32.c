@@ -50,7 +50,6 @@ static void WG_NTAdLibShutdown(void);
 static const TCHAR wg_window_class[] = TEXT("wolf3d-window");
 static HWND wg_window;
 static HCURSOR wg_blank_cursor;
-static uint32_t wg_pixels[WOLF3D_SCREEN_WIDTH * WOLF3D_SCREEN_HEIGHT];
 static LARGE_INTEGER wg_counter_frequency;
 static LARGE_INTEGER wg_counter_start;
 static int wg_quit_pending;
@@ -872,8 +871,7 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
 
         case WM_CLOSE:
             wg_quit_pending = 1;
-            DestroyWindow(window);
-            return 0;
+            return 0; /* Shutdown joins the presenter before destroying HWND. */
 
         case WM_DESTROY:
             wg_fullscreen = 0;
@@ -887,6 +885,8 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
             return DefWindowProc(window, message, wparam, lparam);
     }
 }
+
+#include "WG_GDI_PRESENTER.h"
 
 static int WG_Win32Init(void)
 {
@@ -999,11 +999,17 @@ static int WG_Win32Init(void)
         wg_window = NULL;
         return 0;
     }
+    if(!WG_PresenterStart(wg_window)) {
+        DestroyWindow(wg_window);wg_window=NULL;
+        DestroyCursor(wg_blank_cursor);wg_blank_cursor=NULL;
+        return 0;
+    }
     return 1;
 }
 
 static void WG_Win32Shutdown(void)
 {
+    WG_PresenterStop();
     wg_fullscreen = 0;
     (void)WG_Win32RestoreDisplay(1);
     WG_Win32PCMShutdown();
@@ -1031,74 +1037,10 @@ static void WG_Win32Shutdown(void)
 
 static void WG_Win32Present(const uint8_t *pixels, const uint8_t *palette)
 {
-    BITMAPINFO bitmap_info;
-    RECT client;
-    RECT presentation;
-    HDC device_context;
-    size_t index;
-#ifdef WG_INPOUT32
-    LARGE_INTEGER trace_start, trace_blit, trace_blit_end, trace_end;
-    int trace=WG_OPLPlaybackTraceEnabled() && QueryPerformanceCounter(&trace_start);
-    int blit_trace=0;
-#endif
-
-    if (wg_window == NULL)
-    {
-        return;
-    }
-
-    for (index = 0; index < WOLF3D_SCREEN_WIDTH * WOLF3D_SCREEN_HEIGHT; ++index)
-    {
-        size_t color = (size_t)pixels[index] * 3U;
-        wg_pixels[index] = ((uint32_t)palette[color] << 16)
-                         | ((uint32_t)palette[color + 1U] << 8)
-                         | (uint32_t)palette[color + 2U];
-    }
-
-    ZeroMemory(&bitmap_info, sizeof(bitmap_info));
-    bitmap_info.bmiHeader.biSize = sizeof(bitmap_info.bmiHeader);
-    bitmap_info.bmiHeader.biWidth = WOLF3D_SCREEN_WIDTH;
-    bitmap_info.bmiHeader.biHeight = -WOLF3D_SCREEN_HEIGHT;
-    bitmap_info.bmiHeader.biPlanes = 1;
-    bitmap_info.bmiHeader.biBitCount = 32;
-    bitmap_info.bmiHeader.biCompression = BI_RGB;
-
-    GetClientRect(wg_window, &client);
-    presentation = wg_presentation_rectangle(&client);
-    device_context = GetDC(wg_window);
-    PatBlt(device_context, client.left, client.top,
-           client.right - client.left, presentation.top - client.top,
-           BLACKNESS);
-    PatBlt(device_context, client.left, presentation.bottom,
-           client.right - client.left, client.bottom - presentation.bottom,
-           BLACKNESS);
-    PatBlt(device_context, client.left, presentation.top,
-           presentation.left - client.left,
-           presentation.bottom - presentation.top, BLACKNESS);
-    PatBlt(device_context, presentation.right, presentation.top,
-           client.right - presentation.right,
-           presentation.bottom - presentation.top, BLACKNESS);
-    SetStretchBltMode(device_context, COLORONCOLOR);
-#ifdef WG_INPOUT32
-    blit_trace=trace && QueryPerformanceCounter(&trace_blit);
-#endif
-    StretchDIBits(device_context, presentation.left, presentation.top,
-                  presentation.right - presentation.left,
-                  presentation.bottom - presentation.top,
-                  0, 0, WOLF3D_SCREEN_WIDTH, WOLF3D_SCREEN_HEIGHT, wg_pixels,
-                  &bitmap_info, DIB_RGB_COLORS, SRCCOPY);
-#ifdef WG_INPOUT32
-    blit_trace=blit_trace && QueryPerformanceCounter(&trace_blit_end);
-#endif
-    ReleaseDC(wg_window, device_context);
-#ifdef WG_INPOUT32
-    if(trace && QueryPerformanceCounter(&trace_end) && trace_end.QuadPart>=trace_start.QuadPart)
-        WG_OPLPlaybackPresentTicks((uint64_t)(trace_end.QuadPart-trace_start.QuadPart),
-            blit_trace && trace_blit_end.QuadPart>=trace_blit.QuadPart ?
-                (uint64_t)(trace_blit_end.QuadPart-trace_blit.QuadPart) : 0,
-            (unsigned)(presentation.right-presentation.left),
-            (unsigned)(presentation.bottom-presentation.top));
-#endif
+    RECT client,view;
+    if(!wg_window || !pixels || !palette || !GetClientRect(wg_window,&client))return;
+    view=wg_presentation_rectangle(&client);
+    WG_PresenterSubmit(pixels,palette,client,view);
 }
 
 static uint32_t WG_Win32GetTicksMs(void)

@@ -22,24 +22,12 @@ static uint64_t wg_trace_starved_ticks, wg_trace_max_starved;
 static WAVEHDR *wg_trace_headers;
 static unsigned wg_trace_header_count;
 static wg_pcm_queue_trace_t wg_queue_trace;
-static uint64_t wg_present_count, wg_present_ticks, wg_present_max, wg_blit_ticks, wg_blit_max;
-static unsigned wg_present_width, wg_present_height;
-int WG_OPLPlaybackTraceEnabled(void) { return wg_trace && wg_opl_thread != NULL; }
 void WG_OPLPlaybackTrackBuffers(WAVEHDR *headers, unsigned count)
 {
     if (!wg_opl_thread) return;
     EnterCriticalSection(&wg_opl_lock);
     wg_trace_headers=headers; wg_trace_header_count=count;
     LeaveCriticalSection(&wg_opl_lock);
-}
-void WG_OPLPlaybackPresentTicks(uint64_t total, uint64_t blit, unsigned width, unsigned height)
-{
-    if (!WG_OPLPlaybackTraceEnabled()) return;
-    /* Presentation and shutdown/report run on the engine thread. */
-    ++wg_present_count; wg_present_ticks+=total; wg_blit_ticks+=blit;
-    if(total>wg_present_max)wg_present_max=total;
-    if(blit>wg_blit_max)wg_blit_max=blit;
-    wg_present_width=width; wg_present_height=height;
 }
 static void WG_OPLPlaybackObserveBuffers(uint64_t now)
 {
@@ -77,13 +65,6 @@ static void WG_OPLPlaybackReport(void)
     fprintf(file, "Estimated PCM starvation: total=%.6f s; longest=%.3f ms (completed refill gaps)\n\n",
         (double)wg_trace_starved_ticks/wg_timeline.frequency,
         (double)wg_trace_max_starved*1000/wg_timeline.frequency);
-    fprintf(file, "GDI presentation: calls=%.0f; last destination=%ux%u; total=%.6f s; average=%.3f ms; longest=%.3f ms\n",
-        (double)wg_present_count,wg_present_width,wg_present_height,
-        (double)wg_present_ticks/wg_timeline.frequency,
-        wg_present_count ? (double)wg_present_ticks*1000/wg_timeline.frequency/wg_present_count : 0,
-        (double)wg_present_max*1000/wg_timeline.frequency);
-    fprintf(file, "StretchDIBits calls: total=%.6f s; longest=%.3f ms (API time, no forced GDI flush)\n",
-        (double)wg_blit_ticks/wg_timeline.frequency,(double)wg_blit_max*1000/wg_timeline.frequency);
     fprintf(file, "Observed waveOut queue exhaustion: episodes=%.0f; completed=%.0f; total=%.6f s; longest=%.3f ms; open=%d (sampled header flags)\n\n",
         (double)wg_queue_trace.episodes,(double)wg_queue_trace.completed,
         (double)wg_queue_trace.total/wg_timeline.frequency,
@@ -185,8 +166,6 @@ int WG_OPLPlaybackStart(HWAVEOUT wave, uint32_t rate)
     wg_trace_starved_ticks = wg_trace_max_starved = 0;
     wg_trace_headers=NULL; wg_trace_header_count=0;
     memset(&wg_queue_trace,0,sizeof(wg_queue_trace));
-    wg_present_count=wg_present_ticks=wg_present_max=wg_blit_ticks=wg_blit_max=0;
-    wg_present_width=wg_present_height=0;
     InitializeCriticalSection(&wg_opl_lock);
     wg_opl_wake = CreateEvent(NULL, FALSE, FALSE, NULL);
     if (!wg_opl_wake) { DeleteCriticalSection(&wg_opl_lock); return 0; }

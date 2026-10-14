@@ -265,10 +265,22 @@ shutdown. A zero-duration restart can occur exactly at the published queue end.
 
 For GDI scaling comparisons, repeat with `--windowed --window-scale 1`, `2`,
 and `3`, keeping the song, sample rate and duration the same. Save each run's
-`OPLTIME.TXT` separately. New reports include destination pixel dimensions,
-presentation count/total/average/maximum and separate `StretchDIBits` API time.
-Presentation time includes palette expansion and the surrounding GDI calls;
-no forced GDI flush is added, so it is not a measurement of GPU completion.
+`OPLTIME.TXT` separately. The `Async GDI presentation` block covers the whole
+window lifetime (all music sessions), and includes destination pixel dimensions,
+worker presentation count/total/average/maximum, and pending-frame replacements.
+The worker expands the indexed framebuffer using nearest-neighbor scaling into
+a 32-bit DIB section, then uses an unscaled `BitBlt`. There is no interpolation.
+`BitBlt + worker GdiFlush` is timed separately; this includes a worker-side flush
+before DIB reuse, unlike the earlier synchronous StretchDIBits measurements.
+
+Engine/audio production only publishes a small framebuffer snapshot. A single
+pending frame is overwritten by newer frames while the worker is busy, so slow
+presentation drops display frames instead of blocking audio production. All
+scaling and GDI calls run outside the mailbox lock, on a below-normal-priority
+worker. Window destruction joins that worker first. The game engine remains
+single-threaded; this change does not make concurrent engine API calls.
+The existing PCM/OPL timing blocks remain per audio session. Target-machine
+captures are still needed to verify whether driver-level contention persists.
 
 The OPL worker also samples all waveOut header flags independently of the music
 timeline, and submission checks them before refilling. Once playback has started,

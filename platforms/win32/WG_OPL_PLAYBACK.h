@@ -3,9 +3,7 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <stdint.h>
-int WG_OPLPlaybackTraceEnabled(void);
 void WG_OPLPlaybackTrackBuffers(WAVEHDR *headers, unsigned count);
-void WG_OPLPlaybackPresentTicks(uint64_t total, uint64_t blit, unsigned width, unsigned height);
 int WG_OPLPlaybackStart(HWAVEOUT wave, uint32_t rate);
 void WG_OPLPlaybackStop(void);
 void WG_OPLPlaybackWrite(uint16_t reg, uint8_t value, uint64_t frame, uint32_t rate);

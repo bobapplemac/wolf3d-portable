@@ -2,6 +2,8 @@
 
 ## Unreleased - Native OPL timing diagnostics
 
+- Reduce Windows native OPL device-position polling from roughly 1 ms to 20 ms while retaining QPC event scheduling; log total/longest estimated PCM refill starvation gaps.
+
 - Add opt-in `WOLF3D_OPL_TIMING=1` Win2k/XP playback counters written to `OPLTIME.TXT` on shutdown, to investigate native-versus-emulated tempo without adjusting playback speed.
 - Add sustained 700 Hz timeline tests at four PCM rates with coarse device positions and clock drift.
 - Explicitly label the RH9 build experimental in the build guide and support matrix, and correct its default driver list.

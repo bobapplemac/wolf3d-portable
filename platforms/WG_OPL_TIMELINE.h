@@ -27,6 +27,20 @@ static uint64_t WG_OPLTimelineNow(wg_opl_timeline_t *t, uint64_t now)
     if (frame > t->submitted) frame = t->submitted;
     return frame < t->emitted ? t->emitted : frame;
 }
+#ifdef WG_OPL_TIMELINE_DIAGNOSTICS
+/* Estimated gap after the published PCM timeline drained, measured before
+   the next successful submission. This is not a hardware underrun counter. */
+static uint64_t WG_OPLTimelineStarvedTicks(const wg_opl_timeline_t *t, uint64_t now)
+{
+    uint64_t remaining, duration, elapsed;
+    if (!t->started || !t->rate || !t->frequency || now < t->anchor_ticks
+        || t->anchor_frame > t->submitted) return 0;
+    remaining = t->submitted - t->anchor_frame;
+    duration = (remaining * t->frequency + t->rate - 1U) / t->rate;
+    elapsed = now - t->anchor_ticks;
+    return elapsed > duration ? elapsed - duration : 0;
+}
+#endif
 static void WG_OPLTimelineSubmit(wg_opl_timeline_t *t, unsigned frames, uint64_t now)
 {
     /* Freeze elapsed time at the end of submitted PCM during starvation. */

@@ -3,12 +3,25 @@
 #endif
 #include <assert.h>
 #include <stdio.h>
+#define WG_OPL_TIMELINE_DIAGNOSTICS 1
 #include "../platforms/WG_OPL_TIMELINE.h"
 static wg_opl_timeline_t t;
 int main(void)
 {
     wg_opl_event_t e;
     unsigned i;
+    WG_OPLTimelineInit(&t, 1000, 1000000);
+    assert(WG_OPLTimelineStarvedTicks(&t, 1000000)==0); /* Not started. */
+    WG_OPLTimelineSubmit(&t, 100, 1000000);
+    assert(WG_OPLTimelineStarvedTicks(&t, 999999)==0); /* Clock moved back. */
+    assert(WG_OPLTimelineStarvedTicks(&t, 1050000)==0); /* Buffered. */
+    assert(WG_OPLTimelineStarvedTicks(&t, 1100000)==0); /* Exact end. */
+    assert(WG_OPLTimelineStarvedTicks(&t, 1125000)==25000);
+    WG_OPLTimelineSubmit(&t, 100, 1125000); /* Gap ends; new queue starts. */
+    assert(WG_OPLTimelineStarvedTicks(&t, 1200000)==0);
+    assert(WG_OPLTimelineStarvedTicks(&t, 1245000)==20000);
+    WG_OPLTimelineObserve(&t, 200, 1250000); /* Device reports drained now. */
+    assert(WG_OPLTimelineStarvedTicks(&t, 1251000)==1000);
     WG_OPLTimelineInit(&t, 11025, 1000000);
     assert(WG_OPLTimelinePush(&t, 1, 10, 0, 11025));
     assert(WG_OPLTimelinePush(&t, 2, 20, 110, 11025));

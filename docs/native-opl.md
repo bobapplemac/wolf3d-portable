@@ -255,3 +255,10 @@ port-write/query workload and starvation counts. Counters stay in memory during
 playback; tracing adds counter-query overhead and is disabled unless requested.
 A position slightly behind elapsed time can be ordinary buffering/report latency;
 these figures are diagnostic evidence, not an automatic tempo correction.
+
+The Windows worker polls device position at most every 20 ms (50 queries/second),
+while QPC interpolation and event dispatch continue between reports. Timing logs
+also report total and longest **estimated** PCM starvation durations for gaps
+ending at successful refills. These derive from the current timeline anchor;
+they are not hardware underrun measurements and exclude any unrefilled tail at
+shutdown. A zero-duration restart can occur exactly at the published queue end.

@@ -3,6 +3,7 @@
 #include "WG_OPL_PLAYBACK.h"
 #include <stdio.h>
 #include <stdlib.h>
+#define WG_OPL_TIMELINE_DIAGNOSTICS 1
 #include "../WG_OPL_TIMELINE.h"
 #include "WG_INPOUT32.h"
 #include "../dos/WG_DOS_ADLIB.h"
@@ -16,6 +17,7 @@ static int wg_trace;
 static uint64_t wg_trace_start, wg_trace_writes, wg_trace_queries, wg_trace_positions;
 static uint64_t wg_trace_write_ticks, wg_trace_query_ticks, wg_trace_max_write;
 static uint64_t wg_trace_late_frames, wg_trace_peak_queue, wg_trace_starvations;
+static uint64_t wg_trace_starved_ticks, wg_trace_max_starved;
 static void WG_OPLPlaybackReport(void)
 {
     FILE *file;
@@ -25,7 +27,7 @@ static void WG_OPLPlaybackReport(void)
     file = fopen("OPLTIME.TXT", "a");
     if (!file) return;
     elapsed = (double)((uint64_t)now.QuadPart-wg_trace_start)/wg_timeline.frequency;
-    fprintf(file, "Native OPL timing: rate=%lu, QPC=%.0f Hz, elapsed=%.6f s\n",
+    fprintf(file, "Native OPL timing: rate=%lu, QPC=%.0f Hz, elapsed=%.6f s; position poll=20 ms\n",
         (unsigned long)wg_timeline.rate, (double)wg_timeline.frequency, elapsed);
     fprintf(file, "PCM submitted=%.6f s; last device position=%.6f s; last emitted timeline=%.6f s\n",
         (double)wg_timeline.submitted/wg_timeline.rate,
@@ -35,9 +37,12 @@ static void WG_OPLPlaybackReport(void)
         (double)wg_trace_writes, (double)wg_trace_write_ticks/wg_timeline.frequency,
         (double)wg_trace_max_write*1000/wg_timeline.frequency,
         (double)wg_trace_late_frames*1000/wg_timeline.rate);
-    fprintf(file, "Position queries=%.0f (sample reports=%.0f); query work=%.6f s; peak queued writes=%.0f; PCM starvation/restarts=%.0f; failed=%d\n\n",
+    fprintf(file, "Position queries=%.0f (sample reports=%.0f); query work=%.6f s; peak queued writes=%.0f; PCM starvation/restarts=%.0f; failed=%d\n",
         (double)wg_trace_queries, (double)wg_trace_positions, (double)wg_trace_query_ticks/wg_timeline.frequency,
         (double)wg_trace_peak_queue, (double)wg_trace_starvations, wg_opl_failed);
+    fprintf(file, "Estimated PCM starvation: total=%.6f s; longest=%.3f ms (completed refill gaps)\n\n",
+        (double)wg_trace_starved_ticks/wg_timeline.frequency,
+        (double)wg_trace_max_starved*1000/wg_timeline.frequency);
     fclose(file);
 }
 
@@ -63,7 +68,9 @@ static DWORD WINAPI WG_OPLPlaybackThread(LPVOID context)
         }
         last_counter = (uint64_t)now.QuadPart;
         started = wg_timeline.started;
-        if (wg_opl_wave && started && (uint64_t)now.QuadPart - last_query >= wg_timeline.frequency / 1000)
+        /* Device queries are costly on legacy drivers. QPC still schedules
+           writes between 20 ms position corrections; do not slow the worker. */
+        if (wg_opl_wave && started && (uint64_t)now.QuadPart - last_query >= (wg_timeline.frequency + 49U) / 50U)
         {
             last_query = (uint64_t)now.QuadPart;
             memset(&position, 0, sizeof(position)); position.wType = TIME_SAMPLES;
@@ -129,6 +136,7 @@ int WG_OPLPlaybackStart(HWAVEOUT wave, uint32_t rate)
     wg_trace_start = wg_trace_writes = wg_trace_queries = wg_trace_positions = 0;
     wg_trace_write_ticks = wg_trace_query_ticks = wg_trace_max_write = 0;
     wg_trace_late_frames = wg_trace_peak_queue = wg_trace_starvations = 0;
+    wg_trace_starved_ticks = wg_trace_max_starved = 0;
     InitializeCriticalSection(&wg_opl_lock);
     wg_opl_wake = CreateEvent(NULL, FALSE, FALSE, NULL);
     if (!wg_opl_wake) { DeleteCriticalSection(&wg_opl_lock); return 0; }
@@ -165,8 +173,12 @@ int WG_OPLPlaybackSubmit(const int16_t *samples, size_t frames, WAVEHDR *header)
         if (ok) {
             if (wg_trace) {
                 if (!wg_timeline.started) wg_trace_start = (uint64_t)now.QuadPart;
-                else if (WG_OPLTimelineNow(&wg_timeline, (uint64_t)now.QuadPart) >= wg_timeline.submitted)
+                else if (WG_OPLTimelineNow(&wg_timeline, (uint64_t)now.QuadPart) >= wg_timeline.submitted) {
+                    uint64_t gap = WG_OPLTimelineStarvedTicks(&wg_timeline, (uint64_t)now.QuadPart);
                     ++wg_trace_starvations;
+                    wg_trace_starved_ticks += gap;
+                    if (gap > wg_trace_max_starved) wg_trace_max_starved = gap;
+                }
             }
             WG_OPLTimelineSubmit(&wg_timeline, (unsigned)frames, (uint64_t)now.QuadPart);
         }

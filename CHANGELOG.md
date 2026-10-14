@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - DirectDraw hardware scaling
+
+- Try hardware-only DirectDraw stretching for SDL1 `directx`, uploading only the original 320x200 frame in the display's RGB format. Clip output to the game window and preserve 4:3 output.
+- Fall back to SDL software stretch on unsupported hardware, allocation/lock/blit failure or surface loss, and report the selected path. `WOLF3D_SDL1_SCALE=software` forces the comparison path.
+- Remove custom nearest-neighbor scaling and experimental GDI DIB/DDB paths; delegate scaling to GDI `StretchDIBits` or SDL `SDL_SoftStretch`, retaining asynchronous presentation and audio isolation.
+- Add DirectDraw upload/pixel-format/failure regressions and keep Windows/RH9 host checks.
+
 ## Unreleased - SDL1 exit screen, cursor and scaling fixes
 
 - Route Windows SDL1 B800 exit/error cards through the native CP437 console renderer rather than ANSI/UTF-8 terminal output.

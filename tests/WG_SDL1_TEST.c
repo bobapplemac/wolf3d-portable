@@ -52,18 +52,15 @@ int main(void)
     assert(video(800,480));present(pixels,palette);
     assert(*(Uint32 *)screen->pixels==0); /* Pillarbox, never stretched. */
     {
-        int x,y;unsigned *cached=scale_x;
+        SDL_Surface *cached=software_frame;
         palette[3]=0;palette[5]=255;present(pixels,palette);
-        assert(scale_x==cached && *(Uint32 *)screen->pixels==0);
+        assert(software_frame==cached && *(Uint32 *)screen->pixels==0);
         assert(*(Uint32 *)((Uint8 *)screen->pixels+80*4)==SDL_MapRGB(screen->format,0,0,255));
         for(i=0;i<320*200;++i)pixels[i]=(uint8_t)(i%251);
         for(i=0;i<768;++i)palette[i]=(uint8_t)i;
         assert(video(323,243));present(pixels,palette);
-        for(y=0;y<242;++y)for(x=0;x<323;++x) {
-            unsigned index=pixels[(y*200/242)*320+x*320/323];
-            Uint32 actual=*(Uint32 *)((Uint8 *)screen->pixels+y*screen->pitch+x*4);
-            assert(actual==SDL_MapRGB(screen->format,palette[index*3],palette[index*3+1],palette[index*3+2]));
-        }
+        assert(software_frame->w==320 && software_frame->h==200);
+        assert(*(Uint32 *)screen->pixels==SDL_MapRGB(screen->format,palette[0],palette[1],palette[2]));
     }
     memset(&input,0,sizeof(input));input.type=SDL_KEYDOWN;input.key.keysym.sym=SDLK_ESCAPE;
     assert(SDL_PushEvent(&input)==0);assert(poll_event(&out));

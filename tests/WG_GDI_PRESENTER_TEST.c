@@ -10,25 +10,25 @@
 static HANDLE entered,release_blit,second;
 static LONG calls;
 static HWND test_window;
-static BOOL WINAPI slow_blit(HDC dc,int x,int y,int w,int h,HDC src,int sx,int sy,DWORD rop)
+static int WINAPI slow_blit(HDC dc,int x,int y,int w,int h,int sx,int sy,int sw,int sh,
+    const void *bits,const BITMAPINFO *info,UINT usage,DWORD rop)
 {
     LONG call=InterlockedIncrement(&calls);
+    (void)dc;(void)x;(void)y;(void)sx;(void)sy;(void)usage;(void)rop;
+    assert(sw==320 && sh==200 && info->bmiHeader.biBitCount==8 && ((const uint8_t *)bits)[0]==1);
     if(call==1) {
-        assert(w==320 && h==240 && GetPixel(src,0,0)==RGB(255,0,0));
+        assert(w==320 && h==240 && info->bmiColors[1].rgbRed==255);
         SetEvent(entered);assert(WaitForSingleObject(release_blit,5000)==WAIT_OBJECT_0);
-        assert(GetPixel(src,0,0)==RGB(255,0,0)); /* Producer cannot mutate in-flight DIB. */
+        assert(info->bmiColors[1].rgbRed==255 && ((const uint8_t *)bits)[0]==1);
     } else {
-        assert(w==640 && h==480 && GetPixel(src,0,0)==RGB(0,0,255));
-        SetEvent(second);
-        SendMessage(test_window,WM_NULL,0,0); /* Stop must service cross-thread sends. */
+        assert(w==640 && h==480 && info->bmiColors[1].rgbBlue==255);
+        SetEvent(second);SendMessage(test_window,WM_NULL,0,0);
     }
-    /* Hidden windows may have no drawable DC: exercise the real memory blit. */
-    (void)dc;
-    return BitBlt(src,x,y,w,h,src,sx,sy,rop);
+    return 200;
 }
-#define BitBlt slow_blit
+#define StretchDIBits slow_blit
 #include "../platforms/win32/WG_GDI_PRESENTER.h"
-#undef BitBlt
+#undef StretchDIBits
 int main(void)
 {
     WNDCLASS wc;HWND window;RECT small={0,0,320,240},large={0,0,640,480};

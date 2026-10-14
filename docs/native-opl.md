@@ -268,10 +268,11 @@ and `3`, keeping the song, sample rate and duration the same. Save each run's
 `OPLTIME.TXT` separately. The `Async GDI presentation` block covers the whole
 window lifetime (all music sessions), and includes destination pixel dimensions,
 worker presentation count/total/average/maximum, and pending-frame replacements.
-The worker expands the indexed framebuffer using nearest-neighbor scaling into
-a 32-bit DIB section, then uses an unscaled `BitBlt`. There is no interpolation.
-`BitBlt + worker GdiFlush` is timed separately; this includes a worker-side flush
-before DIB reuse, unlike the earlier synchronous StretchDIBits measurements.
+The worker submits the original indexed framebuffer and palette to
+`StretchDIBits` with `COLORONCOLOR`, leaving scaling to GDI.
+`StretchDIBits + worker GdiFlush` is timed separately. The custom software
+scaler and experimental DIB/DDB paths were removed after hardware comparisons
+did not establish a benefit; the asynchronous worker remains.
 
 Engine/audio production only publishes a small framebuffer snapshot. A single
 pending frame is overwritten by newer frames while the worker is busy, so slow

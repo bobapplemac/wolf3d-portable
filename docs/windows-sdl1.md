@@ -41,49 +41,58 @@ driver; it is not guaranteed to beat GDI on every machine.
 The engine runs independently of the SDL video/input thread. Presentation uses
 a copied, replaceable pending frame; dragging/resizing or a slow blit cannot
 block engine simulation or PCM submission. Input waits for the window thread
-while the OS is running its modal move/resize loop. Video uses nearest-neighbor
-scaling to a 4:3 rectangle, with cached horizontal maps and repeated-row copies.
-Presentation is uncapped; higher frame throughput can still use all available CPU.
-CPU percentage alone does not compare the frame rates of SDL and GDI.
+while the OS is running its modal move/resize loop. Presentation is uncapped;
+CPU percentage alone does not compare SDL and GDI frame rates.
 The cursor is hidden whenever the fullscreen window has focus, independently of
-mouse capture or whether mouse input is enabled. F11/`--fullscreen` uses SDL's display-mode fullscreen,
-not the GDI host's borderless fullscreen. `--windowed` is the default.
+mouse capture or whether mouse input is enabled. F11/`--fullscreen` uses SDL's
+display-mode fullscreen, not the GDI host's borderless fullscreen.
+
+## DirectDraw hardware scaling
+
+With `--sdl-video directx`, the host tries a hardware-only DirectDraw device and
+a 320x200 video-memory upload surface. The CPU converts only the original indexed
+frame to the display's 16/24/32-bit RGB format. DirectDraw stretches that surface
+to the 4:3 client rectangle, using a window clipper. No smoothing filter is
+requested. Successful presentation reports:
+
+```text
+SDL1 scaling: DirectDraw hardware stretch (320x200 upload)
+```
+
+If capability checks, video-memory allocation, surface locking or the blit fail,
+the same frame falls back to SDL software presentation, with a reason printed.
+Surface loss also selects fallback; a resize or mode change permits a new attempt.
+The software path uses SDL's `SDL_SoftStretch`, not a custom scaling loop.
+`windib` always uses this software path. Actual hardware stretch behavior on the
+Win2k/Nvidia test system remains pending physical confirmation.
+
+To compare with software scaling while keeping the DirectDraw video driver:
+
+```bat
+set WOLF3D_SDL1_SCALE=software
+wolf3d.exe --sdl-video directx --window-scale 2 --opl adlib
+set WOLF3D_SDL1_SCALE=
+```
 
 Console output and the text exit card use the existing Windows text helpers.
 Double-click launch pauses at exit; shell launch does not. `--no-pause` disables
 the pause. SDL.dll remains a separate, replaceable LGPL library; its license,
 source URL/checksum and build recipe are included in the distribution notices.
 
-## GDI comparison switches
+## GDI presentation
 
 All Windows GDI targets share the asynchronous presenter, not only Win2k.
-The default path scales into a DIB and issues an unscaled BitBlt. Recognized
-16-bit desktop formats use RGB555/RGB565; other desktops use 32-bit pixels.
-Horizontal sampling maps are cached and borders are cleared on geometry changes.
-No identical-frame detection or interpolation is performed.
-
-For hardware comparison from Command Prompt:
-
-```bat
-set WOLF3D_OPL_TIMING=1
-set WOLF3D_GDI_BITMAP=ddb
-wolf3d.exe --window-scale 2 --opl adlib
-set WOLF3D_GDI_BITMAP=
-```
-
-`ddb` uploads the DIB into a device-dependent compatible bitmap before BitBlt.
-It is opt-in because the upload may cost more than it saves. Clearing the variable
-restores the default DIB path. `WOLF3D_GDI_FORMAT=32` forces 32-bit source pixels
-for comparison on a 16-bit desktop; clearing it restores automatic selection.
-`OPLTIME.TXT` records path, pixel depth, worker timing and replaced pending frames.
-Native OPL timing logging remains available with SDL1, but GDI-specific timings
-and waveOut header exhaustion counters apply only to the GDI host.
+Scaling is delegated to `StretchDIBits` with `COLORONCOLOR`; the worker submits
+the original 320x200 indexed framebuffer and palette. Custom software scaling
+and the experimental DIB/DDB comparison paths were removed because testing had
+not demonstrated a benefit. `WOLF3D_GDI_BITMAP` and `WOLF3D_GDI_FORMAT` are no
+longer used. Audio/engine isolation and `WOLF3D_OPL_TIMING=1` timing logs remain.
 
 ## Validation
 
-Maintainer checks cover 16/32-bit nearest-neighbor pixels and stride guards,
-blocked GDI and SDL presentations, immutable in-flight frames, pending-frame
-replacement, and worker shutdown. Windows SDK syntax checks and the Win2k PE
-import audit remain required. Red Hat 9 SDL1 tests cover the shared host's
-Linux path. Physical Win2k DirectDraw, windib and native OPL comparison is still
-required before declaring this backend supported.
+Maintainer tests cover native-size DirectDraw uploads, pitch, 16/24/32-bit pixel
+formats, destination rectangles, failed-blit/surface-loss fallback, blocked GDI
+and SDL presentation, immutable frames and worker shutdown. The shared SDL tests
+cover palette changes, software stretch, cursor/focus and Windows text routing.
+Windows SDK syntax checks, Win2k/Win9x PE import audits and RH9 tests also pass.
+Real hardware is still needed to confirm acceleration and measure performance.

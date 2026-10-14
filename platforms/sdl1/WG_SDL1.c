@@ -31,7 +31,7 @@ static int opl_init(void) {
 #define WG_SDL1_OPL_NOTE "Native OPL: not compiled"
 #endif
 #ifdef _WIN32
-#define WG_SDL1_VIDEO_HELP "Windows: --sdl-video windib|directx (default windib).\n"
+#define WG_SDL1_VIDEO_HELP "Windows: --sdl-video windib|directx (default windib).\nDirectx tries hardware scaling; WOLF3D_SDL1_SCALE=software forces software.\n"
 #else
 #define WG_SDL1_VIDEO_HELP "Linux: X11 software video and OSS PCM.\n"
 #endif
@@ -46,13 +46,16 @@ static size_t pcm_read, pcm_count, pcm_limit;
 static unsigned pcm_channels;
 static int pcm_open;
 static SDL_Surface *screen;
-static unsigned *scale_x;
-static int scale_width;
+static SDL_Surface *software_frame;
 static int scale = 2, fullscreen, mouse = 1, joy = 1, capture, focused = 1;
 static SDL_Joystick *joysticks[WOLF3D_MAX_JOYSTICKS];
 static int16_t joy_x[WOLF3D_MAX_JOYSTICKS], joy_y[WOLF3D_MAX_JOYSTICKS];
 static uint32_t joy_buttons[WOLF3D_MAX_JOYSTICKS];
 static unsigned char joy_dirty[WOLF3D_MAX_JOYSTICKS], keys[256];
+
+#ifdef _WIN32
+#include "WG_SDL1_DDRAW.h"
+#endif
 
 static uint16_t scan(SDLKey key)
 {
@@ -94,7 +97,11 @@ static void mouse_capture(int value)
 }
 static int video(int width, int height)
 {
-    SDL_Surface *next = SDL_SetVideoMode(width, height, 32,
+    SDL_Surface *next;
+#ifdef _WIN32
+    dd_close();dd_disabled=0;
+#endif
+    next = SDL_SetVideoMode(width, height, 32,
         SDL_SWSURFACE | (fullscreen ? SDL_FULLSCREEN : SDL_RESIZABLE));
     if (!next) { fprintf(stderr, "SDL 1.2 video: %s\n", SDL_GetError()); return 0; }
     if(next->format->BytesPerPixel != 4) {
@@ -102,7 +109,8 @@ static int video(int width, int height)
         return 0;
     }
     screen = next;
-    free(scale_x);scale_x=NULL;scale_width=0;
+    if(software_frame)SDL_FreeSurface(software_frame);
+    software_frame=NULL;
     /* Software surfaces retain their borders between flips. */
     SDL_FillRect(screen,NULL,0);
     mouse_capture(capture);
@@ -128,8 +136,12 @@ static void shutdown_host(void)
         if(joysticks[i]) SDL_JoystickClose(joysticks[i]);
         joysticks[i]=NULL;
     }
+#ifdef _WIN32
+    dd_close();
+#endif
     SDL_Quit(); screen=NULL;
-    free(scale_x);scale_x=NULL;scale_width=0;
+    if(software_frame)SDL_FreeSurface(software_frame);
+    software_frame=NULL;
 }
 static int init(void)
 {
@@ -148,33 +160,24 @@ static int init(void)
 }
 static void present(const uint8_t *pixels, const uint8_t *palette)
 {
-    Uint32 colors[256];
-    int x,y,w,h,left,top,last=-1;
-    if(!screen || !pixels || !palette) return;
-    w=screen->w; h=w*3/4;
-    if(h>screen->h) { h=screen->h; w=h*4/3; }
-    if(w<1 || h<1) return;
-    left=(screen->w-w)/2; top=(screen->h-h)/2;
-    if(scale_width!=w) {
-        unsigned *next=(unsigned *)malloc((size_t)w*sizeof(*next));
-        if(!next)return;
-        for(x=0;x<w;++x)next[x]=(unsigned)((uint64_t)x*WOLF3D_SCREEN_WIDTH/w);
-        free(scale_x);scale_x=next;scale_width=w;
+    Uint32 colors[256];int x,y,w,h,left,top;SDL_Rect target;
+    if(!screen || !pixels || !palette)return;
+    w=screen->w;h=w*3/4;if(h>screen->h) {h=screen->h;w=h*4/3;}
+    if(w<1 || h<1)return;
+    left=(screen->w-w)/2;top=(screen->h-h)/2;
+#ifdef _WIN32
+    if(dd_present(pixels,palette,left,top,w,h))return;
+#endif
+    if(!software_frame)software_frame=SDL_CreateRGBSurface(SDL_SWSURFACE,320,200,32,
+        screen->format->Rmask,screen->format->Gmask,screen->format->Bmask,0);
+    if(!software_frame)return;
+    for(x=0;x<256;++x)colors[x]=SDL_MapRGB(software_frame->format,palette[x*3],palette[x*3+1],palette[x*3+2]);
+    for(y=0;y<200;++y) {
+        Uint32 *row=(Uint32 *)((Uint8 *)software_frame->pixels+y*software_frame->pitch);
+        for(x=0;x<320;++x)row[x]=colors[pixels[y*320+x]];
     }
-    for(x=0;x<256;++x) colors[x]=SDL_MapRGB(screen->format,palette[x*3],palette[x*3+1],palette[x*3+2]);
-    if(SDL_MUSTLOCK(screen) && SDL_LockSurface(screen)<0) return;
-    for(y=0;y<h;++y) {
-        Uint32 *row=(Uint32 *)((Uint8 *)screen->pixels+(y+top)*screen->pitch)+left;
-        int sy=(int)((uint64_t)y*WOLF3D_SCREEN_HEIGHT/h);
-        if(sy==last)memcpy(row,(Uint8 *)row-screen->pitch,(size_t)w*sizeof(*row));
-        else {
-            const uint8_t *src=pixels+sy*WOLF3D_SCREEN_WIDTH;
-            for(x=0;x<w;++x)row[x]=colors[src[scale_x[x]]];
-        }
-        last=sy;
-    }
-    if(SDL_MUSTLOCK(screen)) SDL_UnlockSurface(screen);
-    SDL_Flip(screen);
+    target.x=(Sint16)left;target.y=(Sint16)top;target.w=(Uint16)w;target.h=(Uint16)h;
+    if(SDL_SoftStretch(software_frame,NULL,screen,&target)==0)SDL_Flip(screen);
 }
 static uint32_t ticks(void) { return SDL_GetTicks(); }
 static void sleep_ms(uint32_t ms) { SDL_Delay(ms); }

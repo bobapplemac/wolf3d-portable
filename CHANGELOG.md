@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased - Native OPL timing diagnostics
+
+- Add opt-in `WOLF3D_OPL_TIMING=1` Win2k/XP playback counters written to `OPLTIME.TXT` on shutdown, to investigate native-versus-emulated tempo without adjusting playback speed.
+- Add sustained 700 Hz timeline tests at four PCM rates with coarse device positions and clock drift.
+- Explicitly label the RH9 build experimental in the build guide and support matrix, and correct its default driver list.
+
 ## Unreleased - Red Hat Linux 9 / i586
 
 - Include native AdLib by default in the RH9 SDL1 target, with quiet auto fallback and strict explicit selection; SDL/OSS still supplies PCM.

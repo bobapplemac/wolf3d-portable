@@ -626,7 +626,7 @@ ajmbuild01, glibc/ELF/SIMD audits, six SDL3 and five KMS/fbdev CTest checks,
 and packaged help/DBOPL diagnostics using dummy audio/video. These tests run
 32-bit binaries on an x64 host, not an emulated or physical Pentium Pro.
 
-### Red Hat Linux 9 / original Pentium
+### Red Hat Linux 9 / original Pentium (experimental)
 
 `make rh9-sdl1` builds the separate SDL 1.2 host against the RH9 sysroot.
 See [RH9/i586 instructions](linux-rh9.md) for options, dependencies and validation limits.

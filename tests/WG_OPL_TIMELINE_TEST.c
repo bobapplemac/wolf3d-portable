@@ -47,6 +47,30 @@ int main(void)
     assert(!WG_OPLTimelinePush(&t, 1, 0, 0, 48000));
     assert(WG_OPLTimelinePush(&t, 1, 0, 20, 11025));
     assert(!WG_OPLTimelinePush(&t, 1, 0, 19, 11025));
+    /* Two minutes at 700 IMF ticks/s: coarse waveOut positions must not
+       accumulate lost time, even when QPC runs 0.2% faster than the device. */
+    {
+        unsigned rates[] = {11025, 22050, 44100, 48000};
+        unsigned r, ms, emitted;
+        for (r=0;r<4;++r) {
+            uint32_t rate=rates[r];
+            WG_OPLTimelineInit(&t, rate, 1000000);
+            WG_OPLTimelineSubmit(&t, rate*121U, 0);
+            emitted=0;
+            for (ms=0;ms<=120000;++ms) {
+                uint64_t now=(uint64_t)ms*1002U;
+                uint32_t device=(uint32_t)((uint64_t)(ms/20*20)*rate/1000);
+                WG_OPLTimelineObserve(&t, device, now);
+                if (!t.count)
+                    assert(WG_OPLTimelinePush(&t, 1, 0, (uint64_t)emitted*rate/700, rate));
+                while (WG_OPLTimelinePop(&t, now, &e)) {
+                    ++emitted;
+                    assert(WG_OPLTimelinePush(&t, 1, 0, (uint64_t)emitted*rate/700, rate));
+                }
+            }
+            assert(emitted>=84000 && emitted<=84002);
+        }
+    }
     puts("OPL timeline: spacing, equal-time order, underruns, drift, wrap, overflow and restart passed.");
     return 0;
 }

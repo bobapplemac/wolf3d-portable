@@ -231,3 +231,27 @@ gcc -std=c99 -Wall -Wextra -Werror tests/WG_MODAL_FRAME_TEST.c -o build/modal-fr
 Run the three executables on Windows. They cover event spacing/order, timestamp
 wrap and clock correction, underruns, queue limits, worker cancellation/restart,
 and nested modal loops. Keep DOS/Win9x timing changes as a separate follow-up.
+
+## Windows native playback timing investigation
+
+For a sustained-tempo comparison, use the same explicit sample rate for AdLib
+and DBOPL. The engine uses the same 700 Hz music clock for both. Chip recovery
+waits are separate from timestamp scheduling; they should not add to song time
+unless the playback worker cannot keep up.
+
+To collect an opt-in Win2k/XP native timing report, launch from Command Prompt
+in a writable package directory:
+
+```bat
+set WOLF3D_OPL_TIMING=1
+wolf3d.exe --opl adlib --sample-rate 22050
+set WOLF3D_OPL_TIMING=
+```
+
+Leave the same menu song playing for about a minute, then quit normally.
+`OPLTIME.TXT` is appended after each native playback session stops. It records
+elapsed counter time, submitted PCM, last reported device position, late events,
+port-write/query workload and starvation counts. Counters stay in memory during
+playback; tracing adds counter-query overhead and is disabled unless requested.
+A position slightly behind elapsed time can be ordinary buffering/report latency;
+these figures are diagnostic evidence, not an automatic tempo correction.

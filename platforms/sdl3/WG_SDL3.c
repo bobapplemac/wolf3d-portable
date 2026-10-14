@@ -41,6 +41,8 @@ static int wg_start_fullscreen;
 static int wg_fullscreen;
 static int wg_fullscreen_enter_down;
 
+#include "WG_SDL_MODAL_FRAME.h"
+
 static int WG_SDLSetFullscreen(int fullscreen)
 {
     if (wg_window == NULL || fullscreen == wg_fullscreen)
@@ -358,12 +360,28 @@ static int WG_SDLInit(void)
         SDL_Quit();
         return 0;
     }
+    wg_sdl_modal_window_id = SDL_GetWindowID(wg_window);
+    if (!SDL_AddEventWatch(WG_SDLModalFrameWatch, NULL))
+    {
+        fprintf(stderr, "wolf3d: SDL modal frame watch failed: %s\n", SDL_GetError());
+        wg_sdl_modal_window_id = 0;
+        SDL_DestroyTexture(wg_texture);
+        SDL_DestroyRenderer(wg_renderer);
+        SDL_DestroyWindow(wg_window);
+        wg_texture = NULL;
+        wg_renderer = NULL;
+        wg_window = NULL;
+        SDL_Quit();
+        return 0;
+    }
     WG_SDLRefreshGamepads();
     return 1;
 }
 
 static void WG_SDLShutdown(void)
 {
+    SDL_RemoveEventWatch(WG_SDLModalFrameWatch, NULL);
+    wg_sdl_modal_window_id = 0;
     if (wg_audio != NULL)
     {
         SDL_DestroyAudioStream(wg_audio);

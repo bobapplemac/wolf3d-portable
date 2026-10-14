@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Keep SDL3 simulation, audio and memory rendering running during native
+  move/resize loops using main-thread live-resize event watches. Defer window
+  presentation until normal polling resumes; test event and thread filtering.
+
 ## 1.4.85 - 2026-10-14 - Keep game frames running during window dragging
 
 - Pump the shared engine frame update during GDI move/resize/system-menu loops,

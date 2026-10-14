@@ -176,3 +176,11 @@ audio and memory framebuffer running. To avoid expensive scaling on older
 machines, the host skips GDI presentation until the modal loop ends, then
 shows the latest frame. The visible image can remain still during a drag;
 gameplay is not paused unless an explicit game pause/menu already requires it.
+
+### SDL3 windows
+
+SDL3 live-resize events also keep simulation, audio and the internal framebuffer
+running during native move/resize loops. The host skips presentation from these
+callbacks; normal presentation resumes when event polling returns. Explicit
+in-game pauses still apply. On desktops without a blocking modal loop, the
+ordinary frame loop continues to render and present normally.

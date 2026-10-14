@@ -345,6 +345,16 @@ if(W3P_BUILD_SDL3)
         COMMENT "Staging ${W3P_SDL3_RELEASE_DIR_ARCH} SDL3 release" VERBATIM)
     if(BUILD_TESTING)
         add_test(NAME sdl3-help COMMAND wolf3d-sdl3 --help)
+        add_executable(wg-sdl-modal-frame-test tests/WG_SDL_MODAL_FRAME_TEST.c)
+        target_link_libraries(wg-sdl-modal-frame-test PRIVATE SDL3::SDL3-shared)
+        if(WIN32)
+            add_custom_command(TARGET wg-sdl-modal-frame-test POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "$<TARGET_FILE:SDL3::SDL3-shared>"
+                    "$<TARGET_FILE_DIR:wg-sdl-modal-frame-test>"
+                VERBATIM)
+        endif()
+        add_test(NAME sdl3-modal-frame COMMAND wg-sdl-modal-frame-test)
     endif()
 endif()
 

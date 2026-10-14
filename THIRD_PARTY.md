@@ -95,3 +95,10 @@ upstream copyright/license collections distributed in Debian's libdrm2 and
 libasound2t64 copyright files (copied from ajmbuild01 on 2026-10-09). The full
 LGPL-2.1 text is also shipped in DOCS/LICENSES/LGPL-21.TXT. See the existing musl
 notices for the loader/libc license and corresponding source.
+
+## SDL 1.2 (optional RH9 build)
+
+The RH9 Docker target builds unmodified SDL 1.2.15 from the official source
+archive, verified by packaging/linux-rh9/SHA256SUMS. SDL is copyright Sam Lantinga
+and contributors, LGPL 2.1 or later. Packages retain a replaceable shared library,
+license and source/build instructions. See [RH9 packaging](docs/linux-rh9.md).

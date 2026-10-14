@@ -58,6 +58,15 @@ class LegacyOplChoices(unittest.TestCase):
                         self.assertIn('OPL_DRIVERS=' + expected, command)
                         if target.startswith('portable'):
                             self.assertIn('LINUX_ARCH=' + ('x86' if path[2] == '2' else 'x64'), command)
+            for custom in (False, True):
+                answers=['2','3'] + (['2','2',''] if custom else ['']) + ['', 'n']
+                result=subprocess.run(['bash',str(script)],input='\n'.join(answers)+'\n',text=True,capture_output=True,env=env,timeout=10)
+                self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+                self.assertIn('invoke-build.sh rh9-sdl1',result.stdout)
+                self.assertIn('RH9_NUKED='+('ON' if custom else 'OFF'),result.stdout)
+                self.assertIn('RH9_DBOPL=ON',result.stdout)
+                self.assertIn('RH9_OPL_DEFAULT=auto',result.stdout)
+                self.assertNotIn('adlib',result.stderr.split('Audio options')[-1])
             result = subprocess.run(['bash', str(script)], input='5\nn\n', text=True,
                                     capture_output=True, env=env, timeout=10)
             self.assertEqual(result.returncode, 0, result.stderr)

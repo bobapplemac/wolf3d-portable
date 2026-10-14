@@ -87,16 +87,20 @@ case "$family" in
         case "$backend" in SDL3) target=sdl3-release ;; KMS/fbdev) target=console-release ;; both) target=releases ;; esac
         label="Linux $host_arch $backend (local toolchain)" ;;
     linux)
-        profile=$(choose 'Linux compatibility profile' 'glibc 2.28 portable' 'musl relocatable (x64 only)')
+        profile=$(choose 'Linux compatibility profile' 'glibc 2.28 portable' 'musl relocatable (x64 only)' 'Red Hat 9 i586 SDL 1.2')
         if [[ $profile == glibc* ]]; then
             arch=$(choose 'Target architecture' 'x64 (64-bit Intel/AMD)' 'x86 legacy (Pentium Pro/i686; no SSE)')
             [[ $arch == x86* ]] && linux_arch=x86
         fi
+        if [[ $profile == 'Red Hat'* ]]; then
+            backend='SDL 1.2'; target=rh9-sdl1; linux_arch=x86
+        else
         backend=$(choose 'Linux backend' SDL3 KMS/fbdev both)
         if [[ $profile == glibc* ]]; then
             case "$backend" in SDL3) target=portable-sdl3 ;; KMS/fbdev) target=portable-console ;; both) target=portable ;; esac
         else
             case "$backend" in SDL3) target=musl-sdl3 ;; KMS/fbdev) target=musl-console ;; both) target=musl-all ;; esac
+        fi
         fi
         label="Linux $profile $linux_arch $backend (Docker)" ;;
     windows)
@@ -117,7 +121,7 @@ case "$family" in
 esac
 
 compiler=gcc
-if [[ $target != portable* && $target != musl-* && $target != dos-* && $target != windows-* && $target != clean ]]; then
+if [[ $target != portable* && $target != musl-* && $target != rh9-* && $target != dos-* && $target != windows-* && $target != clean ]]; then
     compilers=()
     ready gcc && compilers+=(gcc)
     ready clang && compilers+=(clang)
@@ -133,6 +137,8 @@ fi
 default_opl=auto
 if [[ $target == dos-* || $target == windows-win9x || $target == windows-win2k || $target == windows-xp || ( $target == portable* && $linux_arch == x86 ) ]]; then
     drivers=dbopl-silent-adlib
+elif [[ $target == rh9-* ]]; then
+    drivers=dbopl-silent
 elif [[ $target == windows-* ]]; then
     drivers=nuked-dbopl-silent
 else
@@ -141,7 +147,11 @@ fi
 if [[ $target != clean ]]; then
     audio=$(choose 'Audio options' "Use recommended settings ($drivers; auto sample rate)" 'Customize compiled drivers and default')
     if [[ $audio == Customize* ]]; then
+        if [[ $target == rh9-* ]]; then
+            drivers=$(choose 'Compiled OPL drivers' dbopl-silent nuked-dbopl-silent nuked-silent silent)
+        else
         drivers=$(choose 'Compiled OPL drivers' "$drivers" nuked-dbopl-silent-adlib nuked-dbopl-silent nuked-silent dbopl-silent adlib-silent silent)
+        fi
         IFS=- read -r -a defaults <<< "$drivers"
         default_opl=$(choose 'Default OPL driver' auto "${defaults[@]}")
     fi
@@ -173,6 +183,10 @@ if [[ $target == windows-win2k ]]; then
 fi
 if [[ $target == windows-xp ]]; then
     args+=("WINXP_OPL_DRIVERS=$opl_drivers" "WINXP_OPL_DEFAULT=$default_opl")
+fi
+if [[ $target == rh9-* ]]; then
+    args=("$target" "RH9_NUKED=$(case $drivers in *nuked*) echo ON;; *) echo OFF;; esac)"
+          "RH9_DBOPL=$(case $drivers in *dbopl*) echo ON;; *) echo OFF;; esac)" "RH9_OPL_DEFAULT=$default_opl")
 fi
 [[ $target == portable* ]] && args+=("LINUX_ARCH=$linux_arch")
 [ -n "$jobs" ] && args+=("JOBS=$jobs")

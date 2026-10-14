@@ -147,3 +147,9 @@ Modern Windows GDI and SDL3 can opt in, but do not bundle InpOut DLLs; x64
 requires inpoutx64.dll. Modern Windows native hardware remains unconfirmed. Linux native OPL
 is build- and mock-tested; physical playback confirmation is pending. ALSA/SDL
 PCM remains independent. Other Linux architectures do not implement ISA port I/O.
+
+## Historical Linux
+
+The [RH9/i586 SDL 1.2 profile](linux-rh9.md) uses an independent old sysroot,
+X11 and OSS, with DBOPL/silent by default. Build/ABI tests are separate from
+pending Linux 2.4 and physical original-Pentium runtime confirmation.

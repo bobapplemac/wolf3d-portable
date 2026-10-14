@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - Red Hat Linux 9 / i586
+
+- Add a separate SDL 1.2 host with 4:3 software video, keyboard/mouse/joystick input and bounded OSS PCM buffering.
+- Add checksum-pinned RH9 Docker/sysroot builds, optional Nuked and default DBOPL/silent, without engine changes.
+- Add host/ABI/i586 regression tests, guided-menu integration and setup/validation documentation.
+- Mark actual Linux 2.4 and physical i586 runtime validation pending; native OPL and legacy Windows SDL1 are deferred.
+
 ## 1.4.88 - 2026-10-14 - Build profiles and native OPL
 
 - Group guided Linux builds by platform, compatibility, architecture and backend.

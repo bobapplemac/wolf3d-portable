@@ -3,7 +3,8 @@
 Runnable Wolfenstein 3D and Spear of Destiny applications built on the
 preservation-oriented [wolf3d-lib](https://github.com/bobapplemac/wolf3d-lib) engine.
 Choose GDI on Windows, SDL3 on desktop systems, KMS/fbdev on a Linux console,
-or VGA on 32-bit DOS. See the [support matrix](docs/support-matrix.md) for
+or VGA on 32-bit DOS. An experimental [SDL 1.2 target](docs/linux-rh9.md)
+also supports Red Hat Linux 9 / i586. See the [support matrix](docs/support-matrix.md) for
 compiler, operating-system and runtime validation details.
 
 Original game data is required and is not included. The [running guide](docs/running.md)

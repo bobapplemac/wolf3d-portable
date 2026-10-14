@@ -128,6 +128,7 @@ help:
 		'  make windows-win10          LLVM-MinGW/UCRT Win10 x64 GDI + SDL3.' \
 		'  make windows-cross          Build every Windows cross profile.' \
 		'' \
+		'  rh9-sdl1                    Red Hat 9 i586 SDL 1.2 distribution (Docker).' \
 		'Useful variables:' \
 		'  CC=gcc|clang                 Compiler (default: gcc).' \
 		'  LINUX_ARCH=x64|x86          Docker glibc target (x86: Pentium Pro/i686, no SSE).' \
@@ -419,3 +420,16 @@ clean-windows-cross:
 		$(DOCKER) image rm "$(WINDOWS_LLVM_MINGW_MSVC_IMAGE)" >/dev/null 2>&1 || true; \
 		$(DOCKER) image rm "$(WINDOWS_LLVM_MINGW_UCRT_IMAGE)" >/dev/null 2>&1 || true; fi
 clean: clean-sdl3 clean-console clean-portable clean-musl clean-dos clean-windows-cross
+
+# RH9 uses its own old sysroot/SDL1 host; it never reuses Debian/glibc artifacts.
+RH9_BUILD_IMAGE ?= wolf3d-portable-build-rh9-i586
+RH9_NUKED ?= OFF
+RH9_DBOPL ?= ON
+RH9_OPL_DEFAULT ?= auto
+.PHONY: rh9-image rh9-sdl1
+rh9-image:
+	$(DOCKER) build --platform linux/amd64 -t "$(RH9_BUILD_IMAGE)" packaging/linux-rh9
+rh9-sdl1: rh9-image
+	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" -v "$(CURDIR):/src" -w /src \
+		-e RH9_NUKED=$(RH9_NUKED) -e RH9_DBOPL=$(RH9_DBOPL) -e RH9_OPL_DEFAULT=$(RH9_OPL_DEFAULT) \
+		-e JOBS=$(if $(JOBS),$(JOBS),4) $(DOCKER_RUN_ARGS) "$(RH9_BUILD_IMAGE)" sh scripts/linux/build-rh9.sh

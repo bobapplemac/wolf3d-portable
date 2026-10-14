@@ -48,6 +48,7 @@ for the mapping and the distinction from MSBuild toolset selection.
 | --- | --- | --- | --- | --- | --- | --- |
 | MSYS2 UCRT64 | MinGW-w64 GCC 16.2 | x64 | Validated | Validated | `build.ps1`, CMake presets | Both packaged wrappers validated with WL1 data on Windows 11 x64; dependency audit rejects MSYS2/Cygwin runtime leakage |
 | Linux Docker / Open Watcom | pinned Open Watcom 2 | x86 | Validated | Not supported | `make windows-win9x` | PE/import audit passed for Win9x profile; destination runtime pending |
+| Linux Docker / MinGW-w64 MSVCRT | GCC 12 | x86 | Validated | Not supported | `make windows-win2000` | 2000 profile PE/import audit passed; destination runtime pending |
 | Linux Docker / MinGW-w64 MSVCRT | GCC 12 | x86 | Validated | Not supported | `make windows-xp` | XP profile PE/import audit passed; destination runtime pending |
 | Linux Docker / MinGW-w64 MSVCRT | GCC 12 | x86, x64 | Validated | Validated | `make windows-win7` | Win7 profile PE/import audit passed; destination runtime pending |
 | Linux Docker / LLVM-MinGW MSVCRT | LLVM 23 | x86, x64 | Validated | Validated | `make windows-llvm-win7` | Independent Win7 profile PE/import audit passed; destination runtime pending |

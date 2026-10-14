@@ -7,9 +7,21 @@ jobs=${W3P_WINDOWS_CROSS_JOBS:-}
 drivers=${W3P_WINDOWS_CROSS_OPL_DRIVERS:-nuked,dbopl,silent}
 default_driver=${W3P_WINDOWS_CROSS_DEFAULT_OPL:-nuked}
 sample_rate=${W3P_WINDOWS_CROSS_SAMPLE_RATE:-48000}
+if [ "$profile" = mingw-win2000-x86 ]; then
+    drivers=${W3P_WINDOWS_CROSS_OPL_DRIVERS:-dbopl,silent}
+    default_driver=${W3P_WINDOWS_CROSS_DEFAULT_OPL:-dbopl}
+fi
 version=$(sed -n '1p' "$root/lib/wolf3d/VERSION")
 
 case "$profile" in
+    mingw-win2000-x86)
+        toolchain=mingw-gcc-i686.cmake
+        compiler_label=mingw-gcc-win2000
+        minimum_windows=0x0500
+        arch=x86
+        build_sdl=OFF
+        release_targets=win32-release
+        ;;
     mingw-xp-x86)
         toolchain=mingw-gcc-i686.cmake
         compiler_label=mingw-gcc-xp
@@ -65,6 +77,7 @@ case "$profile" in
 esac
 
 case "$profile" in
+    *-win2000-*) dist_platform=win2000 ;;
     *-xp-*) dist_platform=winxp ;;
     *-win7-*) dist_platform=win7 ;;
     *-win10-*) dist_platform=win10 ;;
@@ -86,6 +99,7 @@ cmake -S "$root" -B "$build_dir" -G Ninja \
     -DW3P_WARNINGS_AS_ERRORS=ON \
     -DW3P_COMPILER_LABEL="$compiler_label" \
     -DWG_STATIC_GNU_RUNTIME=ON \
+    -DWG_ENABLE_OPL_ADLIB=OFF \
     -DWG_ENABLE_OPL_NUKED=$(case ",$drivers," in *,nuked,*) echo ON;; *) echo OFF;; esac) \
     -DWG_ENABLE_OPL_DBOPL=$(case ",$drivers," in *,dbopl,*) echo ON;; *) echo OFF;; esac) \
     -DWG_ENABLE_OPL_SILENT=$(case ",$drivers," in *,silent,*) echo ON;; *) echo OFF;; esac) \

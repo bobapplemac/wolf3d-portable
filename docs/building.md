@@ -486,3 +486,29 @@ DPMI failure handling, artwork preservation, prompt attributes, narrow screens
 and full-height cards. Confirm final DOS/32A shutdown and COMMAND.COM prompt
 colors on physical hardware as well.
 `tests/WG_DOS_VIDEO_SMOKE.c` also exercises the production helpers under DOS/32A: BIOS graphics/text mode switches, B800 text attributes, and exact real-mode vector restoration. Its result is written to `VIDEO.TXT`.
+
+## Windows 2000 Docker target
+
+Run `make windows-win2000` on Linux (or choose the Windows 2000 option in
+`./build.sh`). The pinned Debian/MinGW-w64 GCC image builds x86 MSVCRT binaries;
+no Windows development VM is required. The target is included in
+`make windows-cross`. The portable package uses GDI and legacy mouse input,
+without the XP-only Raw Input imports. SDL3 is not supported on this target.
+
+Defaults include only DBOPL and silent, with DBOPL selected. The target-specific
+`WIN2000_OPL_DRIVERS` and `WIN2000_OPL_DEFAULT` Make variables override these;
+general OPL settings for other targets do not change them. Native AdLib access
+is not implemented for Windows 2000/XP. The existing `SAMPLE_RATE` override is
+supported (default 48000 Hz); use the runtime `--sample-rate` option to compare
+rates on slower hardware. Other platform defaults are unchanged.
+
+The PE audit checks x86 architecture, runtime dependencies, known post-2000
+imports and the subsystem version of each staged EXE/DLL. This is not a full
+Windows API compatibility proof: Windows 2000 startup, input, sound and
+performance still require physical testing. Use a fully updated Windows 2000
+SP4 installation for the initial test baseline.
+
+On a Windows test host, run `tests/WG_WIN9X_SMOKE.ps1 -Profile win2000` with
+`-PackagePath` and `-WorkRoot` to verify the default driver, exact compiled
+driver list, CLI/INI handling and rejection of unavailable native AdLib.
+Running this on modern Windows does not establish Windows 2000 compatibility.

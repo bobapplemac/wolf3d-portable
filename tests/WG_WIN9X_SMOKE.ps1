@@ -1,5 +1,6 @@
 param(
     [Parameter(Mandatory = $true)][string]$PackagePath,
+    [ValidateSet('win9x', 'win2000')][string]$Profile = 'win9x',
     [string]$WorkRoot = (Join-Path $PSScriptRoot '../build/win9x-smoke')
 )
 $ErrorActionPreference = 'Stop'
@@ -14,9 +15,12 @@ $fixture = (Resolve-Path -LiteralPath $fixture).Path
 $exe = Join-Path $gameDir 'WOLF3D.EXE'
 $bytes = [IO.File]::ReadAllBytes($exe)
 $pe = [BitConverter]::ToInt32($bytes, 0x3c)
-if ([BitConverter]::ToUInt16($bytes, $pe + 92) -ne 3) {
-    throw 'Win9x executable must use the console subsystem.'
+$expectedSubsystem = if ($Profile -eq 'win9x') { 3 } else { 2 }
+if ([BitConverter]::ToUInt16($bytes, $pe + 92) -ne $expectedSubsystem) {
+    throw 'Unexpected PE subsystem.'
 }
+$defaultDriver = if ($Profile -eq 'win9x') { 'adlib' } else { 'dbopl' }
+$compiledDrivers = if ($Profile -eq 'win9x') { 'dbopl silent adlib' } else { 'dbopl silent' }
 function Check-Run([string]$Arguments, [int]$ExpectedExit, [string]$ExpectedText) {
     $info = New-Object Diagnostics.ProcessStartInfo
     $info.FileName = $exe
@@ -37,19 +41,22 @@ function Check-Run([string]$Arguments, [int]$ExpectedExit, [string]$ExpectedText
     Write-Host "PASS: $Arguments"
     return $output
 }
-$help = Check-Run '--no-config --help' 0 'Compiled OPL drivers: dbopl silent adlib'
-if ($help -notmatch 'Default OPL driver: adlib') { throw 'Wrong default driver.' }
+$help = Check-Run '--no-config --help' 0 "Compiled OPL drivers: $compiledDrivers(?:\r?\n|$)"
+if ($help -notmatch "Default OPL driver: $defaultDriver") { throw 'Wrong default driver.' }
 $null = Check-Run '--no-config --diag --opl dbopl' 0 'Requested OPL driver \(not probed\): dbopl'
 $ini = Join-Path $gameDir 'Wolf3d.ini'
 [IO.File]::WriteAllText($ini, "--opl dbopl`n")
 $diagnostics = Check-Run '--diag' 0 'Requested OPL driver \(not probed\): dbopl'
 if ($diagnostics -notmatch 'Config:.*[\\/]wolf3d\.ini') { throw 'INI was not loaded beside the executable.' }
 $null = Check-Run '--diag --opl silent' 0 'Requested OPL driver \(not probed\): silent'
-$null = Check-Run '--no-config --diag' 0 'Requested OPL driver \(not probed\): adlib'
+$null = Check-Run '--no-config --diag' 0 "Requested OPL driver \(not probed\): $defaultDriver"
 $null = Check-Run '--no-config --opl dbpol' 1 'Unknown or unavailable OPL driver: dbpol'
+if ($Profile -eq 'win2000') {
+    $null = Check-Run '--no-config --opl adlib' 1 'Unknown or unavailable OPL driver: adlib'
+}
 $null = Check-Run '--no-config --opl nuked' 1 'Unknown or unavailable OPL driver: nuked'
 $null = Check-Run '--no-config --opl' 1 '--opl requires a driver name'
 [IO.File]::WriteAllText($ini, "--opl dbpol`n")
 $null = Check-Run '--diag' 1 'Unknown or unavailable OPL driver: dbpol'
 $null = Check-Run '--diag --opl dbopl' 0 'Requested OPL driver \(not probed\): dbopl'
-Write-Output "Win9x binary smoke checks passed. Fixture retained at $fixture"
+Write-Output "$Profile binary smoke checks passed. Fixture retained at $fixture"

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.81 - 2026-10-14 - Windows 2000 Docker target
+
+- Add a Windows 2000 x86 MinGW/MSVCRT Docker target, guided build choice and
+  distribution vocabulary, with DBOPL/silent only and DBOPL selected by default.
+- Select the legacy mouse path for pre-XP targets and preserve redirected
+  help/diagnostic output before attaching a parent console.
+- Audit known post-2000 imports and PE subsystem versions; native AdLib support
+  remains deferred and physical Windows 2000 runtime validation is pending.
+
 ## 1.4.80 - 2026-10-14 - DOS and Win9x hardware audio and exit cleanup
 
 - Add DSP 2.x/3.x 8-bit mono DMA output for SB2/SB Pro-compatible cards while

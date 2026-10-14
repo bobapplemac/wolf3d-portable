@@ -37,9 +37,20 @@ static int WG_AttachHelpConsole(void)
 
 static wg_help_stream_t WG_OpenHelpStream(void)
 {
-    int attached = WG_AttachHelpConsole();
+    int attached;
     wg_help_stream_t stream;
+    DWORD output_type;
 
+    /* Preserve redirected output before AttachConsole replaces standard
+       handles. This also works on Windows 2000, which lacks AttachConsole. */
+    stream.handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    stream.close_handle = 0;
+    output_type = GetFileType(stream.handle);
+    if (output_type == FILE_TYPE_PIPE || output_type == FILE_TYPE_DISK)
+    {
+        return stream;
+    }
+    attached = WG_AttachHelpConsole();
     stream.handle = attached ? CreateFileA(
         "CONOUT$", GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
         NULL, OPEN_EXISTING, 0, NULL) : GetStdHandle(STD_OUTPUT_HANDLE);

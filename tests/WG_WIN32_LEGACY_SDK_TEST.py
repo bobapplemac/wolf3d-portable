@@ -24,19 +24,22 @@ class LegacySDKTests(unittest.TestCase):
             env = dict(os.environ)
             env['PATH'] = str(Path(compiler).parent) + os.pathsep + env['PATH']
             host = (ROOT / 'platforms/win32/WG_WIN32.c').as_posix()
-            for mode in ('current-sdk', 'missing-metric', 'existing-definition'):
+            for mode in ('current-sdk', 'missing-metric', 'existing-definition', 'win2000'):
                 with self.subTest(mode=mode):
                     prefix = '#include <windows.h>\n'
-                    if mode != 'current-sdk':
+                    if mode in ('missing-metric', 'existing-definition'):
                         prefix += '#undef SM_CMONITORS\n'
                     expected = 80
                     if mode == 'existing-definition':
                         prefix += '#define SM_CMONITORS 123\n'
                         expected = 123
+                    if mode == 'win2000':
+                        prefix = '#define _WIN32_WINNT 0x0500\n#define WINVER 0x0500\n' + prefix
                     source.write_text(prefix + '#include "' + host + '"\n'
                                       '#if SM_CMONITORS != %d\n#error Unexpected metric value\n#endif\n' % expected)
                     result = subprocess.run([compiler, '-fsyntax-only', '-std=c89',
-                                             '-DWG_LEGACY_WIN32=1', '-DUNICODE', '-D_UNICODE',
+                                             *(['-DWG_LEGACY_WIN32=1'] if mode != 'win2000' else []),
+                                             '-DUNICODE', '-D_UNICODE',
                                              '-I', str(ROOT / 'lib/wolf3d/include'), str(source)],
                                             env=env, capture_output=True, text=True)
                     self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

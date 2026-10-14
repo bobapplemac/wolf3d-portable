@@ -1,3 +1,10 @@
+/* Windows 2000 predates Raw Input; use the existing legacy mouse path. */
+#if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0501
+#ifndef WG_LEGACY_WIN32
+#define WG_LEGACY_WIN32 1
+#endif
+#endif
+
 #if defined(_MSC_VER)
 #define _CRT_SECURE_NO_WARNINGS
 #endif

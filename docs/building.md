@@ -553,10 +553,21 @@ The win2k GDI package uses a console-subsystem launcher (like Win9x), because
 Windows 2000 has no `AttachConsole` API. Start it from a command prompt to keep
 help, diagnostics and the colored B800 exit/error card visible after it exits.
 The game itself still runs in its graphical window. An Explorer launch creates
-its own console, which normally closes when the process exits. A hard crash
+its own console and waits for a fresh keypress before closing. Use `--no-pause`
+on the command line or as a line in `Wolf3d.ini` to disable this wait. A hard crash
 cannot guarantee the engine's error-screen or display-restoration cleanup.
 
 On Windows, run `python tests/WG_WIN2K_CONSOLE_TEST.py PATH/TO/wolf3d.exe`
 with MinGW GCC on PATH. The companion `tests/WG_WIN2K_CONSOLE_TEST.c` creates
 an isolated hidden console and checks real console-buffer help/diagnostic
 output and the shared B800 renderer, rather than testing redirected pipes alone.
+
+Win9x and win2k console launchers pause after gameplay, help, diagnostics and
+handled errors only when they detect a private interactive console. Redirected
+input/output and launches from a normal command prompt do not pause. Keyboard
+keys held at exit must be released and queued input is discarded before the
+prompt accepts a fresh keypress. On XP and newer, detection uses the dynamically
+loaded console process-list API. Win9x/2000 lack that API, so detection uses the
+initial untouched (0,0) console cursor. An unusual launcher or batch file that
+clears an inherited console to (0,0) without printing a prompt can resemble a
+new console; use `--no-pause` for those automation cases.

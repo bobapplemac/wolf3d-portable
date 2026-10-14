@@ -6,6 +6,15 @@
 #include <assert.h>
 #include "../platforms/WG_TEXT_OUTPUT.h"
 
+static int legacy_detection;
+static FARPROC WINAPI test_lookup(HMODULE module, LPCSTR name)
+{
+    return legacy_detection ? NULL : GetProcAddress(module, name);
+}
+#define GetProcAddress test_lookup
+#include "../platforms/win32/WG_WIN32_CONSOLE.h"
+#undef GetProcAddress
+
 static char log_path[MAX_PATH + 8];
 static void failure(int line)
 {
@@ -43,6 +52,39 @@ static void clear(HANDLE output)
     assert(FillConsoleOutputCharacterA(output, ' ', 2000, origin, &written));
     assert(SetConsoleCursorPosition(output, origin));
 }
+static volatile LONG fresh_key_sent;
+static DWORD WINAPI dismiss_prompt(LPVOID parameter)
+{
+    HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE input = GetStdHandle(STD_INPUT_HANDLE);
+    COORD origin = {0, 0};
+    INPUT_RECORD event;
+    char text[2001];
+    DWORD count;
+    unsigned attempt;
+    (void)parameter;
+    for (attempt = 0; attempt < 100; ++attempt)
+    {
+        assert(ReadConsoleOutputCharacterA(output, text, 2000, origin, &count));
+        text[count] = 0;
+        if (strstr(text, "Press any key to close...") != NULL)
+        {
+            ZeroMemory(&event, sizeof(event));
+            event.EventType = KEY_EVENT;
+            event.Event.KeyEvent.bKeyDown = TRUE;
+            event.Event.KeyEvent.wVirtualKeyCode = 'A';
+            event.Event.KeyEvent.wRepeatCount = 1;
+            Sleep(100);
+            InterlockedExchange(&fresh_key_sent, 1);
+            assert(WriteConsoleInputA(input, &event, 1, &count));
+            return 0;
+        }
+        Sleep(10);
+    }
+    failure(__LINE__);
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     HANDLE output;
@@ -52,6 +94,11 @@ int main(int argc, char **argv)
     unsigned i;
     unsigned char cells[4000];
     CHAR_INFO cell;
+    HANDLE thread;
+    DWORD old_mode, new_mode;
+    INPUT_RECORD stale;
+    COORD moved = {0, 1};
+    char *options[] = {"wolf3d", "--no-pause"};
     COORD size = {1, 1};
     SMALL_RECT region = {0, 0, 0, 0};
     sprintf(log_path, "%s.log", argv[0]);
@@ -66,12 +113,19 @@ int main(int argc, char **argv)
             if (log) { while (fgets(text, sizeof(text), log)) fputs(text, stderr); fclose(log); }
             return 1;
         }
-        puts("Inherited console help/diagnostics and B800 output passed");
+        puts("Console inheritance, B800 output, detection and exit pause passed");
         return 0;
     }
     assert(argc == 3);
     output = GetStdHandle(STD_OUTPUT_HANDLE);
     assert(output != INVALID_HANDLE_VALUE);
+    clear(output);
+    assert(WG_OwnConsole());
+    legacy_detection = 1;
+    assert(WG_OwnConsole());
+    assert(SetConsoleCursorPosition(output, moved));
+    assert(!WG_OwnConsole());
+    legacy_detection = 0;
     clear(output);
     sprintf(command, "\"%s\" --no-config --help", argv[2]);
     assert(run(command, 0, 1) == 0);
@@ -90,6 +144,25 @@ int main(int argc, char **argv)
     WG_WriteWindowsTextScreen(cells, 80, 25);
     assert(ReadConsoleOutputA(output, &cell, size, origin, &region));
     assert(cell.Char.AsciiChar == 'W' && cell.Attributes == 0x1e);
+    assert(WG_NoPause(2, options) && !WG_NoPause(1, options));
+    WG_PauseConsole(0, 0);
+    WG_PauseConsole(1, 1);
+    clear(output);
+    assert(GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &old_mode));
+    ZeroMemory(&stale, sizeof(stale));
+    stale.EventType = KEY_EVENT;
+    stale.Event.KeyEvent.bKeyDown = TRUE;
+    stale.Event.KeyEvent.wVirtualKeyCode = 'Q';
+    stale.Event.KeyEvent.wRepeatCount = 1;
+    assert(WriteConsoleInputA(GetStdHandle(STD_INPUT_HANDLE), &stale, 1, &count));
+    thread = CreateThread(NULL, 0, dismiss_prompt, NULL, 0, NULL);
+    assert(thread != NULL);
+    WG_PauseConsole(1, 0);
+    assert(fresh_key_sent);
+    assert(WaitForSingleObject(thread, 2000) == WAIT_OBJECT_0);
+    CloseHandle(thread);
+    assert(GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &new_mode));
+    assert(old_mode == new_mode);
     return 0;
 }
 

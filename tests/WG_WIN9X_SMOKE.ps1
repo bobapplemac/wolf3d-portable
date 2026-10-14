@@ -41,6 +41,7 @@ function Check-Run([string]$Arguments, [int]$ExpectedExit, [string]$ExpectedText
     Write-Host "PASS: $Arguments"
     return $output
 }
+$null = Check-Run '--no-config --no-pause --help' 0 'Compiled OPL drivers:'
 $null = Check-Run '--no-config /?' 0 'Compiled OPL drivers:'
 $help = Check-Run '--no-config --help' 0 "Compiled OPL drivers: $compiledDrivers(?:\r?\n|$)"
 if ($help -notmatch "Default OPL driver: $defaultDriver") { throw 'Wrong default driver.' }
@@ -71,4 +72,6 @@ $null = Check-Run '--diag' 0 'Window scale: 1 \(320x240\)'
 $null = Check-Run '--diag --window-scale 2 --fullscreen-resolution 640x480' 0 'Fullscreen resolution: 640x480'
 [IO.File]::WriteAllText($ini, "--window-scale invalid`n")
 $null = Check-Run '--diag --window-scale 2' 0 'Window scale: 2'
+[IO.File]::WriteAllText($ini, "--no-pause`n")
+$null = Check-Run '--diag' 0 '--no-pause'
 Write-Output "$Profile binary smoke checks passed. Fixture retained at $fixture"

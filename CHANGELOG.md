@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - 2026-10-14 - Private-console exit pause
+
+- Preserve Win9x/win2k exit cards and CLI output in newly created interactive
+  consoles with a fresh-keypress prompt; add CLI/INI `--no-pause` opt-out.
+- Skip pauses for redirected streams and ordinary command-prompt launches;
+  document the legacy console-detection heuristic and discard stale input.
+
 ## Unreleased - 2026-10-14 - Win2k console inheritance
 
 - Use a Unicode console entry point for win2k so CMD.EXE waits for the game and

@@ -5,12 +5,12 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
 profile=${W3P_WINDOWS_CROSS_PROFILE:?set W3P_WINDOWS_CROSS_PROFILE}
 jobs=${W3P_WINDOWS_CROSS_JOBS:-}
 drivers=${W3P_WINDOWS_CROSS_OPL_DRIVERS:-nuked,dbopl,silent}
-case ",$drivers," in *,silent,*) ;; *) drivers="$drivers,silent" ;; esac
 default_driver=${W3P_WINDOWS_CROSS_DEFAULT_OPL:-auto}
 if [ "$profile" = mingw-win2k-x86 ] || [ "$profile" = mingw-xp-x86 ]; then
     drivers=${W3P_WINDOWS_CROSS_OPL_DRIVERS:-dbopl,silent,adlib}
     default_driver=${W3P_WINDOWS_CROSS_DEFAULT_OPL:-auto}
 fi
+case ",$drivers," in *,silent,*) ;; *) drivers="$drivers,silent" ;; esac
 version=$(sed -n '1p' "$root/lib/wolf3d/VERSION")
 
 case "$profile" in
@@ -90,10 +90,7 @@ esac
 native_opl=OFF
 case ",$drivers," in
     *,adlib,*)
-        case "$profile" in
-            mingw-win2k-x86|mingw-xp-x86) native_opl=ON ;;
-            *) echo "Native AdLib is currently supported only by win2k/XP x86 GDI profiles" >&2; exit 2 ;;
-        esac ;;
+        native_opl=ON ;;
 esac
 build_dir="$root/build/windows-cross-$profile"
 cmake -S "$root" -B "$build_dir" -G Ninja \

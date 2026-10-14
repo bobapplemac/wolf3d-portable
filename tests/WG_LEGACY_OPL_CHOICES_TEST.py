@@ -25,28 +25,43 @@ class LegacyOplChoices(unittest.TestCase):
                 stub.write_text('#!/bin/sh\nexit ' + ('1' if name == 'git' else '0') + '\n')
                 stub.chmod(0o755)
             env = dict(os.environ, PATH=str(bin_dir) + ':' + os.environ['PATH'])
-            for selection, target, default in ((11, 'dos-release', 'auto'), (12, 'windows-win9x', 'auto'),
-                                                (13, 'windows-win2k', 'auto'), (14, 'windows-xp', 'auto'),
-                                                (1, 'sdl3-release', 'auto'), (2, 'console-release', 'auto'),
-                                                (5, 'portable', 'auto'), (8, 'musl-sdl3', 'auto'), (9, 'musl-console', 'auto')):
-                choices = (('', 'dbopl,silent,adlib'), ('2', 'nuked,dbopl,silent,adlib')) if selection >= 11 else (('', 'nuked,dbopl,silent,adlib'), ('2', 'nuked,dbopl,silent'))
-                for choice, expected in choices:
-                    with self.subTest(target=target, drivers=expected):
-                        answers = [str(selection)]
-                        if selection in (1, 2): answers.append('')  # compiler
-                        if selection == 1: answers.append('')  # SDL source
-                        answers += [choice, '']
-                        if selection not in (11, 12):
-                            answers.append('')  # parallel jobs
+            # Each path traverses the real submenus; no Docker/compiler executes.
+            cases = [
+                (['4'], 'dos-release', 'dbopl,silent,adlib', False),
+                (['3', '5'], 'windows-win9x', 'dbopl,silent,adlib', False),
+                (['3', '3'], 'windows-win2k', 'dbopl,silent,adlib', True),
+                (['3', '4'], 'windows-xp', 'dbopl,silent,adlib', True),
+                (['3', '1', '1'], 'windows-win7', 'nuked,dbopl,silent', True),
+                (['3', '1', '2'], 'windows-llvm-win7', 'nuked,dbopl,silent', True),
+                (['3', '2'], 'windows-win10', 'nuked,dbopl,silent', True),
+                (['1', '1', '', ''], 'sdl3-release', 'nuked,dbopl,silent,adlib', True),
+                (['1', '2', ''], 'console-release', 'nuked,dbopl,silent,adlib', True),
+                (['2', '1', '1', '3'], 'portable', 'nuked,dbopl,silent,adlib', True),
+                (['2', '1', '2', '1'], 'portable-sdl3', 'dbopl,silent,adlib', True),
+                (['2', '1', '2', '2'], 'portable-console', 'dbopl,silent,adlib', True),
+                (['2', '2', '1'], 'musl-sdl3', 'nuked,dbopl,silent,adlib', True),
+                (['2', '2', '2'], 'musl-console', 'nuked,dbopl,silent,adlib', True),
+            ]
+            for path, target, recommended, jobs in cases:
+                for custom in (False, True):
+                    with self.subTest(target=target, custom=custom, path=path):
+                        expected = 'nuked,dbopl,silent,adlib' if custom else recommended
+                        answers = path + (['2', '2', ''] if custom else [''])
+                        if jobs: answers.append('')
                         answers.append('n')
                         result = subprocess.run(['bash', str(script)], input='\n'.join(answers)+'\n',
                                                 text=True, capture_output=True, env=env, timeout=10)
                         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-                        self.assertIn('OPL drivers: ' + expected + ' (default: ' + default + ')', result.stdout)
+                        self.assertIn('OPL drivers: ' + expected + ' (default: auto)', result.stdout)
                         command = result.stdout.replace('\\,', ',')
-                        prefix = {11:'DOS_', 12:'', 13:'WIN2K_', 14:'WINXP_'}.get(selection, '')
-                        self.assertIn(prefix + 'OPL_DRIVERS=' + expected, command)
-                        self.assertIn(prefix + 'OPL_DEFAULT=' + default, command)
+                        self.assertIn('invoke-build.sh ' + target + ' ', command)
+                        self.assertIn('OPL_DRIVERS=' + expected, command)
+                        if target.startswith('portable'):
+                            self.assertIn('LINUX_ARCH=' + ('x86' if path[2] == '2' else 'x64'), command)
+            result = subprocess.run(['bash', str(script)], input='5\nn\n', text=True,
+                                    capture_output=True, env=env, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotIn('Audio options', result.stderr)
 
     def test_linux_and_modern_windows_defaults(self):
         for target in ('configure-sdl3', 'configure-console'):

@@ -1,0 +1,16 @@
+# Cross-build 32-bit legacy Linux using the x64 Debian 10 Docker toolchain.
+set(CMAKE_SYSTEM_NAME Linux)
+set(CMAKE_SYSTEM_PROCESSOR i686)
+set(CMAKE_C_COMPILER gcc)
+set(CMAKE_CXX_COMPILER g++)
+set(CMAKE_C_FLAGS_INIT "-m32 -march=pentiumpro -mtune=generic -mno-mmx -mno-sse -mno-sse2 -mfpmath=387")
+set(CMAKE_CXX_FLAGS_INIT "${CMAKE_C_FLAGS_INIT}")
+set(CMAKE_EXE_LINKER_FLAGS_INIT "-m32")
+set(CMAKE_SHARED_LINKER_FLAGS_INIT "-m32")
+set(ENV{PKG_CONFIG_LIBDIR} "/usr/lib/i386-linux-gnu/pkgconfig:/usr/share/pkgconfig")
+set(ENV{PKG_CONFIG_PATH} "")
+set(W3P_CPU_BASELINE "Pentium Pro/i686 (no MMX/SSE/SSE2 requirement)" CACHE STRING "Target CPU baseline")
+# Use X11 software presentation for SDL; KMS/fbdev remains a separate host.
+foreach(feature MMX SSE SSE2 SSE3 SSE4_1 SSE4_2 AVX AVX2 AVX512F OPENGL OPENGLES VULKAN RENDER_GPU KMSDRM WAYLAND)
+    set(SDL_${feature} OFF CACHE BOOL "Legacy x86 baseline" FORCE)
+endforeach()

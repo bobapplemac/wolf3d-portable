@@ -21,7 +21,7 @@ w3p_check_engine_version("${W3P_WOLF3D_VERSION}")
 project(wolf3d-portable VERSION "${W3P_WOLF3D_VERSION}" LANGUAGES C)
 include(CTest)
 
-option(W3P_ENABLE_INPOUT32 "Enable optional x86 NT native AdLib via InpOut32" OFF)
+option(W3P_ENABLE_INPOUT32 "Enable optional x86/x64 Windows native AdLib via InpOut" OFF)
 option(W3P_BUILD_WIN32 "Build the dependency-free Win32 host" ON)
 option(W3P_BUILD_LINUX_CONSOLE
     "Build the direct DRM/fbdev/evdev/ALSA Linux console host" OFF)
@@ -54,8 +54,8 @@ set(WG_BUILD_HEADLESS OFF CACHE BOOL "" FORCE)
 set(WG_WARNINGS_AS_ERRORS ${W3P_WARNINGS_AS_ERRORS} CACHE BOOL "" FORCE)
 set(WG_DIST_ROOT "${CMAKE_BINARY_DIR}/wolf3d-lib-dist" CACHE PATH "" FORCE)
 if(W3P_ENABLE_INPOUT32)
-    if(NOT WIN32 OR NOT CMAKE_SIZEOF_VOID_P EQUAL 4 OR NOT W3P_BUILD_WIN32)
-        message(FATAL_ERROR "InpOut32 requires the x86 Windows GDI host")
+    if(NOT WIN32 OR (NOT W3P_BUILD_WIN32 AND NOT W3P_BUILD_SDL3))
+        message(FATAL_ERROR "InpOut requires a Windows GDI or SDL3 host")
     endif()
     set(WG_ENABLE_OPL_ADLIB ON CACHE BOOL "Native AdLib adapter" FORCE)
 endif()
@@ -66,6 +66,16 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_
     set(WG_ENABLE_OPL_ADLIB ON CACHE BOOL "Compile the native AdLib adapter")
 endif()
 add_subdirectory(lib/wolf3d wolf3d-lib)
+
+function(w3p_windows_opl target)
+    if(W3P_ENABLE_INPOUT32)
+        target_sources(${target} PRIVATE
+            platforms/dos/WG_DOS_ADLIB.c platforms/win32/WG_INPOUT32.c
+            platforms/win32/WG_OPL_PLAYBACK.c)
+        target_compile_definitions(${target} PRIVATE WG_INPOUT32=1)
+        target_link_libraries(${target} PRIVATE winmm)
+    endif()
+endfunction()
 
 function(w3p_linux_opl target)
     if(W3P_LINUX_OPL_SUPPORTED AND WG_ENABLE_OPL_ADLIB)
@@ -123,7 +133,7 @@ endif()
 set(W3P_NATIVE_OPL_NOTE "")
 if(W3P_ENABLE_INPOUT32)
     set(W3P_NATIVE_OPL_NOTE
-        "Optional native AdLib: use --opl adlib. Auto is the default.\nThe win2k/winxp x86 GDI native-AdLib distributions bundle inpout32.dll.\nFor other profiles, obtain the official Highrez 1.5.0.1 Win32 DLL and place\nit beside wolf3d.exe. First use may install/start its embedded kernel driver;\nrun as Administrator on the destination computer for initial installation.\nInstructions: https://vps.highrez.co.uk/downloads/InpOut32/default.htm\nFirst run: wolf3d.exe --no-config --diag --opl adlib\nClose other FM/MIDI playback applications. Digital effects use waveOut.\n")
+        "Optional native AdLib: use --opl adlib. Auto is the default.\nThe win2k/winxp x86 GDI native-AdLib distributions bundle inpout32.dll.\nOther profiles do not bundle a driver: supply Highrez inpout32.dll for x86\nor inpoutx64.dll for x64 beside wolf3d.exe (match application bitness).\nModern Windows security may block the kernel driver. First use may install/start its embedded kernel driver;\nrun as Administrator on the destination computer for initial installation.\nInstructions: https://vps.highrez.co.uk/downloads/InpOut32/default.htm\nFirst run: wolf3d.exe --no-config --diag --opl adlib\nClose other FM/MIDI playback applications. Digital effects use the host PCM audio backend.\n")
 endif()
 set(W3P_LINUX_OPL_NOTE "")
 if(W3P_LINUX_OPL_SUPPORTED AND WG_ENABLE_OPL_ADLIB)
@@ -216,12 +226,7 @@ if(W3P_BUILD_WIN32)
     add_executable(wolf3d-win32 WIN32
         platforms/WG_HELP.c platforms/WG_TEXT_OUTPUT.c
         platforms/win32/WG_WIN32.c)
-    if(W3P_ENABLE_INPOUT32)
-        target_sources(wolf3d-win32 PRIVATE
-            platforms/dos/WG_DOS_ADLIB.c platforms/win32/WG_INPOUT32.c
-            platforms/win32/WG_OPL_PLAYBACK.c)
-        target_compile_definitions(wolf3d-win32 PRIVATE WG_INPOUT32=1)
-    endif()
+    w3p_windows_opl(wolf3d-win32)
     w3p_configure_host(wolf3d-win32)
     # Windows 2000 cannot attach a GUI process to its parent's console.
     # Inherit it at process creation for CLI output and the B800 exit card.
@@ -301,6 +306,7 @@ if(W3P_BUILD_SDL3)
     endif()
     w3p_configure_host(wolf3d-sdl3)
     w3p_linux_opl(wolf3d-sdl3)
+    w3p_windows_opl(wolf3d-sdl3)
     target_link_libraries(wolf3d-sdl3 PRIVATE SDL3::SDL3-shared)
     set_target_properties(wolf3d-sdl3 PROPERTIES OUTPUT_NAME "wolf3d-sdl3"
         BUILD_RPATH "$ORIGIN" BUILD_RPATH_USE_ORIGIN ON INSTALL_RPATH "$ORIGIN")
@@ -402,7 +408,7 @@ if(W3P_BUILD_LINUX_CONSOLE)
     w3p_linux_opl(wolf3d-console)
     target_link_libraries(wolf3d-console PRIVATE PkgConfig::LIBDRM PkgConfig::ALSA)
     set_target_properties(wolf3d-console PROPERTIES OUTPUT_NAME "wolf3d"
-        BUILD_WITH_INSTALL_RPATH ON INSTALL_RPATH "$ORIGIN")
+        BUILD_RPATH "$ORIGIN" BUILD_RPATH_USE_ORIGIN ON INSTALL_RPATH "$ORIGIN")
 
     wg_distribution(W3P_CONSOLE_RELEASE_DIR wolf3d-portable "${PROJECT_VERSION}" "kms-fbdev" "${CMAKE_CURRENT_SOURCE_DIR}" "${W3P_DIST_ROOT}")
     set(W3P_CONSOLE_OPL_COMMANDS "")
@@ -467,6 +473,7 @@ if(BUILD_TESTING)
             "-DPROBE=$<TARGET_FILE:wg-discovery-probe>"
             "-DROOT=${CMAKE_CURRENT_BINARY_DIR}/discovery-fixture"
             "-DCONFIG_EXTENSION=$<IF:$<BOOL:${WIN32}>,ini,conf>"
+            "-DOPL_TEST_DRIVER=$<IF:$<BOOL:${WG_ENABLE_OPL_DBOPL}>,dbopl,silent>"
             -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/WG_DISCOVERY_TEST.cmake")
 endif()
 

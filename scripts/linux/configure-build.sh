@@ -66,25 +66,55 @@ for tool in gcc clang cmake make docker git; do
     else printf '  %-8s not found\n' "$tool"; fi
 done
 
-targets=()
-labels=()
+# Select dimensions instead of listing every platform/backend combination.
+case "$(uname -m)" in x86_64|amd64) host_arch=x64 ;; i?86) host_arch=x86 ;; *) host_arch=$(uname -m) ;; esac
+families=(); family_targets=()
 if ready cmake && ready make; then
-    targets+=(sdl3-release console-release releases clean)
-    labels+=('Linux SDL3 distribution (local toolchain)' 'Linux KMS/fbdev distribution (local toolchain)' 'Linux SDL3 + KMS/fbdev distributions (local toolchain)' 'clean local build outputs')
+    families+=("Build for this computer ($host_arch detected)"); family_targets+=(local)
 fi
 if ready docker && ready make; then
-    targets+=(portable portable-sdl3 portable-console musl-sdl3 musl-console musl-all dos-release windows-win9x windows-win2k windows-xp windows-win7 windows-llvm-win7 windows-win10 windows-cross)
-    labels+=('Linux glibc SDL3 + KMS/fbdev distributions (Docker)' 'Linux glibc SDL3 distribution (Docker)' 'Linux glibc KMS/fbdev distribution (Docker)' 'Linux musl SDL3 relocatable distribution (Docker)' 'Linux musl KMS/fbdev relocatable distribution (Docker)' 'Linux musl SDL3 + KMS/fbdev relocatable distributions (Docker)' 'DOS32 x86 VGA Open Watcom distribution (Docker)' 'Win9x x86 GDI Open Watcom package (Docker)' 'Windows 2000 x86 GDI MinGW GCC/MSVCRT package (Docker)' 'Windows XP x86 GDI MinGW GCC/MSVCRT package (Docker)' 'Windows 7 x86/x64 MinGW GCC/MSVCRT GDI + SDL3 packages (Docker)' 'Windows 7 x86/x64 LLVM-MinGW/MSVCRT GDI + SDL3 packages (Docker)' 'Windows 10 x64 LLVM-MinGW/UCRT GDI + SDL3 packages (Docker)' 'all Linux-hosted Windows packages (Docker)')
+    families+=('Linux distributions (Docker)' 'Windows distributions (Docker)' 'DOS32 x86 VGA distribution (Docker)')
+    family_targets+=(linux windows dos)
 fi
-if [ ${#targets[@]} -eq 0 ]; then
-    printf '\nNo usable build path was detected. See docs/building.md for prerequisites.\n' >&2; exit 2
-fi
-
-label=$(choose 'What would you like to produce?' "${labels[@]}")
-target=''
-for ((i=0; i<${#labels[@]}; ++i)); do
-    [ "${labels[$i]}" = "$label" ] && target=${targets[$i]}
-done
+if ready make; then families+=('Clean local build outputs'); family_targets+=(clean); fi
+if [ ${#families[@]} -eq 0 ]; then echo 'No usable build tools detected.' >&2; exit 2; fi
+family=$(choose 'What would you like to produce?' "${families[@]}")
+for ((i=0; i<${#families[@]}; ++i)); do [ "$family" = "${families[$i]}" ] && family=${family_targets[$i]}; done
+linux_arch=x64
+case "$family" in
+    local)
+        backend=$(choose 'Linux backend' SDL3 KMS/fbdev both)
+        case "$backend" in SDL3) target=sdl3-release ;; KMS/fbdev) target=console-release ;; both) target=releases ;; esac
+        label="Linux $host_arch $backend (local toolchain)" ;;
+    linux)
+        profile=$(choose 'Linux compatibility profile' 'glibc 2.28 portable' 'musl relocatable (x64 only)')
+        if [[ $profile == glibc* ]]; then
+            arch=$(choose 'Target architecture' 'x64 (64-bit Intel/AMD)' 'x86 legacy (Pentium Pro/i686; no SSE)')
+            [[ $arch == x86* ]] && linux_arch=x86
+        fi
+        backend=$(choose 'Linux backend' SDL3 KMS/fbdev both)
+        if [[ $profile == glibc* ]]; then
+            case "$backend" in SDL3) target=portable-sdl3 ;; KMS/fbdev) target=portable-console ;; both) target=portable ;; esac
+        else
+            case "$backend" in SDL3) target=musl-sdl3 ;; KMS/fbdev) target=musl-console ;; both) target=musl-all ;; esac
+        fi
+        label="Linux $profile $linux_arch $backend (Docker)" ;;
+    windows)
+        os=$(choose 'Windows compatibility target' win7 win10 win2k winxp win9x 'all supported profiles')
+        case "$os" in
+            win7)
+                toolchain=$(choose 'Windows toolchain (x86 + x64; GDI + SDL3)' 'MinGW GCC/MSVCRT' 'LLVM-MinGW/MSVCRT')
+                case "$toolchain" in MinGW*) target=windows-win7 ;; *) target=windows-llvm-win7 ;; esac ;;
+            win10) target=windows-win10 ;;
+            win2k) target=windows-win2k ;;
+            winxp) target=windows-xp ;;
+            win9x) target=windows-win9x ;;
+            *) target=windows-cross ;;
+        esac
+        label="Windows $os (Docker: $target)" ;;
+    dos) target=dos-release; label='DOS32 x86 VGA Open Watcom (Docker)' ;;
+    clean) target=clean; label='Clean local build outputs' ;;
+esac
 
 compiler=gcc
 if [[ $target != portable* && $target != musl-* && $target != dos-* && $target != windows-* && $target != clean ]]; then
@@ -100,38 +130,25 @@ if [[ $target == sdl3-release || $target == releases ]]; then
     source=$(choose 'SDL3 source' 'pinned submodule (most reproducible)' 'system SDL3 >= 3.2')
     [ "$source" = 'system SDL3 >= 3.2' ] && system_sdl=ON
 fi
-drivers=all
 default_opl=auto
-if [[ $target == dos-* || $target == windows-win9x || $target == windows-win2k || $target == windows-xp ]]; then
-    default_opl=auto
-    drivers=$(choose 'Compiled OPL drivers' dbopl-silent-adlib nuked-dbopl-silent-adlib dbopl-silent adlib-silent silent)
-    IFS=- read -r -a compiled <<< "$drivers"
-    defaults=(auto)
-    for driver in "${compiled[@]}"; do
-        [ "$driver" = "$default_opl" ] && defaults+=("$driver")
-    done
-    for driver in "${compiled[@]}"; do
-        [ "$driver" != "$default_opl" ] && defaults+=("$driver")
-    done
-    default_opl=$(choose 'Default OPL driver' "${defaults[@]}")
-elif [[ $target != clean && $target != windows-* ]]; then
-    drivers=$(choose 'Compiled OPL drivers' nuked-dbopl-silent-adlib nuked-dbopl-silent nuked-silent dbopl-silent adlib-silent silent)
-    IFS=- read -r -a defaults <<< "$drivers"
-    default_opl=$(choose 'Default OPL driver' auto "${defaults[@]}")
-elif [[ $target != clean ]]; then
-    drivers=$(choose 'Compiled OPL drivers' all nuked-silent dbopl-silent silent)
-    if [ "$drivers" = all ]; then
-        default_opl=$(choose 'Default OPL driver' auto nuked dbopl silent)
-    else
+if [[ $target == dos-* || $target == windows-win9x || $target == windows-win2k || $target == windows-xp || ( $target == portable* && $linux_arch == x86 ) ]]; then
+    drivers=dbopl-silent-adlib
+elif [[ $target == windows-* ]]; then
+    drivers=nuked-dbopl-silent
+else
+    drivers=nuked-dbopl-silent-adlib
+fi
+if [[ $target != clean ]]; then
+    audio=$(choose 'Audio options' "Use recommended settings ($drivers; auto sample rate)" 'Customize compiled drivers and default')
+    if [[ $audio == Customize* ]]; then
+        drivers=$(choose 'Compiled OPL drivers' "$drivers" nuked-dbopl-silent-adlib nuked-dbopl-silent nuked-silent dbopl-silent adlib-silent silent)
         IFS=- read -r -a defaults <<< "$drivers"
-        defaults=(auto "${defaults[@]}")
-        default_opl=$(choose 'Default OPL driver' "${defaults[@]}")
+        default_opl=$(choose 'Default OPL driver' auto "${defaults[@]}")
     fi
 fi
 opl_drivers=${drivers//-/,}
-[ "$drivers" = all ] && opl_drivers=nuked,dbopl,silent
 jobs=''
-if [[ $target != dos-* && $target != windows-win9x ]]; then
+if [[ $target != dos-* && $target != windows-win9x && $target != clean ]]; then
     read -r -p 'Parallel jobs (blank lets the build tool decide): ' jobs
 fi
 if [[ $target == dos-* ]]; then
@@ -157,6 +174,7 @@ fi
 if [[ $target == windows-xp ]]; then
     args+=("WINXP_OPL_DRIVERS=$opl_drivers" "WINXP_OPL_DEFAULT=$default_opl")
 fi
+[[ $target == portable* ]] && args+=("LINUX_ARCH=$linux_arch")
 [ -n "$jobs" ] && args+=("JOBS=$jobs")
 
 compiler_display=$compiler

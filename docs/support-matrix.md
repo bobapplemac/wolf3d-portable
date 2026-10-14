@@ -27,7 +27,7 @@ or the local submodule's `lib/wolf3d/docs/support-matrix.md`.
 | Native Linux SDL3 | Linux | `./build.sh` or `make sdl3-release CC=clang` | `dist/wolf3d-portable_<version>_linux-glibc_<arch>_sdl3_<toolchain>/` |
 | Native Linux console | Linux | `make console-release` | `dist/wolf3d-portable_<version>_linux-glibc_<arch>_kms-fbdev_<toolchain>/` |
 | Both native Linux wrappers | Linux | `make releases` | Both native folders |
-| Portable glibc Linux wrappers | Linux + Docker | `./build.sh` or `make portable` | SDL3 and console x86-64 folders audited to glibc 2.28 |
+| Portable glibc Linux wrappers | Linux + Docker | `./build.sh` or `make portable` | SDL3 and KMS/fbdev x64 folders audited to glibc 2.28; `LINUX_ARCH=x86` selects i686 |
 | Bundled-musl Linux SDL3 | Linux + Docker | `./build.sh` or `make musl-sdl3` | Relocatable AppDir-style x86-64 folder |
 | Bundled-musl Linux KMS/fbdev | Linux + Docker | `make musl-console` | Relocatable x64 folder; fbdev console runtime confirmed on ajmbuild01; DRM/audio validation remains separate |
 | 32-bit protected-mode DOS | Linux + Docker | `./build.sh` or `make dos` | `dist/wolf3d-portable_<version>_dos32_x86_vga_openwatcom<major>/` |
@@ -103,6 +103,7 @@ default; dynamic CRT packages require the matching Microsoft redistributable.
 | Native console | GCC, Clang | DRM/KMS or fbdev + evdev + ALSA | Build-host glibc; system `libdrm` and ALSA | Validated | Linux virtual console with DRM preferred and `/dev/fb0` fallback; no X11/Wayland required |
 | Portable glibc SDL3 | GCC | SDL3 | Debian 10 baseline, pinned SDL3, audited maximum `GLIBC_2.28` | Validated | x86-64 Linux with glibc 2.28+, X11 or Wayland, and supported audio service |
 | Portable glibc console | GCC | DRM/KMS or fbdev + evdev + ALSA | Debian 10 baseline, audited maximum `GLIBC_2.28` | Validated | x86-64 glibc 2.28+ virtual-console system with DRM or `/dev/fb0` access |
+| Legacy glibc SDL3 / KMS-fbdev | GCC 8 | X11 software / DRM-fbdev + ALSA | Debian 10 i686, glibc 2.28; no required MMX/SSE/SSE2 | Build validation; physical test pending | Pentium Pro or newer; not original Pentium/i586; `make portable LINUX_ARCH=x86` |
 | Bundled musl SDL3 | GCC, Clang | SDL3 | Private musl loader and closed shared-library set | Validated with an X11 window smoke test | x86-64 Linux; no destination glibc dependency; bundled X11/Wayland/eudev/ALSA/PulseAudio clients connect to destination services |
 
 The portable glibc artifacts intentionally build against an older userspace:
@@ -140,7 +141,9 @@ DOS/4GW extender: its adjacent `DOS4GW.EXE` is DOS/32A's compatible loader and
 includes the DOS/32A license. When explicitly enabled, Nuked-OPL3 remains a
 separable library in the package's Open Watcom relink kit even though DOS has
 no runtime shared-library facility. Native AdLib output is standard on DOS/Win9x and an
-[option on win2k/XP x86 GDI and Linux x86/x64 SDL3/KMS-fbdev](native-opl.md).
-These builds include it by default, with quiet auto fallback. Linux native OPL
+[option on Windows and Linux x86/x64 GDI/SDL3/KMS-fbdev](native-opl.md).
+Linux and win2k/XP x86 builds include it by default, with quiet auto fallback.
+Modern Windows GDI and SDL3 can opt in, but do not bundle InpOut DLLs; x64
+requires inpoutx64.dll. Modern Windows native hardware remains unconfirmed. Linux native OPL
 is build- and mock-tested; physical playback confirmation is pending. ALSA/SDL
 PCM remains independent. Other Linux architectures do not implement ISA port I/O.

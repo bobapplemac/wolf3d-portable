@@ -3,6 +3,7 @@ Compile WG_INPOUT32_FAKE.c with i686 MinGW -shared -Wl,--kill-at.
 Never pass the genuine InpOut DLL to this test.
 """
 import argparse
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -10,10 +11,17 @@ import tempfile
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('package', type=Path)
 p.add_argument('fake_dll', type=Path)
+p.add_argument('--modern', action='store_true', help='Nuked-first modern policy')
+p.add_argument('--arch', choices=('x86', 'x64'), default='x86')
+p.add_argument('--sdl', action='store_true')
 a = p.parse_args()
+if a.sdl:
+    os.environ['SDL_AUDIO_DRIVER'] = 'dummy'
+    os.environ['SDL_VIDEO_DRIVER'] = 'dummy'
 with tempfile.TemporaryDirectory(prefix='wolf-inpout-') as folder:
     root = Path(folder)
-    for name in ('wolf3d.exe', 'wolf3d.dll'):
+    for name in ('wolf3d.exe', 'wolf3d.dll', 'Nuked-OPL3.dll', 'SDL3.dll'):
+        if not (a.package / name).exists(): continue
         shutil.copy2(a.package / name, root / name)
     def run(*args, expected=0):
         result = subprocess.run([str(root / 'wolf3d.exe'), '--no-config', '--no-pause', *args], cwd=root,
@@ -22,9 +30,9 @@ with tempfile.TemporaryDirectory(prefix='wolf-inpout-') as folder:
         return result.stdout + result.stderr
     assert 'missing or inaccessible' in run('--diag', '--opl', 'adlib', expected=1)
     text = run('--diag', '--opl', 'auto', '--sample-rate', 'auto')
-    assert 'dbopl: selected; preferred 22050 Hz' in text
+    assert ('nuked: selected; preferred 48000 Hz' if a.modern else 'dbopl: selected; preferred 22050 Hz') in text, text
     assert 'missing or inaccessible' in text
-    assert 'Available OPL drivers' in run('--diag', '--opl', 'nuked', expected=1)
+    if not a.modern: assert 'Available OPL drivers' in run('--diag', '--opl', 'nuked', expected=1)
     assert 'device 11025 Hz' in run('--diag', '--opl', 'dbopl', '--sample-rate', '11025')
     assert 'Invalid sample rate' in run('--diag', '--sample-rate', '7000', expected=1)
     (root / 'wolf3d.ini').write_text('--opl adlib\n--sample-rate auto\n')
@@ -36,7 +44,7 @@ with tempfile.TemporaryDirectory(prefix='wolf-inpout-') as folder:
     overridden = configured('--opl', 'dbopl', '--sample-rate', '11025')
     assert overridden.returncode == 0 and 'device 11025 Hz' in overridden.stdout
     (root / 'wolf3d.ini').unlink()
-    shutil.copy2(a.fake_dll, root / 'inpout32.dll')
+    shutil.copy2(a.fake_dll, root / ('inpoutx64.dll' if a.arch == 'x64' else 'inpout32.dll'))
     marker = root / 'inpout-loaded.marker'
     run('--help')
     run('--diag', '--opl', 'dbopl')

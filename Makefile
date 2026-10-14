@@ -14,7 +14,8 @@ BUILD_TYPE ?= Release
 CMAKE_ARGS ?=
 JOBS ?=
 USE_SYSTEM_SDL3 ?= OFF
-OPL_DRIVERS ?= nuked,dbopl,silent,adlib
+LINUX_ARCH ?= x64
+OPL_DRIVERS ?= $(if $(filter x86,$(LINUX_ARCH)),dbopl$(comma)silent$(comma)adlib,nuked$(comma)dbopl$(comma)silent$(comma)adlib)
 WINDOWS_OPL_DRIVERS = $(if $(filter file default undefined,$(origin OPL_DRIVERS)),nuked$(comma)dbopl$(comma)silent,$(OPL_DRIVERS))
 OPL_DEFAULT ?= auto
 WIN2K_OPL_DRIVERS ?= dbopl,silent,adlib
@@ -26,11 +27,12 @@ WINXP_OPL_DRIVERS ?= $(if $(filter file default undefined,$(origin OPL_DRIVERS))
 WINXP_OPL_DEFAULT ?= $(if $(filter file default undefined,$(origin OPL_DEFAULT)),auto,$(OPL_DEFAULT))
 CONSOLE_BUILD_DIR ?= build/linux-console-$(COMPILER_NAME)
 SDL3_BUILD_DIR ?= build/linux-sdl3-$(COMPILER_NAME)
-PORTABLE_CONSOLE_BUILD_DIR ?= build/linux-console-portable-debian10-gcc
-PORTABLE_SDL3_BUILD_DIR ?= build/linux-sdl3-portable-debian10-gcc
+PORTABLE_CONSOLE_BUILD_DIR ?= build/linux-console-portable-debian10-$(LINUX_ARCH)-gcc
+PORTABLE_SDL3_BUILD_DIR ?= build/linux-sdl3-portable-debian10-$(LINUX_ARCH)-gcc
 PORTABLE_CONSOLE_DIST_DIR ?= $$(cat "$(PORTABLE_CONSOLE_BUILD_DIR)/W3P_CONSOLE_RELEASE_DIR-Release.path")
 PORTABLE_SDL3_DIST_DIR ?= $$(cat "$(PORTABLE_SDL3_BUILD_DIR)/W3P_SDL3_RELEASE_DIR-Release.path")
-PORTABLE_BUILD_IMAGE ?= wolf3d-portable-build-debian10
+PORTABLE_BUILD_IMAGE ?= wolf3d-portable-build-debian10-$(LINUX_ARCH)
+PORTABLE_CMAKE_ARGS = $(if $(filter x86,$(LINUX_ARCH)),-DCMAKE_TOOLCHAIN_FILE=/src/cmake/toolchains/linux-glibc-x86.cmake,)
 PORTABLE_GLIBC_MAX ?= 2.28
 MUSL_SDL3_BUILD_DIR ?= build/linux-sdl3-musl-$(COMPILER_NAME)
 MUSL_STAGE_ROOT ?= build/linux-sdl3-musl-stage
@@ -128,6 +130,7 @@ help:
 		'' \
 		'Useful variables:' \
 		'  CC=gcc|clang                 Compiler (default: gcc).' \
+		'  LINUX_ARCH=x64|x86          Docker glibc target (x86: Pentium Pro/i686, no SSE).' \
 		'  JOBS=N                       Parallel job limit.' \
 		'  BUILD_TYPE=Release|Debug     Build type (default: Release).' \
 		'  USE_SYSTEM_SDL3=ON|OFF       Installed SDL >= 3.2 or pinned SDL (default).' \
@@ -201,27 +204,32 @@ console: console-release
 releases: sdl3-release console-release
 
 portable-image:
-	$(DOCKER) build --tag "$(PORTABLE_BUILD_IMAGE)" packaging/linux-portable
+	@case "$(LINUX_ARCH)" in x64|x86) ;; *) echo "LINUX_ARCH must be x64 or x86"; exit 2;; esac
+	$(DOCKER) build --platform linux/amd64 --build-arg TARGET_ARCH=$(LINUX_ARCH) --tag "$(PORTABLE_BUILD_IMAGE)" packaging/linux-portable
 
 portable-sdl3-release: portable-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		"$(PORTABLE_BUILD_IMAGE)" make sdl3-release CC=gcc \
 		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" \
-		SDL3_BUILD_DIR="$(PORTABLE_SDL3_BUILD_DIR)" JOBS="$(JOBS)" USE_SYSTEM_SDL3=OFF
+		SDL3_BUILD_DIR="$(PORTABLE_SDL3_BUILD_DIR)" JOBS="$(JOBS)" USE_SYSTEM_SDL3=OFF CMAKE_ARGS="$(PORTABLE_CMAKE_ARGS) $(CMAKE_ARGS)"
 	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
 		$(DOCKER_RUN_ARGS) "$(PORTABLE_BUILD_IMAGE)" sh tools/WG_GLIBC_AUDIT.sh \
 		"$(PORTABLE_SDL3_DIST_DIR)" "$(PORTABLE_GLIBC_MAX)"
+	@if [ "$(LINUX_ARCH)" = x86 ]; then $(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
+		$(DOCKER_RUN_ARGS) "$(PORTABLE_BUILD_IMAGE)" sh tools/W3P_X86_AUDIT.sh "$(PORTABLE_SDL3_DIST_DIR)"; fi
 
 portable-console-release: portable-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		"$(PORTABLE_BUILD_IMAGE)" make console-release CC=gcc \
 		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" \
-		CONSOLE_BUILD_DIR="$(PORTABLE_CONSOLE_BUILD_DIR)" JOBS="$(JOBS)"
+		CONSOLE_BUILD_DIR="$(PORTABLE_CONSOLE_BUILD_DIR)" JOBS="$(JOBS)" CMAKE_ARGS="$(PORTABLE_CMAKE_ARGS) $(CMAKE_ARGS)"
 	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
 		$(DOCKER_RUN_ARGS) "$(PORTABLE_BUILD_IMAGE)" sh tools/WG_GLIBC_AUDIT.sh \
 		"$(PORTABLE_CONSOLE_DIST_DIR)" "$(PORTABLE_GLIBC_MAX)"
+	@if [ "$(LINUX_ARCH)" = x86 ]; then $(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
+		$(DOCKER_RUN_ARGS) "$(PORTABLE_BUILD_IMAGE)" sh tools/W3P_X86_AUDIT.sh "$(PORTABLE_CONSOLE_DIST_DIR)"; fi
 
 portable-sdl3: portable-sdl3-release
 portable-console: portable-console-release
@@ -231,7 +239,7 @@ portable-glibc-audit:
 	sh tools/WG_GLIBC_AUDIT.sh "$(PORTABLE_CONSOLE_DIST_DIR)" "$(PORTABLE_GLIBC_MAX)"
 
 musl-image:
-	$(DOCKER) build --tag "$(MUSL_BUILD_IMAGE)" packaging/linux-musl
+	$(DOCKER) build --platform linux/amd64 --tag "$(MUSL_BUILD_IMAGE)" packaging/linux-musl
 
 musl-sdl3-release: musl-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \

@@ -3,6 +3,8 @@ FROM debian:10-slim@sha256:bb3dc79fddbca7e8903248ab916bb775c96ec61014b3d02b4f060
 LABEL org.opencontainers.image.title="wolf3d-portable Debian 10 builder" \
       org.opencontainers.image.description="Project-local glibc 2.28 Linux release toolchain"
 
+ARG TARGET_ARCH=x64
+
 ARG CMAKE_VERSION=3.31.6
 ARG CMAKE_SHA256=5a1133ff103c71eb5120e2cc3de922733e7d8a26a98ae716397e8676adb367bf
 ARG WAYLAND_VERSION=1.18.0
@@ -50,6 +52,20 @@ RUN printf '%s\n' \
         pkg-config \
         xz-utils \
     && rm -rf /var/lib/apt/lists/*
+
+# Keep build tools native x64; link legacy targets against Debian i386 headers
+# and libraries. The toolchain file excludes newer ISA assumptions and graphics
+# backends inappropriate for the legacy profile.
+RUN case "$TARGET_ARCH" in x64) ;; x86) \
+        dpkg --add-architecture i386 \
+        && apt-get update \
+        && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            gcc-multilib g++-multilib libc6-dev:i386 libasound2-dev:i386 libdrm-dev:i386 \
+            libx11-dev:i386 libxext-dev:i386 libxcursor-dev:i386 libxfixes-dev:i386 \
+            libxi-dev:i386 libxrandr-dev:i386 libxss-dev:i386 libxtst-dev:i386 \
+            libudev-dev:i386 libpulse-dev:i386 libxkbcommon-dev:i386 \
+        && rm -rf /var/lib/apt/lists/* ;; \
+        *) echo "TARGET_ARCH must be x64 or x86" >&2; exit 2 ;; esac
 
 # SDL 3.4 needs Wayland 1.18 headers and wayland-scanner, while Debian 10
 # supplies 1.16. Build only that toolchain against Debian 10's libc. SDL owns

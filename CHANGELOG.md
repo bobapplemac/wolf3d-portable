@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased - Linux native OPL
+## 1.4.88 - 2026-10-14 - Build profiles and native OPL
+
+- Group guided Linux builds by platform, compatibility, architecture and backend.
+- Add i686 glibc Docker SDL3/KMS-fbdev packages; no required MMX/SSE/SSE2, no i586 or legacy musl claim.
+- Align Windows dispatchers and legacy IDE audio defaults; always include silent.
+- Offer optional modern Windows x86/x64 native OPL for GDI and SDL3; user supplies the matching InpOut DLL.
+- Complete Microsoft version vocabulary through VS2026 and document CPU/runtime limits.
 
 - Add shared Linux x86/x64 native AdLib support to SDL3 and KMS/fbdev, retaining PCM.
 - Schedule timestamped writes on a port-owning worker with elapsed-time delays.

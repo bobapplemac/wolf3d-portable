@@ -1,5 +1,8 @@
 /* No real DLL is loaded and no hardware ports are accessed by this test. */
 #include <windows.h>
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -37,7 +40,11 @@ static DWORD WINAPI test_path(HMODULE module, LPSTR path, DWORD length)
 }
 static HMODULE WINAPI test_load(LPCSTR path)
 {
+    #ifdef _WIN64
+    assert(!strcmp(path, "C:\\Games\\inpoutx64.dll"));
+#else
     assert(!strcmp(path, "C:\\Games\\inpout32.dll"));
+#endif
     assert((error_mode & (SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX)) ==
            (SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX));
     assert(error_mode & SEM_NOGPFAULTERRORBOX);

@@ -1,4 +1,4 @@
-# Native OPL on Linux, Windows 2000 and XP
+# Native OPL on Linux and Windows
 
 ## Linux x86/x64: SDL3 and KMS/fbdev
 
@@ -72,9 +72,9 @@ writes, invalid rate handling, restart, silence and permission cleanup. The shar
 Build with `make releases`; add `OPL_DRIVERS=nuked,dbopl,silent` to omit native
 OPL. Direct CMake builds use `-DWG_ENABLE_OPL_ADLIB=OFF` to omit it. Existing caches
 retain explicit driver choices. glibc and musl use the same backend. Validation covers full x64 builds of both
-hosts on glibc 2.28 and musl, plus 32-bit `-march=pentium3` compilation and the
-mocked worker test. A complete 32-bit Linux distribution and physical playback
-on the Pentium III still need confirmation.
+hosts on glibc 2.28 and musl, plus full i686 glibc distributions and mocked
+worker tests. Physical Linux playback remains pending. See building.md for
+the i686 Docker profile and its CPU/runtime limits.
 
 ## Windows 2000 and XP
 
@@ -95,12 +95,16 @@ make windows-win2k WIN2K_OPL_DRIVERS=nuked,dbopl,silent,adlib
 make windows-xp WINXP_OPL_DRIVERS=nuked,dbopl,silent,adlib
 ```
 
-For an x86 Windows GDI CMake build, set `W3P_ENABLE_INPOUT32=ON`.
+For a Windows x86/x64 GDI or SDL3 CMake build, set `W3P_ENABLE_INPOUT32=ON`.
 This enables the library's `WG_ENABLE_OPL_ADLIB` adapter. The win2k and winxp
 Docker profiles enable it by default, compiling DBOPL, silent and AdLib with
 auto selected at runtime. Generic CMake builds keep this option off by default.
-Other cross profiles reject AdLib selection for now. The guided Linux build
-lets DOS, Win9x, win2k and winxp users add Nuked and select their runtime default.
+Modern Windows profiles omit native AdLib by default. Enable it with
+`make windows-win7 OPL_DRIVERS=nuked,dbopl,silent,adlib` (also supported by
+`windows-llvm-win7` and `windows-win10`), or Windows
+`build.ps1 -Drivers all-adlib -DefaultOpl auto`. The guided PowerShell and
+Linux menus expose these choices. `build.cmd` remains the VC6--VS2005 entry point. Silent is
+always included; explicitly selected unavailable drivers fail rather than fall back.
 
 ## Install and test
 
@@ -111,9 +115,17 @@ initial installation requires Administrator privileges on the destination
 machine. No separate `InstallDriver.exe` or `.sys` download is required.
 Explicit DBOPL and help do not load it. Auto diagnostics may probe it.
 
-Other profiles do not bundle this DLL. For a custom supported x86 GDI build,
-obtain the Win32 DLL from the official
+Other profiles do not bundle an access DLL or its kernel driver. Supply
+`inpout32.dll` for an **x86 application** or `inpoutx64.dll` for an **x64 application**,
+including when the x86 application runs on a 64-bit OS. Obtain the matching DLL
+from the official
 [InpOut32 1.5.0.1 binaries](https://vps.highrez.co.uk/downloads/InpOut32/default.htm).
+
+Modern Windows driver-signing and security policies can prevent InpOut from
+loading. The wrapper reports that failure for explicit `--opl adlib`; `auto`
+quietly falls back. Native ISA OPL on modern Windows/x64 is implemented and
+mock-tested, but is not physically confirmed. Do not assume a PCI sound card
+exposes a compatible OPL chip simply because Windows audio works.
 
 The repository vendors the unmodified binary and upstream MIT license in
 `third_party/InpOut32`. Packaging verifies its pinned SHA-256 and fails on a
@@ -177,8 +189,9 @@ with this test.
 
 Platform API v7 supplies a 64-bit PCM-frame timestamp for each native register
 write. The Windows host preserves event order in a bounded queue and dispatches
-it from a dedicated worker, separate from rendering. The worker follows waveOut's
-sample position, interpolated with QueryPerformanceCounter between device updates.
+it from a dedicated worker, separate from rendering. GDI follows waveOut's
+sample position; SDL3 observes accepted PCM and its remaining stream queue.
+Both interpolate with QueryPerformanceCounter between device updates.
 If the device cannot report sample positions, the QPC timeline remains active.
 It never advances beyond accepted PCM; an underrun rebases the timeline when
 new samples arrive. Queue overflow or a failed clock stops audio with an error

@@ -1,3 +1,8 @@
+#ifdef WG_INPOUT32
+#include "../win32/WG_INPOUT32.h"
+#include "../win32/WG_OPL_PLAYBACK.h"
+#include "../dos/WG_DOS_ADLIB.h"
+#endif
 #ifdef WG_LINUX_OPL
 #include "../linux/WG_LINUX_OPL.h"
 #endif
@@ -24,6 +29,33 @@ static SDL_Renderer *wg_renderer;
 static SDL_Texture *wg_texture;
 static SDL_AudioStream *wg_audio;
 static uint16_t wg_audio_channels;
+#ifdef WG_INPOUT32
+static uint32_t wg_audio_rate;
+static int wg_native_opl;
+static void WG_SDLNativeShutdown(void)
+{
+    WG_OPLPlaybackStop();
+    WG_DOSAdLibShutdown();
+    wg_native_opl = 0;
+}
+static int WG_SDLNativeInit(void)
+{
+    if (!wg_audio || !wg_audio_rate) return 0;
+    if (!WG_DOSAdLibInit())
+    {
+        wolf3d_SetOPLError(WG_InpOutStatus());
+        return 0;
+    }
+    if (!WG_OPLPlaybackStart(NULL, wg_audio_rate))
+    {
+        WG_DOSAdLibShutdown();
+        wolf3d_SetOPLError("native OPL playback worker could not start");
+        return 0;
+    }
+    wg_native_opl = 1;
+    return 1;
+}
+#endif
 static uint32_t wg_rgba[WOLF3D_SCREEN_WIDTH * WOLF3D_SCREEN_HEIGHT];
 static SDL_Gamepad *wg_gamepads[WOLF3D_MAX_JOYSTICKS];
 static int16_t wg_joystick_x[WOLF3D_MAX_JOYSTICKS];
@@ -643,6 +675,9 @@ static int WG_SDLPCMInit(uint32_t sample_rate, uint16_t channels)
         return 0;
     }
     wg_audio_channels = channels;
+#ifdef WG_INPOUT32
+    wg_audio_rate = sample_rate;
+#endif
     return 1;
 }
 
@@ -664,6 +699,10 @@ static int WG_SDLPCMInitEx(const wolf3d_pcm_format_t *requested,
 
 static void WG_SDLPCMShutdown(void)
 {
+#ifdef WG_INPOUT32
+    WG_SDLNativeShutdown();
+    wg_audio_rate = 0;
+#endif
 #ifdef WG_LINUX_OPL
     WG_LinuxOPLShutdown();
     WG_LinuxOPLSetRate(0);
@@ -702,6 +741,18 @@ static int WG_SDLPCMSubmit(const int16_t *samples, size_t frame_count)
     }
     bytes = frame_count * wg_audio_channels * sizeof(*samples);
     if (bytes > INT_MAX || !SDL_PutAudioStreamData(wg_audio, samples, (int)bytes)) return 0;
+#ifdef WG_INPOUT32
+    if (wg_native_opl)
+    {
+        int queued = SDL_GetAudioStreamQueued(wg_audio);
+        if (!WG_OPLPlaybackSubmitFrames(frame_count, queued >= 0 ?
+                (uint64_t)queued / (wg_audio_channels * sizeof(*samples)) : UINT64_MAX))
+        {
+            wolf3d_SetOPLError(WG_InpOutStatus());
+            return 0;
+        }
+    }
+#endif
 #ifdef WG_LINUX_OPL
     if (WG_LinuxOPLActive())
     {
@@ -739,6 +790,10 @@ int WG_InstallPlatform(void)
         WG_LinuxOPLInit,
         WG_LinuxOPLShutdown,
         WG_LinuxOPLWrite,
+#elif defined(WG_INPOUT32)
+        WG_SDLNativeInit,
+        WG_SDLNativeShutdown,
+        WG_DOSAdLibWrite,
 #else
         NULL,
         NULL,
@@ -748,6 +803,8 @@ int WG_InstallPlatform(void)
         WG_SDLRequestMouseCapture,
 #ifdef WG_LINUX_OPL
         WG_LinuxOPLWriteTimed
+#elif defined(WG_INPOUT32)
+        WG_OPLPlaybackWrite
 #else
         NULL
 #endif

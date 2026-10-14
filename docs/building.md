@@ -206,7 +206,13 @@ Run `./build.sh` without arguments for the guided Linux configurator. It
 verifies and, with confirmation, initializes the recorded submodules; reports
 GCC, Clang, CMake, Make, Docker, and Git; shows only usable build paths; and
 prints the exact Make command before executing it. Arguments bypass the
-wizard and are forwarded to Make.
+wizard and are forwarded to Make. The main menu selects local Linux, Docker
+Linux, Docker Windows, DOS, or cleaning. Submenus then select compatibility,
+architecture and backend, followed by recommended or custom audio settings.
+Windows `build.cmd` and `build.ps1` share `auto` defaults and always include
+silent. Modern Windows can opt into native OPL with `-Drivers all-adlib`,
+`dbopl-silent-adlib`, or `adlib-silent`; `all` means the three software drivers.
+Legacy VC6--VS2005 scripts/IDE builds also default to auto and include silent.
 
 `make` defaults to the pinned-SDL3 distribution. Useful targets include:
 
@@ -227,7 +233,7 @@ make clean
 
 GCC is the default. Select Clang with `CC=clang`. Set
 `USE_SYSTEM_SDL3=ON` to use the installed SDL package. `OPL_DRIVERS` is a
-comma-separated subset of `nuked,dbopl,silent`; `OPL_DEFAULT` chooses one
+comma-separated subset of `nuked,dbopl,silent,adlib`; `OPL_DEFAULT` chooses one
 included driver or `auto`. Silent is always included. Sample rate is selected
 at runtime through `--sample-rate auto` or a numeric override.
 `CMAKE_ARGS` passes additional definitions through to configuration, and
@@ -582,3 +588,40 @@ Linux port access; no extra third-party library or kernel driver is bundled.
 Builds/tests require no raw I/O privilege. Runtime access needs CAP_SYS_RAWIO.
 See [native OPL](native-opl.md) for setup, PCM coexistence, and the explicit
 pending-physical-test status. Build success is not hardware confirmation.
+
+### Legacy Linux x86 glibc Docker profile
+
+Use `make portable LINUX_ARCH=x86` for SDL3 + KMS/fbdev, or
+`make portable-sdl3 LINUX_ARCH=x86` / `make portable-console LINUX_ARCH=x86`.
+The guided Linux Docker menu exposes the same architecture choice. The default
+Docker architecture remains `x64`; local builds use the host toolchain's target.
+Package vocabulary is `x86` and `x64`, never `i386` or `amd64`.
+
+The legacy profile targets **Pentium Pro/i686 or newer**, with no required MMX,
+SSE or SSE2. It builds with GCC 8 against Debian 10's 32-bit glibc 2.28 libraries.
+Original Pentium/Pentium MMX (i586) is not supported: those dependencies already
+require i686. Supporting i586 would require a separate older or rebuilt userspace,
+not just different compiler flags. A suitable 32-bit kernel/userspace and working
+video/audio drivers are still required; a modern distro need not boot on this CPU.
+
+SDL3 uses X11 software presentation in this profile; Wayland, OpenGL, Vulkan,
+SDL KMSDRM and SIMD options are disabled. The separate KMS/fbdev host retains
+DRM with framebuffer fallback and ALSA. DBOPL, silent and native AdLib are
+compiled by default, with runtime `auto`; Nuked can be added explicitly through
+`OPL_DRIVERS=nuked,dbopl,silent,adlib`. Native port access still needs runtime
+permission. Original ISA hardware and actual i686 performance remain pending
+physical testing. Compiler flags and CPU baseline are recorded in DOCS/BUILD.TXT.
+There is no legacy x86 musl profile; musl Docker packages remain x64 only.
+
+Maintainers can run `python tests/WG_WINDOWS_AUDIO_CHOICES_TEST.py` on Windows
+for dispatcher auto/silent/native choices and stale-cache regression checks.
+
+Legacy packages run `tools/W3P_X86_AUDIT.sh` after the glibc audit, checking
+ELF32/x86 and absence of SIMD registers in project binaries. Maintainers can run
+`python3 tests/WG_LINUX_X86_TEST.py` in a multilib Linux environment to exercise
+its rejection paths. This does not replace testing on an actual i686 machine.
+
+Validation for the i686 profile includes full SDL3 and KMS/fbdev builds on
+ajmbuild01, glibc/ELF/SIMD audits, six SDL3 and five KMS/fbdev CTest checks,
+and packaged help/DBOPL diagnostics using dummy audio/video. These tests run
+32-bit binaries on an x64 host, not an emulated or physical Pentium Pro.

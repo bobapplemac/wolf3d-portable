@@ -57,3 +57,5 @@ DOCS/BUILD.TXT records the complete configured build options, compiler and
 source details. See docs/BUILD-NAMING.md in the source tree for package naming.
 
 @W3P_LINUX_OPL_NOTE@
+
+@W3P_NATIVE_OPL_NOTE@

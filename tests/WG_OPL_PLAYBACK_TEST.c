@@ -1,4 +1,5 @@
 /* Real Windows worker, fake waveOut device and register sink: no InpOut DLL. */
+#undef NDEBUG
 #include <assert.h>
 #include <stdio.h>
 #include <windows.h>
@@ -61,6 +62,17 @@ int main(void)
     assert(WG_OPLPlaybackStart((HWAVEOUT)1, 11025));
     assert(WG_OPLPlaybackSubmit(NULL, 512, &header));
     Sleep(20); WG_OPLPlaybackStop(); assert(count == before);
+    count = 0;
+    assert(WG_OPLPlaybackStart(NULL, 11025)); /* SDL owns PCM instead of waveOut. */
+    WG_OPLPlaybackWrite(1, 1, 0, 11025);
+    WG_OPLPlaybackWrite(1, 2, 220, 11025);
+    Sleep(15); assert(count == 0);
+    assert(WG_OPLPlaybackSubmitFrames(512, 512));
+    start = GetTickCount();
+    while (count < 2 && GetTickCount() - start < 2000) Sleep(1);
+    assert(count == 2);
+    assert((times[1] - times[0]) * 1000 / frequency.QuadPart >= 5);
+    WG_OPLPlaybackStop(); before = count; Sleep(20); assert(count == before);
     puts("OPL worker: events paced during PCM playback; stop/restart cancel pending writes.");
     return 0;
 }

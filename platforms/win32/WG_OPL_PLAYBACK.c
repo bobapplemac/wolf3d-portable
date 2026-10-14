@@ -32,7 +32,7 @@ static DWORD WINAPI WG_OPLPlaybackThread(LPVOID context)
         }
         last_counter = (uint64_t)now.QuadPart;
         started = wg_timeline.started;
-        if (started && (uint64_t)now.QuadPart - last_query >= wg_timeline.frequency / 1000)
+        if (wg_opl_wave && started && (uint64_t)now.QuadPart - last_query >= wg_timeline.frequency / 1000)
         {
             last_query = (uint64_t)now.QuadPart;
             memset(&position, 0, sizeof(position)); position.wType = TIME_SAMPLES;
@@ -66,7 +66,7 @@ int WG_OPLPlaybackStart(HWAVEOUT wave, uint32_t rate)
 {
     LARGE_INTEGER frequency;
     WG_OPLPlaybackStop();
-    if (!wave || !rate || !QueryPerformanceFrequency(&frequency) || frequency.QuadPart <= 0)
+    if (!rate || !QueryPerformanceFrequency(&frequency) || frequency.QuadPart <= 0)
         return 0;
     WG_OPLTimelineInit(&wg_timeline, rate, (uint64_t)frequency.QuadPart);
     wg_opl_wave = wave; wg_opl_stopping = wg_opl_failed = 0;
@@ -103,6 +103,27 @@ int WG_OPLPlaybackSubmit(const int16_t *samples, size_t frames, WAVEHDR *header)
         /* Hold publication until the matching PCM has actually been accepted. */
         ok = waveOutWrite(wg_opl_wave, header, sizeof(*header)) == MMSYSERR_NOERROR;
         if (ok) WG_OPLTimelineSubmit(&wg_timeline, (unsigned)frames, (uint64_t)now.QuadPart);
+    }
+    LeaveCriticalSection(&wg_opl_lock);
+    if (!ok) WG_InpOutError("native OPL playback queue/clock failed");
+    SetEvent(wg_opl_wake);
+    return ok;
+}
+
+/* SDL accepts PCM itself, then publishes its application-rate queue position.
+   Unlike waveOut, no SDL API is called from the worker thread. */
+int WG_OPLPlaybackSubmitFrames(size_t frames, uint64_t queued)
+{
+    LARGE_INTEGER now;
+    int ok;
+    if (!wg_opl_thread) return 1;
+    EnterCriticalSection(&wg_opl_lock);
+    ok = !wg_opl_failed && frames <= 0xffffffffU && QueryPerformanceCounter(&now);
+    if (ok)
+    {
+        WG_OPLTimelineSubmit(&wg_timeline, (unsigned)frames, (uint64_t)now.QuadPart);
+        if (queued <= wg_timeline.submitted)
+            WG_OPLTimelineObserve(&wg_timeline, (uint32_t)(wg_timeline.submitted - queued), (uint64_t)now.QuadPart);
     }
     LeaveCriticalSection(&wg_opl_lock);
     if (!ok) WG_InpOutError("native OPL playback queue/clock failed");

@@ -3,6 +3,13 @@
 #include <windows.h>
 #include <string.h>
 #include "WG_INPOUT32.h"
+#ifdef _WIN64
+#define WG_INPOUT_DLL "inpoutx64.dll"
+#define WG_INPOUT_BITS "64-bit"
+#else
+#define WG_INPOUT_DLL "inpout32.dll"
+#define WG_INPOUT_BITS "32-bit"
+#endif
 
 typedef short (__stdcall *wg_inp_fn)(short);
 typedef void (__stdcall *wg_out_fn)(short, short);
@@ -34,7 +41,7 @@ int WG_InpOutOpen(void)
     if (wg_io_module) return 1;
     if (GetVersion() & 0x80000000UL)
     {
-        WG_InpOutError("InpOut32 transport requires Windows NT/2000/XP");
+        WG_InpOutError("InpOut32 transport requires Windows NT (Windows 2000 or newer)");
         return 0;
     }
     if (!QueryPerformanceFrequency(&wg_io_frequency) ||
@@ -50,12 +57,12 @@ int WG_InpOutOpen(void)
         return 0;
     }
     slash = strrchr(path, '\\');
-    if (!slash || (size_t)(slash + 1 - path) + sizeof("inpout32.dll") > sizeof(path))
+    if (!slash || (size_t)(slash + 1 - path) + sizeof(WG_INPOUT_DLL) > sizeof(path))
     {
         WG_InpOutError("executable directory path is too long");
         return 0;
     }
-    strcpy(slash + 1, "inpout32.dll");
+    strcpy(slash + 1, WG_INPOUT_DLL);
     /* Absolute path: never search the current directory or PATH for this DLL. */
     error_mode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
     SetErrorMode(error_mode | SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
@@ -65,13 +72,13 @@ int WG_InpOutOpen(void)
     if (!wg_io_module)
     {
         if (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES)
-            WG_InpOutError("inpout32.dll is missing or inaccessible beside wolf3d.exe");
+            WG_InpOutError(WG_INPOUT_DLL " is missing or inaccessible beside wolf3d.exe");
         else if (load_error == ERROR_BAD_EXE_FORMAT)
-            WG_InpOutError("inpout32.dll is incompatible or invalid (32-bit DLL required)");
+            WG_InpOutError(WG_INPOUT_DLL " is incompatible or invalid (" WG_INPOUT_BITS " DLL required)");
         else if (load_error == ERROR_MOD_NOT_FOUND)
-            WG_InpOutError("inpout32.dll could not load: a DLL dependency is missing");
+            WG_InpOutError(WG_INPOUT_DLL " could not load: a DLL dependency is missing");
         else
-            WG_InpOutError("inpout32.dll could not load (Windows loader failure)");
+            WG_InpOutError(WG_INPOUT_DLL " could not load (Windows loader failure)");
         return 0;
     }
     proc = GetProcAddress(wg_io_module, "Inp32");
@@ -82,7 +89,7 @@ int WG_InpOutOpen(void)
     memcpy(&driver_open, &proc, sizeof(driver_open));
     if (!wg_io_read || !wg_io_write || !driver_open)
     {
-        WG_InpOutError("inpout32.dll is missing required exports");
+        WG_InpOutError(WG_INPOUT_DLL " is missing required exports");
         WG_InpOutClose();
         return 0;
     }

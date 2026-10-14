@@ -142,20 +142,23 @@ foreach(sound --adlib --pc-speaker --no-sound -noal -NoSb /NOAL /NOSB noal --nos
     endif()
 endforeach()
 expect_options("OPL is independent" "--no-sound\n--opl silent"
-    "--no-sound\n--opl\nnuked" --opl nuked)
+    "--no-sound\n--opl\nauto" --opl auto)
 expect_options("no-config bypasses hardware defaults" "--nomouse\n--nojoy\n--no-sound"
     "--no-config\n--mouse" --no-config --mouse)
 
-expect_options("DBOPL config selection" "--opl dbopl" "--opl\ndbopl")
-expect_options("DBOPL CLI selection" "--opl silent" "--opl\ndbopl" --opl dbopl)
+if(NOT OPL_TEST_DRIVER)
+    set(OPL_TEST_DRIVER silent)
+endif()
+expect_options("compiled driver config selection" "--opl ${OPL_TEST_DRIVER}" "--opl\n${OPL_TEST_DRIVER}")
+expect_options("compiled driver CLI selection" "--opl silent" "--opl\n${OPL_TEST_DRIVER}" --opl ${OPL_TEST_DRIVER})
 expect_options("CLI replaces invalid config driver" "--opl dbpol"
-    "--opl\ndbopl" --opl dbopl)
+    "--opl\n${OPL_TEST_DRIVER}" --opl ${OPL_TEST_DRIVER})
 foreach(invalid "--opl dbpol" "--opl")
     file(WRITE "${config_root}/wolf.${CONFIG_EXTENSION}" "${invalid}\n")
     execute_process(COMMAND "${PROBE}" "${config_root}" wolf.exe --diag
         RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
     if(NOT result EQUAL 2 OR NOT error MATCHES "Available OPL drivers: auto"
-       OR NOT error MATCHES "dbopl")
+       OR NOT error MATCHES "silent")
         message(FATAL_ERROR "Invalid config OPL was not diagnosed: ${result}: ${error}")
     endif()
 endforeach()

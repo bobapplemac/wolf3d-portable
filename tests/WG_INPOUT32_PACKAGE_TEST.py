@@ -23,6 +23,9 @@ class InpOutPackageTests(unittest.TestCase):
                      ('win9x', 'x86', 'gdi', 'ON', 'ON', False),
                      ('win7', 'x86', 'gdi', 'ON', 'ON', False),
                      ('winxp', 'x64', 'gdi', 'ON', 'ON', False),
+                     ('win7', 'x64', 'gdi', 'ON', 'ON', False),
+                     ('win7', 'x64', 'sdl3', 'ON', 'ON', False),
+                     ('win10', 'x64', 'sdl3', 'ON', 'ON', False),
                      ('winxp', 'x86', 'sdl3', 'ON', 'ON', False)]
             def stage(index, case):
                 platform, arch, backend, enabled, adlib, expected = case
@@ -42,6 +45,7 @@ class InpOutPackageTests(unittest.TestCase):
                     dist, result = stage(index, case)
                     self.assertEqual(result.returncode, 0, result.stderr)
                     included = case[-1]
+                    self.assertFalse((dist / 'inpoutx64.dll').exists())
                     self.assertEqual((dist / 'inpout32.dll').exists(), included)
                     self.assertEqual((dist / 'DOCS/LICENSES/INPOUT32.TXT').exists(), included)
                     notices = (dist / 'DOCS/NOTICES.TXT').read_text()

@@ -1,7 +1,7 @@
 /* PCM is rendered ahead; only this worker writes queued musical events to
    the chip. Probe/reset/shutdown remain synchronous with the worker stopped. */
 #include "WG_OPL_PLAYBACK.h"
-#include "WG_OPL_TIMELINE.h"
+#include "../WG_OPL_TIMELINE.h"
 #include "WG_INPOUT32.h"
 #include "../dos/WG_DOS_ADLIB.h"
 static wg_opl_timeline_t wg_timeline;

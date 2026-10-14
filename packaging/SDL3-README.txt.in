@@ -44,7 +44,7 @@ only by the host and will not dismiss an in-game "Press a key" prompt.
 
 Run with --help for complete game and host options (--sdl3-help remains an
 alias). Use --opl
-nuked|dbopl|silent to select an included audio driver and --sample-rate HZ to
+auto|nuked|dbopl|silent|adlib to select an included audio driver and --sample-rate auto|HZ to
 change the preferred PCM rate. Emulated hardware is selected independently:
 --adlib/-nosb, --pc-speaker/-noal, or --no-sound.
 
@@ -55,3 +55,5 @@ directory also identifies wolf3d-lib's GPL-2.0 license explicitly.
 
 DOCS/BUILD.TXT records the complete configured build options, compiler and
 source details. See docs/BUILD-NAMING.md in the source tree for package naming.
+
+@W3P_LINUX_OPL_NOTE@

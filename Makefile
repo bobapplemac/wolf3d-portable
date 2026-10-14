@@ -14,7 +14,8 @@ BUILD_TYPE ?= Release
 CMAKE_ARGS ?=
 JOBS ?=
 USE_SYSTEM_SDL3 ?= OFF
-OPL_DRIVERS ?= nuked,dbopl,silent
+OPL_DRIVERS ?= nuked,dbopl,silent,adlib
+WINDOWS_OPL_DRIVERS = $(if $(filter file default undefined,$(origin OPL_DRIVERS)),nuked$(comma)dbopl$(comma)silent,$(OPL_DRIVERS))
 OPL_DEFAULT ?= auto
 WIN2K_OPL_DRIVERS ?= dbopl,silent,adlib
 WIN2K_OPL_DEFAULT ?= auto
@@ -67,6 +68,7 @@ CMAKE_AUDIO_ARGS := \
 	-DWG_ENABLE_OPL_NUKED=$(if $(findstring nuked,$(OPL_DRIVERS)),ON,OFF) \
 	-DWG_ENABLE_OPL_DBOPL=$(if $(findstring dbopl,$(OPL_DRIVERS)),ON,OFF) \
 	-DWG_ENABLE_OPL_SILENT=ON \
+	-DWG_ENABLE_OPL_ADLIB=$(if $(findstring adlib,$(OPL_DRIVERS)),ON,OFF) \
 	-DWG_DEFAULT_OPL_DRIVER="$(OPL_DEFAULT)"
 
 PARALLEL_ARG := --parallel $(JOBS)
@@ -129,8 +131,8 @@ help:
 		'  JOBS=N                       Parallel job limit.' \
 		'  BUILD_TYPE=Release|Debug     Build type (default: Release).' \
 		'  USE_SYSTEM_SDL3=ON|OFF       Installed SDL >= 3.2 or pinned SDL (default).' \
-		'  OPL_DRIVERS=nuked,dbopl,silent Drivers compiled into wolf3d (default: all).' \
-		'  OPL_DEFAULT=auto|nuked|dbopl|silent Runtime default (default: auto).' \
+		'  OPL_DRIVERS=nuked,dbopl,silent,adlib Drivers compiled into wolf3d (default: all).' \
+		'  OPL_DEFAULT=auto|nuked|dbopl|silent|adlib Runtime default (default: auto).' \
 		'  WIN2K_OPL_DRIVERS=...       Windows 2000 drivers (default: dbopl,silent,adlib).' \
 		'  WINXP_OPL_DRIVERS=...       Windows XP drivers (default: dbopl,silent,adlib).' \
 		'  WIN2K_OPL_DEFAULT=...      Windows 2000 runtime default (default: dbopl).' \
@@ -138,7 +140,7 @@ help:
 		'  CMAKE_ARGS="..."             Additional CMake definitions.' \
 		'  DOCKER_RUN_ARGS="..."        Additional Docker run arguments.' \
 		'  DOS_OPL_DRIVERS=...          DOS drivers (default: dbopl,silent,adlib).' \
-		'  DOS_OPL_DEFAULT=...          DOS runtime default (default: adlib).' \
+		'  DOS_OPL_DEFAULT=...          DOS runtime default (default: auto).' \
 		'' \
 		'Cleanup:' \
 		'  make clean                   Remove build trees and project builder images.' \
@@ -343,7 +345,7 @@ windows-win7: windows-mingw-image
 			--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 			--env W3P_WINDOWS_CROSS_PROFILE="$$profile" \
 			--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
-			--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(OPL_DRIVERS)" \
+			--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(WINDOWS_OPL_DRIVERS)" \
 			--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(OPL_DEFAULT)" \
 			"$(WINDOWS_MINGW_BUILD_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh || exit $$?; \
 	done
@@ -354,7 +356,7 @@ windows-llvm-win7: windows-llvm-msvcrt-image
 			--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 			--env W3P_WINDOWS_CROSS_PROFILE="$$profile" \
 			--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
-			--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(OPL_DRIVERS)" \
+			--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(WINDOWS_OPL_DRIVERS)" \
 			--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(OPL_DEFAULT)" \
 			"$(WINDOWS_LLVM_MINGW_MSVC_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh || exit $$?; \
 	done
@@ -364,7 +366,7 @@ windows-win10: windows-llvm-ucrt-image
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		--env W3P_WINDOWS_CROSS_PROFILE=llvm-mingw-win10-x64 \
 		--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
-		--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(OPL_DRIVERS)" \
+		--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(WINDOWS_OPL_DRIVERS)" \
 		--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(OPL_DEFAULT)" \
 		"$(WINDOWS_LLVM_MINGW_UCRT_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh
 

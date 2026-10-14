@@ -5,7 +5,7 @@ engine through the public WOLF3D.h API, without private engine include paths.
 
 | Path | Responsibility |
 | --- | --- |
-| `platforms/` | GDI (win32/), SDL3 (sdl3/), KMS/fbdev (linux-console/) and VGA (dos/) hosts plus shared launcher/API compatibility code. |
+| `platforms/` | GDI (win32/), SDL3 (sdl3/), KMS/fbdev (linux-console/) and VGA (dos/) hosts plus shared launcher/API compatibility code. `platforms/linux/` contains Linux services shared by SDL3 and KMS/fbdev; `platforms/WG_OPL_TIMELINE.h` is the host-independent native OPL scheduler. |
 | `lib/wolf3d/` | Engine submodule: recorded starting revision, optionally advanced through confirmed updates. |
 | `third_party/SDL3/` | Recorded SDL3 source submodule; system SDL3 is an explicit build option. |
 | `.github/` | CI and repository automation. |

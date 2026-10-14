@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - Linux native OPL
+
+- Add shared Linux x86/x64 native AdLib support to SDL3 and KMS/fbdev, retaining PCM.
+- Schedule timestamped writes on a port-owning worker with elapsed-time delays.
+- Include native OPL in Linux defaults; preserve quiet fallback and explicit errors.
+- Add mocked hardware/thread tests and setup documentation; physical Linux playback remains unconfirmed.
+
 ## 1.4.87 - 2026-10-14 - Legacy audio policy integration
 
 - Integrate the completed engine audio policy across legacy compiler targets.

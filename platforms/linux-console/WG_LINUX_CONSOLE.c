@@ -1,3 +1,6 @@
+#ifdef WG_LINUX_OPL
+#include "../linux/WG_LINUX_OPL.h"
+#endif
 #include "../WG_ENGINE_COMPAT.h"
 #include "../WG_HOST.h"
 #include "../WG_TEXT_OUTPUT.h"
@@ -1347,12 +1350,19 @@ static int WG_LinuxConsolePCMInitEx(
     }
     /* snd_pcm_set_params configures the application-facing stream at the
        requested rate and lets ALSA perform any device-side conversion. */
+#ifdef WG_LINUX_OPL
+    WG_LinuxOPLSetRate(requested->sample_rate);
+#endif
     *obtained = *requested;
     return 1;
 }
 
 static void WG_LinuxConsolePCMShutdown(void)
 {
+#ifdef WG_LINUX_OPL
+    WG_LinuxOPLShutdown();
+    WG_LinuxOPLSetRate(0);
+#endif
     if (wg_pcm != NULL)
     {
         (void)snd_pcm_drop(wg_pcm);
@@ -1397,6 +1407,15 @@ static int WG_LinuxConsolePCMSubmit(const int16_t *samples,
             continue;
         }
         if (result == 0) return 0;
+#ifdef WG_LINUX_OPL
+        if (WG_LinuxOPLActive())
+        {
+            snd_pcm_sframes_t delay;
+            uint64_t queued = UINT64_MAX;
+            if (snd_pcm_delay(wg_pcm, &delay) == 0 && delay >= 0) queued = (uint64_t)delay;
+            if (!WG_LinuxOPLSubmit((size_t)result, queued)) return 0;
+        }
+#endif
         submitted += (size_t)result;
     }
     return 1;
@@ -1424,12 +1443,22 @@ int WG_InstallPlatform(void)
         WG_LinuxConsolePCMWritableFrames,
         WG_LinuxConsolePCMSubmit,
         WG_LinuxConsolePCMInitEx,
+#ifdef WG_LINUX_OPL
+        WG_LinuxOPLInit,
+        WG_LinuxOPLShutdown,
+        WG_LinuxOPLWrite,
+#else
         NULL,
         NULL,
         NULL,
+#endif
         WG_LinuxConsoleInputDevices,
         NULL,
+#ifdef WG_LINUX_OPL
+        WG_LinuxOPLWriteTimed
+#else
         NULL
+#endif
     };
 
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;

@@ -140,5 +140,7 @@ DOS/4GW extender: its adjacent `DOS4GW.EXE` is DOS/32A's compatible loader and
 includes the DOS/32A license. When explicitly enabled, Nuked-OPL3 remains a
 separable library in the package's Open Watcom relink kit even though DOS has
 no runtime shared-library facility. Native AdLib output is standard on DOS/Win9x and an
-[experimental opt-in on win2k/XP x86 GDI](native-opl.md). It is not
-compiled into other platform packages by default.
+[option on win2k/XP x86 GDI and Linux x86/x64 SDL3/KMS-fbdev](native-opl.md).
+These builds include it by default, with quiet auto fallback. Linux native OPL
+is build- and mock-tested; physical playback confirmation is pending. ALSA/SDL
+PCM remains independent. Other Linux architectures do not implement ISA port I/O.

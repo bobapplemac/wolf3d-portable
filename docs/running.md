@@ -210,3 +210,10 @@ optional DLL load; explicit native failure is reported by the application.
 Builds no longer offer a fixed sample rate. Old SAMPLE_RATE variables and
 WG_DEFAULT_SAMPLE_RATE do not control playback; move overrides to the launcher
 configuration or command line. BUILD.TXT records the runtime-auto policy.
+
+### Native OPL on Linux
+
+Linux x86/x64 SDL3 and KMS/fbdev builds support `--opl adlib`, keeping existing
+PCM playback through ALSA or SDL's audio backend. `auto` falls back quietly if
+raw port access or the chip is unavailable. See [native OPL setup](native-opl.md)
+for permissions, mixer configuration and pending physical validation.

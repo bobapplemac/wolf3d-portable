@@ -114,6 +114,10 @@ if [[ $target == dos-* || $target == windows-win9x || $target == windows-win2k |
         [ "$driver" != "$default_opl" ] && defaults+=("$driver")
     done
     default_opl=$(choose 'Default OPL driver' "${defaults[@]}")
+elif [[ $target != clean && $target != windows-* ]]; then
+    drivers=$(choose 'Compiled OPL drivers' nuked-dbopl-silent-adlib nuked-dbopl-silent nuked-silent dbopl-silent adlib-silent silent)
+    IFS=- read -r -a defaults <<< "$drivers"
+    default_opl=$(choose 'Default OPL driver' auto "${defaults[@]}")
 elif [[ $target != clean ]]; then
     drivers=$(choose 'Compiled OPL drivers' all nuked-silent dbopl-silent silent)
     if [ "$drivers" = all ]; then

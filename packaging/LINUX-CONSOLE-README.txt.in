@@ -40,7 +40,7 @@ Host-specific options:
   --no-audio
   --help                              (also -h or /?)
 
-Game audio options are --opl nuked|dbopl|silent and --sample-rate HZ. Only
+Game audio options are --opl auto|nuked|dbopl|silent|adlib and --sample-rate auto|HZ. Only
 drivers recorded in DOCS/BUILD.TXT are available. Emulated hardware is selected
 independently with --adlib/-nosb, --pc-speaker/-noal, or --no-sound. Host-only
 --no-audio suppresses ALSA output without changing detected game hardware.
@@ -64,3 +64,5 @@ component provenance.
 
 DOCS/BUILD.TXT records the complete configured build options, compiler and
 source details. See docs/BUILD-NAMING.md in the source tree for package naming.
+
+@W3P_LINUX_OPL_NOTE@

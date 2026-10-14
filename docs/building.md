@@ -571,3 +571,14 @@ loaded console process-list API. Win9x/2000 lack that API, so detection uses the
 initial untouched (0,0) console cursor. An unusual launcher or batch file that
 clears an inherited console to (0,0) without printing a prompt can resemble a
 new console; use `--no-pause` for those automation cases.
+
+### Linux native OPL
+
+Linux x86/x64 SDL3 and KMS/fbdev builds now include `adlib` in the default driver
+set, alongside Nuked, DBOPL and silent. This applies to local, portable glibc and
+musl builds. `OPL_DRIVERS=nuked,dbopl,silent` (Make) or
+`WG_ENABLE_OPL_ADLIB=OFF` (CMake) omits native OPL. The backend uses pthreads and
+Linux port access; no extra third-party library or kernel driver is bundled.
+Builds/tests require no raw I/O privilege. Runtime access needs CAP_SYS_RAWIO.
+See [native OPL](native-opl.md) for setup, PCM coexistence, and the explicit
+pending-physical-test status. Build success is not hardware confirmation.

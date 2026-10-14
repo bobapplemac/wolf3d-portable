@@ -1,6 +1,9 @@
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
-#include "../platforms/win32/WG_OPL_TIMELINE.h"
+#include "../platforms/WG_OPL_TIMELINE.h"
 static wg_opl_timeline_t t;
 int main(void)
 {

@@ -1,8 +1,86 @@
-# Native OPL on Windows 2000 and XP
+# Native OPL on Linux, Windows 2000 and XP
+
+## Linux x86/x64: SDL3 and KMS/fbdev
+
+**Status: implemented, build- and mock-tested; physical Linux OPL playback is
+pending confirmation.** The chip probe and 4/24 microsecond write delays follow
+our working DOS/Windows implementation. That gives a sound basis for expecting
+compatible ISA hardware to work, but does not establish real-card timing,
+FM/PCM synchronization, mixer routing, or distribution compatibility.
+
+Both Linux hosts share a direct port-I/O worker for the OPL chip at 0x388-0x38b.
+The KMS/fbdev host keeps ALSA PCM; SDL3 keeps its selected audio backend (ALSA,
+PulseAudio, PipeWire, etc.). Native FM does not replace or bypass PCM. To select
+ALSA specifically for SDL3, set `SDL_AUDIO_DRIVER=alsa` before launching.
+The sound card mixes FM with PCM; software capture of PCM alone will not capture FM.
+
+Linux x86/x64 builds include AdLib by default. `auto` tries AdLib, Nuked, DBOPL,
+then silent; permission or detection failure falls back quietly. Explicit
+`--opl adlib` fails with a diagnostic instead. Native OPL prefers 22050 Hz PCM;
+`--sample-rate` still overrides that preference without changing FM tempo/pitch.
+Non-x86 Linux does not provide this direct ISA backend. Docker builds do not need
+hardware access or elevated I/O privileges; those are runtime requirements only.
+
+### Hardware and permissions
+
+- Initialize the card using its normal Linux sound driver and enable/unmute the
+  FM mixer route. Yamaha OPL3-SA2/SA3 cards use `snd-opl3sa2`; their ISA PnP,
+  port/IRQ/DMA and mixer configuration is separate from this backend.
+- Leave ALSA PCM and mixer support enabled. Close other FM players and avoid
+  using ALSA's OPL sequencer at the same time. Direct access does not acquire
+  exclusive ownership from the kernel FM driver or other applications.
+- The playback thread requests `ioperm(0x388, 4, 1)`. It needs `CAP_SYS_RAWIO`;
+  kernel lockdown/security policy can still deny access. The game never changes
+  privileges or permissions itself. Only the worker receives port permission,
+  and it silences the chip and revokes permission when stopped.
+
+For an administrator-controlled hardware test, util-linux `setpriv` can launch
+under your normal UID with the required ambient capability, avoiding running the
+whole game as root (this is still a powerful capability; use trusted binaries
+and libraries):
+
+```sh
+sudo setpriv --reuid="$(id -u)" --regid="$(id -g)" --init-groups \
+  --inh-caps=+sys_rawio --ambient-caps=+sys_rawio \
+  ./wolf3d --no-config --diag --opl adlib
+```
+
+Use the same launcher without `--diag` for playback. Ambient capabilities require
+Linux 4.3 or newer; distribution policy may restrict them. Bundled shared-library
+builds should not simply be given file capabilities: secure-loader rules can
+change library lookup. No permission setup is needed for software emulation.
+
+The probe resets the OPL chip. Success should select `adlib` at the requested or
+negotiated PCM rate. Then test music, AdLib effects and digitized effects together,
+including window dragging, busy scenes, normal exit and restarting. Do not label
+physical support confirmed until this has been checked on the target machine.
+
+### Implementation and regression checks
+
+The worker performs chip I/O; a monotonic clock enforces elapsed-time register
+recovery waits. Timestamped musical writes are released only after corresponding
+PCM is accepted. PCM queue observations correct the playback timeline; hardware
+and sound-server buffering can introduce additional latency, requiring listening
+tests. Shutdown joins the worker before resetting PCM. No InpOut32 DLL or custom
+kernel module is used.
+
+`linux-native-opl` in CTest exercises mocked port access with the real pthread
+worker: denied permission, absent chip, OPL2/OPL3 reset, minimum delays, PCM-gated
+writes, invalid rate handling, restart, silence and permission cleanup. The shared
+`WG_OPL_TIMELINE_TEST.c` also covers drift, starvation and queue boundaries.
+
+Build with `make releases`; add `OPL_DRIVERS=nuked,dbopl,silent` to omit native
+OPL. Direct CMake builds use `-DWG_ENABLE_OPL_ADLIB=OFF` to omit it. Existing caches
+retain explicit driver choices. glibc and musl use the same backend. Validation covers full x64 builds of both
+hosts on glibc 2.28 and musl, plus 32-bit `-march=pentium3` compilation and the
+mocked worker test. A complete 32-bit Linux distribution and physical playback
+on the Pentium III still need confirmation.
+
+## Windows 2000 and XP
 
 This experimental x86 GDI option uses the real ISA OPL chip at ports
-388h-38Bh through InpOut32. Auto is the default; ordinary launches,
-help does not load the access DLL; diagnostics probes the selected policy.
+388h-38Bh through InpOut32. Auto is the default; ordinary launches may probe the chip. Help does not load
+the access DLL; diagnostics probes the selected policy.
 Digital effects still use Windows waveOut. This is not WSS or SB DMA support.
 
 ## Build
@@ -12,7 +90,7 @@ On the Linux Docker build host:
 ```sh
 make windows-win2k
 make windows-xp
-# Optional heavier emulator, retaining DBOPL as the runtime default:
+# Optional heavier emulator, retaining auto as the runtime default:
 make windows-win2k WIN2K_OPL_DRIVERS=nuked,dbopl,silent,adlib
 make windows-xp WINXP_OPL_DRIVERS=nuked,dbopl,silent,adlib
 ```

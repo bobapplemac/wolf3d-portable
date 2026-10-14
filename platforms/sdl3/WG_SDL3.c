@@ -1,3 +1,6 @@
+#ifdef WG_LINUX_OPL
+#include "../linux/WG_LINUX_OPL.h"
+#endif
 #include "../WG_ENGINE_COMPAT.h"
 #include "../WG_HELP.h"
 #include "../WG_HOST.h"
@@ -652,12 +655,19 @@ static int WG_SDLPCMInitEx(const wolf3d_pcm_format_t *requested,
     {
         return 0;
     }
+#ifdef WG_LINUX_OPL
+    WG_LinuxOPLSetRate(requested->sample_rate);
+#endif
     *obtained = *requested;
     return 1;
 }
 
 static void WG_SDLPCMShutdown(void)
 {
+#ifdef WG_LINUX_OPL
+    WG_LinuxOPLShutdown();
+    WG_LinuxOPLSetRate(0);
+#endif
     if (wg_audio != NULL)
     {
         SDL_DestroyAudioStream(wg_audio);
@@ -691,8 +701,16 @@ static int WG_SDLPCMSubmit(const int16_t *samples, size_t frame_count)
         return 0;
     }
     bytes = frame_count * wg_audio_channels * sizeof(*samples);
-    return bytes <= INT_MAX
-        && SDL_PutAudioStreamData(wg_audio, samples, (int)bytes);
+    if (bytes > INT_MAX || !SDL_PutAudioStreamData(wg_audio, samples, (int)bytes)) return 0;
+#ifdef WG_LINUX_OPL
+    if (WG_LinuxOPLActive())
+    {
+        int queued = SDL_GetAudioStreamQueued(wg_audio);
+        if (!WG_LinuxOPLSubmit(frame_count, queued >= 0 ?
+                (uint64_t)queued / (wg_audio_channels * sizeof(*samples)) : UINT64_MAX)) return 0;
+    }
+#endif
+    return 1;
 }
 
 int WG_InstallPlatform(void)
@@ -717,12 +735,22 @@ int WG_InstallPlatform(void)
         WG_SDLPCMWritableFrames,
         WG_SDLPCMSubmit,
         WG_SDLPCMInitEx,
+#ifdef WG_LINUX_OPL
+        WG_LinuxOPLInit,
+        WG_LinuxOPLShutdown,
+        WG_LinuxOPLWrite,
+#else
         NULL,
         NULL,
         NULL,
+#endif
         WG_SDLInputDevices,
         WG_SDLRequestMouseCapture,
+#ifdef WG_LINUX_OPL
+        WG_LinuxOPLWriteTimed
+#else
         NULL
+#endif
     };
     return wolf3d_SetPlatform(&platform) == WOLF3D_RESULT_OK;
 }

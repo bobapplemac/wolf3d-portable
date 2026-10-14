@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - 2026-10-14 - GDI display sizing
+
+- Add `--window-scale` for aspect-corrected 320x240 multiples (1-8, default 3).
+- Add opt-in `--fullscreen-resolution` primary-display mode switching with
+  desktop restoration on fullscreen exit, focus loss and shutdown.
+- Preserve default borderless fullscreen and 4:3 rendering; validate CLI/INI
+  values and report unsupported display modes.
+- Add display-state and launcher regression coverage.
+
 ## 1.4.82 - 2026-10-14 - Windows 2000 shorthand
 
 - Standardize Windows 2000 identifiers, build targets, profiles and package

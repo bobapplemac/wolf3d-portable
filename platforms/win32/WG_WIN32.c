@@ -20,6 +20,7 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <shellapi.h>
+#include "WG_WIN32_DISPLAY.h"
 
 /* Older Platform SDK headers omit this GetSystemMetrics index. */
 #ifndef SM_CMONITORS
@@ -41,6 +42,8 @@ static uint32_t wg_pixels[WOLF3D_SCREEN_WIDTH * WOLF3D_SCREEN_HEIGHT];
 static LARGE_INTEGER wg_counter_frequency;
 static LARGE_INTEGER wg_counter_start;
 static int wg_quit_pending;
+static unsigned wg_window_scale = 3U;
+static wg_display_mode_t wg_display_mode;
 static int wg_start_fullscreen;
 static int wg_fullscreen;
 static int wg_fullscreen_enter_down;
@@ -112,7 +115,6 @@ static uint8_t wg_joystick_connected[WOLF3D_MAX_JOYSTICKS];
 #define WG_PCM_BUFFER_FRAMES 512U
 #define WG_DISPLAY_ASPECT_WIDTH 4
 #define WG_DISPLAY_ASPECT_HEIGHT 3
-#define WG_INITIAL_SCALE 3
 static HWAVEOUT wg_wave_out;
 static WAVEHDR wg_wave_headers[WG_PCM_BUFFER_COUNT];
 static int16_t wg_wave_samples[WG_PCM_BUFFER_COUNT]
@@ -443,60 +445,73 @@ static void WG_Win32RequestMouseCapture(int capture)
                               && GetForegroundWindow() == wg_window);
 }
 
+static int WG_Win32RestoreDisplay(int forget)
+{
+    if (WG_DisplayRestore(&wg_display_mode, forget)) return 1;
+    WG_PrintLauncherError("Unable to restore the desktop display mode.\n");
+    return 0;
+}
+
 static int WG_Win32SetFullscreen(int fullscreen)
 {
-    if (wg_window == NULL || fullscreen == wg_fullscreen)
-    {
-        return 1;
-    }
+    RECT bounds;
+#ifndef WG_LEGACY_WIN32
+    MONITORINFO monitor = { 0 };
+#endif
+    if (wg_window == NULL || fullscreen == wg_fullscreen) return 1;
     if (fullscreen)
     {
+        wg_windowed_placement.length = sizeof(wg_windowed_placement);
+        if (!GetWindowPlacement(wg_window, &wg_windowed_placement)) return 0;
 #ifdef WG_LEGACY_WIN32
         wg_windowed_style = GetWindowLong(wg_window, GWL_STYLE);
-        wg_windowed_placement.length = sizeof(wg_windowed_placement);
-        if (!GetWindowPlacement(wg_window, &wg_windowed_placement))
-        {
-            return 0;
-        }
-        SetWindowLong(wg_window, GWL_STYLE,
-                       wg_windowed_style & ~(LONG)WS_OVERLAPPEDWINDOW);
-        if (!SetWindowPos(wg_window, HWND_TOP, 0, 0,
-                          GetSystemMetrics(SM_CXSCREEN),
-                          GetSystemMetrics(SM_CYSCREEN),
-                          SWP_NOOWNERZORDER | SWP_FRAMECHANGED))
-        {
-            SetWindowLong(wg_window, GWL_STYLE, wg_windowed_style);
-            return 0;
-        }
 #else
-        MONITORINFO monitor = { 0 };
-
         wg_windowed_style = GetWindowLongPtrW(wg_window, GWL_STYLE);
-        wg_windowed_placement.length = sizeof(wg_windowed_placement);
-        monitor.cbSize = sizeof(monitor);
-        if (!GetWindowPlacement(wg_window, &wg_windowed_placement)
-            || !GetMonitorInfoW(MonitorFromWindow(
-                                    wg_window, MONITOR_DEFAULTTONEAREST),
-                                &monitor))
+#endif
+        if (!WG_DisplayEnable(&wg_display_mode))
         {
+            (void)WG_Win32RestoreDisplay(1);
+            WG_PrintLauncherError("Requested fullscreen resolution is unavailable at the current color depth.\n");
             return 0;
+        }
+        bounds.left = bounds.top = 0;
+        bounds.right = GetSystemMetrics(SM_CXSCREEN);
+        bounds.bottom = GetSystemMetrics(SM_CYSCREEN);
+#ifndef WG_LEGACY_WIN32
+        /* Explicit mode switching uses the primary display on all SDKs.
+           Default borderless fullscreen continues to use the nearest display. */
+        monitor.cbSize = sizeof(monitor);
+        if (wg_display_mode.width == 0)
+        {
+            if (!GetMonitorInfoW(MonitorFromWindow(wg_window,
+                    MONITOR_DEFAULTTONEAREST), &monitor)) return 0;
+            bounds = monitor.rcMonitor;
         }
         SetWindowLongPtrW(wg_window, GWL_STYLE,
-                          wg_windowed_style
-                              & ~(LONG_PTR)WS_OVERLAPPEDWINDOW);
-        if (!SetWindowPos(wg_window, HWND_TOP,
-                          monitor.rcMonitor.left, monitor.rcMonitor.top,
-                          monitor.rcMonitor.right - monitor.rcMonitor.left,
-                          monitor.rcMonitor.bottom - monitor.rcMonitor.top,
+                         wg_windowed_style & ~(LONG_PTR)WS_OVERLAPPEDWINDOW);
+#else
+        SetWindowLong(wg_window, GWL_STYLE,
+                      wg_windowed_style & ~(LONG)WS_OVERLAPPEDWINDOW);
+#endif
+        if (!SetWindowPos(wg_window, HWND_TOP, bounds.left, bounds.top,
+                          bounds.right - bounds.left, bounds.bottom - bounds.top,
                           SWP_NOOWNERZORDER | SWP_FRAMECHANGED))
         {
+#ifdef WG_LEGACY_WIN32
+            SetWindowLong(wg_window, GWL_STYLE, wg_windowed_style);
+#else
             SetWindowLongPtrW(wg_window, GWL_STYLE, wg_windowed_style);
+#endif
+            (void)WG_Win32RestoreDisplay(1);
+            (void)SetWindowPlacement(wg_window, &wg_windowed_placement);
             return 0;
         }
-#endif
     }
     else
     {
+        /* Prevent activation callbacks from reapplying the mode during restore. */
+        wg_fullscreen = 0;
+        if (!WG_Win32RestoreDisplay(1)) { wg_fullscreen = 1; return 0; }
 #ifdef WG_LEGACY_WIN32
         SetWindowLong(wg_window, GWL_STYLE, wg_windowed_style);
 #else
@@ -505,10 +520,7 @@ static int WG_Win32SetFullscreen(int fullscreen)
         if (!SetWindowPlacement(wg_window, &wg_windowed_placement)
             || !SetWindowPos(wg_window, NULL, 0, 0, 0, 0,
                              SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER
-                                 | SWP_NOOWNERZORDER | SWP_FRAMECHANGED))
-        {
-            return 0;
-        }
+                                 | SWP_NOOWNERZORDER | SWP_FRAMECHANGED)) return 0;
     }
     wg_fullscreen = fullscreen;
     SetCursor((fullscreen || wg_mouse_captured)
@@ -766,6 +778,30 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
         }
 
         case WM_ACTIVATE:
+            if (wg_fullscreen && wg_display_mode.width != 0
+                && !wg_display_mode.changing)
+            {
+                if (LOWORD(wparam) == WA_INACTIVE)
+                {
+                    (void)WG_Win32RestoreDisplay(0);
+                    ShowWindow(window, SW_MINIMIZE);
+                }
+                else if (!wg_display_mode.active)
+                {
+                    if (!WG_DisplayEnable(&wg_display_mode))
+                    {
+                        (void)WG_Win32SetFullscreen(0);
+                        WG_PrintLauncherError("Unable to reapply the fullscreen resolution; returned to windowed mode.\n");
+                    }
+                    else
+                    {
+                        SetWindowPos(window, HWND_TOP, 0, 0,
+                                     GetSystemMetrics(SM_CXSCREEN),
+                                     GetSystemMetrics(SM_CYSCREEN),
+                                     SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+                    }
+                }
+            }
             if (LOWORD(wparam) == WA_INACTIVE)
             {
 #ifdef WG_LEGACY_WIN32
@@ -788,6 +824,8 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
             return 0;
 
         case WM_DESTROY:
+            wg_fullscreen = 0;
+            (void)WG_Win32RestoreDisplay(1);
             wg_window = NULL;
             wg_quit_pending = 1;
             PostQuitMessage(0);
@@ -829,9 +867,9 @@ static int WG_Win32Init(void)
 
     rectangle.left = 0;
     rectangle.top = 0;
-    rectangle.right = WOLF3D_SCREEN_WIDTH * WG_INITIAL_SCALE;
+    rectangle.right = WOLF3D_SCREEN_WIDTH * wg_window_scale;
     rectangle.bottom = (WOLF3D_SCREEN_WIDTH * WG_DISPLAY_ASPECT_HEIGHT
-                        / WG_DISPLAY_ASPECT_WIDTH) * WG_INITIAL_SCALE;
+                        / WG_DISPLAY_ASPECT_WIDTH) * wg_window_scale;
     AdjustWindowRect(&rectangle, WS_OVERLAPPEDWINDOW, FALSE);
     window_width = rectangle.right - rectangle.left;
     window_height = rectangle.bottom - rectangle.top;
@@ -914,6 +952,8 @@ static int WG_Win32Init(void)
 
 static void WG_Win32Shutdown(void)
 {
+    wg_fullscreen = 0;
+    (void)WG_Win32RestoreDisplay(1);
     WG_Win32PCMShutdown();
     WG_Win32RequestMouseCapture(0);
     wg_xinput_get_state = NULL;
@@ -1496,7 +1536,24 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     launcher_argv = launcher_arguments.argv;
     for (index = 1; index < launcher_argc; ++index)
     {
-        if (strcmp(launcher_argv[index], "--fullscreen") == 0)
+        if (strcmp(launcher_argv[index], "--window-scale") == 0
+            || strcmp(launcher_argv[index], "--fullscreen-resolution") == 0)
+        {
+            int scale = strcmp(launcher_argv[index], "--window-scale") == 0;
+            if (index + 1 >= launcher_argc
+                || (scale ? !WG_ParseWindowScale(launcher_argv[index + 1], &wg_window_scale)
+                          : !WG_ParseFullscreenResolution(launcher_argv[index + 1],
+                                &wg_display_mode.width, &wg_display_mode.height)))
+            {
+                WG_PrintLauncherError(scale ? "--window-scale requires an integer from 1 to 8.\n"
+                    : "--fullscreen-resolution requires WIDTHxHEIGHT (320x240 to 8192x8192).\n");
+                result = WOLF3D_RESULT_PLATFORM_ERROR;
+                WG_FreeLauncherArguments(&launcher_arguments);
+                goto cleanup;
+            }
+            ++index;
+        }
+        else if (strcmp(launcher_argv[index], "--fullscreen") == 0)
         {
             wg_start_fullscreen = 1;
         }
@@ -1528,7 +1585,9 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
             launcher_argc > 0 ? launcher_argv[0] : "wolf3d.exe",
             "Win32 host options:\n"
             "  --fullscreen         Start in borderless fullscreen mode\n"
-            "  --windowed           Start in windowed mode\n",
+            "  --windowed           Start in windowed mode\n"
+            "  --window-scale N     Initial 320x240 scale, 1-8 (default 3)\n"
+            "  --fullscreen-resolution WxH  Optional primary-display mode\n",
             "Press F11 or Alt+Enter to toggle windowed/fullscreen mode.\n");
         result = WOLF3D_RESULT_QUIT;
     }
@@ -1538,6 +1597,13 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
         char report[1024];
 
         WG_Win32DiagnosticReport(report, sizeof(report));
+        {
+            char options[160];
+            (void)sprintf(options, "  Window scale: %u (%ux%u)\n  Fullscreen resolution: %ux%u (0x0 = desktop)\n",
+                          wg_window_scale, 320U * wg_window_scale, 240U * wg_window_scale,
+                          wg_display_mode.width, wg_display_mode.height);
+            if (strlen(report) + strlen(options) < sizeof(report)) strcat(report, options);
+        }
         WG_PrintDiagnostics(launcher_argc, launcher_argv,
                             launcher_arguments.config_path, report);
         result = WOLF3D_RESULT_QUIT;

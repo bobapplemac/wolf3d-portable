@@ -512,3 +512,39 @@ On a Windows test host, run `tests/WG_WIN9X_SMOKE.ps1 -Profile win2k` with
 `-PackagePath` and `-WorkRoot` to verify the default driver, exact compiled
 driver list, CLI/INI handling and rejection of unavailable native AdLib.
 Running this on modern Windows does not establish Windows 2000 compatibility.
+
+## Windows GDI window size and optional display mode
+
+The GDI host starts at scale 3 (a 960x720 client area). Use `--window-scale N`
+with an integer from 1 through 8 to choose the initial client area: 1 gives
+320x240, 2 gives 640x480, 3 gives 960x720, and 4 gives 1280x960. Window borders
+are additional. Manual resizing remains available; rendering preserves 4:3
+with black bars when the client area has a different aspect ratio.
+
+Plain `--fullscreen` keeps borderless fullscreen at the desktop resolution.
+`--fullscreen-resolution 640x480` optionally selects a temporary primary-display
+mode when entering fullscreen, including through F11 or Alt+Enter. It does not
+itself start fullscreen. The current color depth is preserved and the driver
+selects the refresh rate. Unsupported modes report an error; no alternate
+resolution is silently selected. Both dimensions must be between 320x240 and
+8192x8192, respectively; non-4:3 displays still use 4:3 rendering.
+
+The previous desktop mode is restored on leaving fullscreen, focus loss, and
+normal/error shutdown. Focus loss minimizes the mode-switched window; activation
+reapplies the selected mode, falling back to windowed mode with an error if it
+is no longer available. Default borderless fullscreen is unaffected. Forced
+process termination cannot guarantee cleanup.
+
+Both options work as separate lines in `Wolf3d.ini`; command-line values override
+matching INI options. For example:
+
+```text
+--window-scale 2
+--fullscreen-resolution 640x480
+--sample-rate 11025
+```
+
+Run `python tests/WG_WIN32_DISPLAY_TEST.py --cc gcc` for parsing and mocked mode
+lifecycle checks (`tests/WG_WIN32_DISPLAY_TEST.c`). The Windows package smoke
+script also checks CLI/INI validation; actual display switching and focus changes
+must be tested on the destination Windows/display driver.

@@ -59,4 +59,15 @@ $null = Check-Run '--no-config --opl' 1 '--opl requires a driver name'
 [IO.File]::WriteAllText($ini, "--opl dbpol`n")
 $null = Check-Run '--diag' 1 'Unknown or unavailable OPL driver: dbpol'
 $null = Check-Run '--diag --opl dbopl' 0 'Requested OPL driver \(not probed\): dbopl'
+$null = Check-Run '--no-config --diag --window-scale 2 --fullscreen-resolution 640x480' 0 'Window scale: 2 \(640x480\)'
+$null = Check-Run '--no-config --diag --window-scale 0' 1 '--window-scale requires'
+$null = Check-Run '--no-config --diag --window-scale 9' 1 '--window-scale requires'
+$null = Check-Run '--no-config --window-scale' 1 '--window-scale requires'
+$null = Check-Run '--no-config --diag --fullscreen-resolution 640x480oops' 1 '--fullscreen-resolution requires'
+$null = Check-Run '--no-config --fullscreen-resolution' 1 '--fullscreen-resolution requires'
+[IO.File]::WriteAllText($ini, "--window-scale 1`n--fullscreen-resolution 800x600`n")
+$null = Check-Run '--diag' 0 'Window scale: 1 \(320x240\)'
+$null = Check-Run '--diag --window-scale 2 --fullscreen-resolution 640x480' 0 'Fullscreen resolution: 640x480'
+[IO.File]::WriteAllText($ini, "--window-scale invalid`n")
+$null = Check-Run '--diag --window-scale 2' 0 'Window scale: 2'
 Write-Output "$Profile binary smoke checks passed. Fixture retained at $fixture"

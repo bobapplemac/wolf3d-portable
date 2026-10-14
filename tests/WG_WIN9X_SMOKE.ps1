@@ -15,7 +15,7 @@ $fixture = (Resolve-Path -LiteralPath $fixture).Path
 $exe = Join-Path $gameDir 'WOLF3D.EXE'
 $bytes = [IO.File]::ReadAllBytes($exe)
 $pe = [BitConverter]::ToInt32($bytes, 0x3c)
-$expectedSubsystem = if ($Profile -eq 'win9x') { 3 } else { 2 }
+$expectedSubsystem = 3
 if ([BitConverter]::ToUInt16($bytes, $pe + 92) -ne $expectedSubsystem) {
     throw 'Unexpected PE subsystem.'
 }
@@ -41,6 +41,7 @@ function Check-Run([string]$Arguments, [int]$ExpectedExit, [string]$ExpectedText
     Write-Host "PASS: $Arguments"
     return $output
 }
+$null = Check-Run '--no-config /?' 0 'Compiled OPL drivers:'
 $help = Check-Run '--no-config --help' 0 "Compiled OPL drivers: $compiledDrivers(?:\r?\n|$)"
 if ($help -notmatch "Default OPL driver: $defaultDriver") { throw 'Wrong default driver.' }
 $null = Check-Run '--no-config --diag --opl dbopl' 0 'Requested OPL driver \(not probed\): dbopl'

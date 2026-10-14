@@ -1646,3 +1646,14 @@ cleanup:
 #endif
     return result == WOLF3D_RESULT_PLATFORM_ERROR ? 1 : exit_code;
 }
+
+#ifdef WG_CONSOLE_WIN32
+/* Keep Unicode argument handling shared with the GUI launcher, but use the
+   console CRT entry point so pre-XP systems inherit CMD.EXE's console. */
+int wmain(int argc, wchar_t **argv)
+{
+    (void)argc;
+    (void)argv;
+    return wWinMain(GetModuleHandle(NULL), NULL, GetCommandLineW(), SW_SHOWNORMAL);
+}
+#endif

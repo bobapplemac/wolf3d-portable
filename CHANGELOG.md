@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - 2026-10-14 - Win2k console inheritance
+
+- Use a Unicode console entry point for win2k so CMD.EXE waits for the game and
+  help, diagnostics and B800 exit/error screens use the inherited console.
+- Retain graphical gameplay and the GUI subsystem on newer Windows targets.
+- Confirm physical win2k window scaling, display switching and desktop restoration.
+
 ## Unreleased - 2026-10-14 - GDI display sizing
 
 - Add `--window-scale` for aspect-corrected 320x240 multiples (1-8, default 3).

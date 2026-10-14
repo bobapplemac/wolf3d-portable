@@ -176,6 +176,12 @@ if(W3P_BUILD_WIN32)
         platforms/WG_HELP.c platforms/WG_TEXT_OUTPUT.c
         platforms/win32/WG_WIN32.c)
     w3p_configure_host(wolf3d-win32)
+    # Windows 2000 cannot attach a GUI process to its parent's console.
+    # Inherit it at process creation for CLI output and the B800 exit card.
+    if(WG_DIST_PLATFORM STREQUAL "win2k")
+        set_target_properties(wolf3d-win32 PROPERTIES WIN32_EXECUTABLE FALSE)
+        target_compile_definitions(wolf3d-win32 PRIVATE WG_CONSOLE_WIN32=1)
+    endif()
     target_compile_definitions(wolf3d-win32 PRIVATE
         WIN32_LEAN_AND_MEAN UNICODE _UNICODE)
     if(MINGW)

@@ -548,3 +548,15 @@ Run `python tests/WG_WIN32_DISPLAY_TEST.py --cc gcc` for parsing and mocked mode
 lifecycle checks (`tests/WG_WIN32_DISPLAY_TEST.c`). The Windows package smoke
 script also checks CLI/INI validation; actual display switching and focus changes
 must be tested on the destination Windows/display driver.
+
+The win2k GDI package uses a console-subsystem launcher (like Win9x), because
+Windows 2000 has no `AttachConsole` API. Start it from a command prompt to keep
+help, diagnostics and the colored B800 exit/error card visible after it exits.
+The game itself still runs in its graphical window. An Explorer launch creates
+its own console, which normally closes when the process exits. A hard crash
+cannot guarantee the engine's error-screen or display-restoration cleanup.
+
+On Windows, run `python tests/WG_WIN2K_CONSOLE_TEST.py PATH/TO/wolf3d.exe`
+with MinGW GCC on PATH. The companion `tests/WG_WIN2K_CONSOLE_TEST.c` creates
+an isolated hidden console and checks real console-buffer help/diagnostic
+output and the shared B800 renderer, rather than testing redirected pipes alone.

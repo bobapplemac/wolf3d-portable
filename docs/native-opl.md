@@ -10,13 +10,19 @@ Digital effects still use Windows waveOut. This is not WSS or SB DMA support.
 On the Linux Docker build host:
 
 ```sh
-make windows-win2k WIN2K_OPL_DRIVERS=dbopl,silent,adlib
-make windows-xp OPL_DRIVERS=dbopl,silent,adlib OPL_DEFAULT=dbopl
+make windows-win2k
+make windows-xp
+# Optional heavier emulator, retaining DBOPL as the runtime default:
+make windows-win2k WIN2K_OPL_DRIVERS=nuked,dbopl,silent,adlib
+make windows-xp WINXP_OPL_DRIVERS=nuked,dbopl,silent,adlib
 ```
 
 For an x86 Windows GDI CMake build, set `W3P_ENABLE_INPOUT32=ON`.
-This enables the library's `WG_ENABLE_OPL_ADLIB` adapter. Both are off by
-default. Other cross profiles reject AdLib selection for now.
+This enables the library's `WG_ENABLE_OPL_ADLIB` adapter. The win2k and winxp
+Docker profiles enable it by default, compiling DBOPL, silent and AdLib with
+DBOPL selected at runtime. Generic CMake builds keep this option off by default.
+Other cross profiles reject AdLib selection for now. The guided Linux build
+lets DOS, Win9x, win2k and winxp users add Nuked and select their runtime default.
 
 ## Install and test
 

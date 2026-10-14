@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Default win2k/winxp Docker builds to DBOPL, silent and native AdLib (DBOPL
+  runtime default); offer optional Nuked and audio choices in guided legacy builds.
+
 - Bundle verified Highrez InpOut32 for win2k/winxp x86 GDI native-AdLib packages,
   with SHA-256 enforcement, verbatim MIT license, notices and build provenance.
 

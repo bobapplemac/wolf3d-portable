@@ -495,9 +495,15 @@ no Windows development VM is required. The target is included in
 `make windows-cross`. The portable package uses GDI and legacy mouse input,
 without the XP-only Raw Input imports. SDL3 is not supported on this target.
 
-Defaults include only DBOPL and silent, with DBOPL selected. The target-specific
+Defaults include DBOPL, silent and AdLib, with DBOPL selected. Nuked is opt-in. The target-specific
 `WIN2K_OPL_DRIVERS` and `WIN2K_OPL_DEFAULT` Make variables override these;
-general OPL settings for other targets do not change them. Optional [native AdLib access](native-opl.md) is available for x86 GDI
+general OPL settings for other targets do not change them. Windows XP uses the
+same defaults, overridden with `WINXP_OPL_DRIVERS` / `WINXP_OPL_DEFAULT`
+(or explicit generic `OPL_DRIVERS` / `OPL_DEFAULT` settings).
+The guided Linux menus offer Nuked for DOS, Win9x, win2k and winxp; runtime
+defaults remain AdLib for DOS/Win9x and DBOPL for win2k/winxp.
+Maintainers can run `python3 tests/WG_LEGACY_OPL_CHOICES_TEST.py` on Linux.
+[native AdLib access](native-opl.md) is available for x86 GDI
 through Highrez InpOut32 1.5.0.1. Physical access and correctly timed playback are confirmed on Windows 2000. The existing `SAMPLE_RATE` override is
 supported (default 48000 Hz); use the runtime `--sample-rate` option to compare
 rates on slower hardware. Other platform defaults are unchanged.
@@ -508,9 +514,9 @@ Windows API compatibility proof: Windows 2000 startup, input, sound and
 performance still require physical testing. Use a fully updated Windows 2000
 SP4 installation for the initial test baseline.
 
-On a Windows test host, run `tests/WG_WIN9X_SMOKE.ps1 -Profile win2k` with
+On a Windows test host, run `tests/WG_WIN9X_SMOKE.ps1 -Profile win2k -NativeOpl` with
 `-PackagePath` and `-WorkRoot` to verify the default driver, exact compiled
-driver list, CLI/INI handling and rejection of unavailable native AdLib.
+driver list and CLI/INI handling without accessing the physical chip.
 Running this on modern Windows does not establish Windows 2000 compatibility.
 
 ## Windows GDI window size and optional display mode

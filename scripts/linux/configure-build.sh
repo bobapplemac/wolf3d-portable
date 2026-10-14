@@ -103,13 +103,27 @@ fi
 drivers=all
 default_opl=nuked
 sample_rate=48000
-if [[ $target == dos-* || $target == windows-win9x ]]; then
-    drivers=dos-default
-    default_opl=adlib
-    sample_rate=22050
-elif [[ $target == windows-win2k ]]; then
-    drivers=dbopl-silent
+if [[ $target == dos-* || $target == windows-win9x || $target == windows-win2k || $target == windows-xp ]]; then
     default_opl=dbopl
+    if [[ $target == dos-* || $target == windows-win9x ]]; then
+        default_opl=adlib
+        sample_rate=22050
+    fi
+    drivers=$(choose 'Compiled OPL drivers' dbopl-silent-adlib nuked-dbopl-silent-adlib dbopl-silent adlib silent)
+    IFS=- read -r -a compiled <<< "$drivers"
+    defaults=()
+    for driver in "${compiled[@]}"; do
+        [ "$driver" = "$default_opl" ] && defaults+=("$driver")
+    done
+    for driver in "${compiled[@]}"; do
+        [ "$driver" != "$default_opl" ] && defaults+=("$driver")
+    done
+    default_opl=$(choose 'Default OPL driver' "${defaults[@]}")
+    if [ "$sample_rate" = 22050 ]; then
+        sample_rate=$(choose 'Preferred PCM sample rate' 22050 44100 48000 11025)
+    else
+        sample_rate=$(choose 'Preferred PCM sample rate' 48000 44100 22050 11025)
+    fi
 elif [[ $target != clean ]]; then
     drivers=$(choose 'Compiled OPL drivers' all nuked-dbopl nuked-silent dbopl-silent nuked dbopl silent)
     if [ "$drivers" = all ]; then
@@ -121,14 +135,12 @@ elif [[ $target != clean ]]; then
     sample_rate=$(choose 'Preferred PCM sample rate' 48000 44100)
 fi
 opl_drivers=${drivers//-/,}
-[ "$drivers" = dos-default ] && opl_drivers=dbopl,silent,adlib
 [ "$drivers" = all ] && opl_drivers=nuked,dbopl,silent
 jobs=''
 if [[ $target != dos-* && $target != windows-win9x ]]; then
     read -r -p 'Parallel jobs (blank lets the build tool decide): ' jobs
 fi
 if [[ $target == dos-* ]]; then
-    [ "$drivers" = dos-default ] && opl_drivers=dbopl,silent,adlib
     compiler='Open Watcom 2 (2026-10-01)'
     args=("$target" "DOS_OPL_DRIVERS=$opl_drivers" \
           "DOS_OPL_DEFAULT=$default_opl" "DOS_SAMPLE_RATE=$sample_rate")
@@ -142,10 +154,15 @@ else
           "SAMPLE_RATE=$sample_rate")
 fi
 if [[ $target == windows-cross ]]; then
-    args+=("WIN9X_OPL_DRIVERS=dbopl,silent,adlib" "WIN9X_OPL_DEFAULT=adlib" "WIN9X_SAMPLE_RATE=22050")
+    args+=("WIN9X_OPL_DRIVERS=dbopl,silent,adlib" "WIN9X_OPL_DEFAULT=adlib" "WIN9X_SAMPLE_RATE=22050"
+           "WIN2K_OPL_DRIVERS=dbopl,silent,adlib" "WIN2K_OPL_DEFAULT=dbopl"
+           "WINXP_OPL_DRIVERS=dbopl,silent,adlib" "WINXP_OPL_DEFAULT=dbopl")
 fi
 if [[ $target == windows-win2k ]]; then
-    args+=("WIN2K_OPL_DRIVERS=dbopl,silent" "WIN2K_OPL_DEFAULT=dbopl")
+    args+=("WIN2K_OPL_DRIVERS=$opl_drivers" "WIN2K_OPL_DEFAULT=$default_opl")
+fi
+if [[ $target == windows-xp ]]; then
+    args+=("WINXP_OPL_DRIVERS=$opl_drivers" "WINXP_OPL_DEFAULT=$default_opl")
 fi
 [ -n "$jobs" ] && args+=("JOBS=$jobs")
 

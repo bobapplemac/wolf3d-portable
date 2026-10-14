@@ -16,11 +16,14 @@ JOBS ?=
 USE_SYSTEM_SDL3 ?= OFF
 OPL_DRIVERS ?= nuked,dbopl,silent
 OPL_DEFAULT ?= nuked
-WIN2K_OPL_DRIVERS ?= dbopl,silent
+WIN2K_OPL_DRIVERS ?= dbopl,silent,adlib
 WIN2K_OPL_DEFAULT ?= dbopl
 SAMPLE_RATE ?= 48000
 
 comma := ,
+# XP follows legacy NT defaults; preserve explicit generic OPL overrides.
+WINXP_OPL_DRIVERS ?= $(if $(filter file default undefined,$(origin OPL_DRIVERS)),dbopl$(comma)silent$(comma)adlib,$(OPL_DRIVERS))
+WINXP_OPL_DEFAULT ?= $(if $(filter file default undefined,$(origin OPL_DEFAULT)),dbopl,$(OPL_DEFAULT))
 CONSOLE_BUILD_DIR ?= build/linux-console-$(COMPILER_NAME)
 SDL3_BUILD_DIR ?= build/linux-sdl3-$(COMPILER_NAME)
 PORTABLE_CONSOLE_BUILD_DIR ?= build/linux-console-portable-debian10-gcc
@@ -132,6 +135,10 @@ help:
 		'  OPL_DRIVERS=nuked,dbopl,silent Drivers compiled into wolf3d (default: all).' \
 		'  OPL_DEFAULT=nuked|dbopl|silent Runtime default (default: nuked).' \
 		'  SAMPLE_RATE=Hz               Preferred PCM rate (default: 48000).' \
+		'  WIN2K_OPL_DRIVERS=...       Windows 2000 drivers (default: dbopl,silent,adlib).' \
+		'  WINXP_OPL_DRIVERS=...       Windows XP drivers (default: dbopl,silent,adlib).' \
+		'  WIN2K_OPL_DEFAULT=...      Windows 2000 runtime default (default: dbopl).' \
+		'  WINXP_OPL_DEFAULT=...      Windows XP runtime default (default: dbopl).' \
 		'  WIN9X_SAMPLE_RATE=Hz        Win9x preferred PCM rate (default: 22050).' \
 		'  CMAKE_ARGS="..."             Additional CMake definitions.' \
 		'  DOCKER_RUN_ARGS="..."        Additional Docker run arguments.' \
@@ -335,8 +342,8 @@ windows-xp: windows-mingw-image
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		--env W3P_WINDOWS_CROSS_PROFILE=mingw-xp-x86 \
 		--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
-		--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(OPL_DRIVERS)" \
-		--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(OPL_DEFAULT)" \
+		--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(WINXP_OPL_DRIVERS)" \
+		--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(WINXP_OPL_DEFAULT)" \
 		--env W3P_WINDOWS_CROSS_SAMPLE_RATE="$(SAMPLE_RATE)" \
 		"$(WINDOWS_MINGW_BUILD_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh
 

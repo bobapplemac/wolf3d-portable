@@ -7,8 +7,8 @@ jobs=${W3P_WINDOWS_CROSS_JOBS:-}
 drivers=${W3P_WINDOWS_CROSS_OPL_DRIVERS:-nuked,dbopl,silent}
 default_driver=${W3P_WINDOWS_CROSS_DEFAULT_OPL:-nuked}
 sample_rate=${W3P_WINDOWS_CROSS_SAMPLE_RATE:-48000}
-if [ "$profile" = mingw-win2k-x86 ]; then
-    drivers=${W3P_WINDOWS_CROSS_OPL_DRIVERS:-dbopl,silent}
+if [ "$profile" = mingw-win2k-x86 ] || [ "$profile" = mingw-xp-x86 ]; then
+    drivers=${W3P_WINDOWS_CROSS_OPL_DRIVERS:-dbopl,silent,adlib}
     default_driver=${W3P_WINDOWS_CROSS_DEFAULT_OPL:-dbopl}
 fi
 version=$(sed -n '1p' "$root/lib/wolf3d/VERSION")

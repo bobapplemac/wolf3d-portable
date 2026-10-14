@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.83 - 2026-10-14 - Optional native OPL on NT
+
+- Add opt-in x86 win2k/XP GDI AdLib access through an executable-local
+  InpOut32 DLL; retain DBOPL defaults and require explicit native selection.
+- Replace NT dummy timing reads with elapsed-time 4/24-us recovery waits;
+  preserve the proven OPL3 reset sequence and unchanged DOS/Win9x timing.
+- Add explicit native diagnostics, mocked transport/timing regression coverage,
+  and driver setup documentation. Physical NT hardware testing is pending.
+
 ## Unreleased - 2026-10-14 - Private-console exit pause
 
 - Preserve Win9x/win2k exit cards and CLI output in newly created interactive

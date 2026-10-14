@@ -139,5 +139,6 @@ pinned by `wolf3d-lib`. The package does not redistribute the proprietary
 DOS/4GW extender: its adjacent `DOS4GW.EXE` is DOS/32A's compatible loader and
 includes the DOS/32A license. When explicitly enabled, Nuked-OPL3 remains a
 separable library in the package's Open Watcom relink kit even though DOS has
-no runtime shared-library facility. Native AdLib output is confined to the DOS and Win9x hosts and is not
-compiled into unrelated platform packages by default.
+no runtime shared-library facility. Native AdLib output is standard on DOS/Win9x and an
+[experimental opt-in on win2k/XP x86 GDI](native-opl.md). It is not
+compiled into other platform packages by default.

@@ -13,8 +13,18 @@
 #include "../WG_HELP.h"
 #include "../WG_HOST.h"
 #include "../WG_TEXT_OUTPUT.h"
-#ifdef WG_WIN9X
+#if defined(WG_WIN9X) || defined(WG_INPOUT32)
 #include "../dos/WG_DOS_ADLIB.h"
+#endif
+
+#ifdef WG_INPOUT32
+#include "WG_INPOUT32.h"
+static int WG_NTAdLibInit(void)
+{
+    if (WG_DOSAdLibInit()) return 1;
+    WG_PrintLauncherError(WG_InpOutStatus());
+    return 0;
+}
 #endif
 
 #include <windows.h>
@@ -1369,8 +1379,12 @@ int WG_InstallPlatform(void)
         WG_Win32PCMWritableFrames,
         WG_Win32PCMSubmit,
         WG_Win32PCMInitEx,
-#ifdef WG_WIN9X
+#if defined(WG_WIN9X) || defined(WG_INPOUT32)
+#ifdef WG_INPOUT32
+        WG_NTAdLibInit,
+#else
         WG_DOSAdLibInit,
+#endif
         WG_DOSAdLibShutdown,
         WG_DOSAdLibWrite,
 #else
@@ -1621,6 +1635,28 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
                           wg_display_mode.width, wg_display_mode.height);
             if (strlen(report) + strlen(options) < sizeof(report)) strcat(report, options);
         }
+#ifdef WG_INPOUT32
+        {
+            const char *selected = NULL;
+            for (index = 1; index + 1 < launcher_argc; ++index)
+                if (strcmp(launcher_argv[index], "--opl") == 0)
+                    selected = launcher_argv[++index];
+            if (selected && strcmp(selected, "adlib") == 0)
+            {
+                if (WG_DOSAdLibInit())
+                {
+                    WG_InpOutError("OPL detected at 0x388; elapsed-time waits (4/24 us)");
+                    WG_DOSAdLibShutdown();
+                }
+            }
+            if (strlen(report) + strlen(WG_InpOutStatus()) + 20 < sizeof(report))
+            {
+                strcat(report, "  Native OPL: ");
+                strcat(report, WG_InpOutStatus());
+                strcat(report, "\n");
+            }
+        }
+#endif
         WG_PrintDiagnostics(launcher_argc, launcher_argv,
                             launcher_arguments.config_path, report);
         result = WOLF3D_RESULT_QUIT;

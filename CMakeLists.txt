@@ -21,6 +21,7 @@ w3p_check_engine_version("${W3P_WOLF3D_VERSION}")
 project(wolf3d-portable VERSION "${W3P_WOLF3D_VERSION}" LANGUAGES C)
 include(CTest)
 
+option(W3P_ENABLE_INPOUT32 "Enable optional x86 NT native AdLib via InpOut32" OFF)
 option(W3P_BUILD_WIN32 "Build the dependency-free Win32 host" ON)
 option(W3P_BUILD_LINUX_CONSOLE
     "Build the direct DRM/fbdev/evdev/ALSA Linux console host" OFF)
@@ -52,6 +53,12 @@ endif()
 set(WG_BUILD_HEADLESS OFF CACHE BOOL "" FORCE)
 set(WG_WARNINGS_AS_ERRORS ${W3P_WARNINGS_AS_ERRORS} CACHE BOOL "" FORCE)
 set(WG_DIST_ROOT "${CMAKE_BINARY_DIR}/wolf3d-lib-dist" CACHE PATH "" FORCE)
+if(W3P_ENABLE_INPOUT32)
+    if(NOT WIN32 OR NOT CMAKE_SIZEOF_VOID_P EQUAL 4 OR NOT W3P_BUILD_WIN32)
+        message(FATAL_ERROR "InpOut32 requires the x86 Windows GDI host")
+    endif()
+    set(WG_ENABLE_OPL_ADLIB ON CACHE BOOL "Native AdLib adapter" FORCE)
+endif()
 add_subdirectory(lib/wolf3d wolf3d-lib)
 
 find_package(Git QUIET)
@@ -73,7 +80,7 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/WOLF3D-LIB.txt"
     "wolf3d-portable commit: ${W3P_PORTABLE_COMMIT}\n"
     "wolf3d-lib version: ${W3P_WOLF3D_VERSION}\n"
     "wolf3d-lib commit: ${W3P_WOLF3D_COMMIT}\n"
-    "OPL drivers: nuked=${WG_ENABLE_OPL_NUKED}, dbopl=${WG_ENABLE_OPL_DBOPL}, silent=${WG_ENABLE_OPL_SILENT}\n"
+    "OPL drivers: nuked=${WG_ENABLE_OPL_NUKED}, dbopl=${WG_ENABLE_OPL_DBOPL}, silent=${WG_ENABLE_OPL_SILENT}, adlib=${WG_ENABLE_OPL_ADLIB}\n"
     "default OPL driver: ${WG_DEFAULT_OPL_DRIVER}\n"
     "preferred sample rate: ${WG_DEFAULT_SAMPLE_RATE} Hz\n")
 
@@ -87,6 +94,11 @@ else()
         "  (Selected OPL drivers are compiled into wolf3d.dll)")
     set(W3P_OPL_KEEP_NOTE
         "wolf3d.dll must remain beside the executable. Audio-driver details\nare recorded in DOCS/BUILD.TXT and the source distribution.")
+endif()
+set(W3P_NATIVE_OPL_NOTE "")
+if(W3P_ENABLE_INPOUT32)
+    set(W3P_NATIVE_OPL_NOTE
+        "Optional native AdLib: install the official InpOut32 1.5.0.1 Win32 driver\nas Administrator and place its inpout32.dll beside wolf3d.exe. Loading the\nDLL may install/start its embedded driver. Download and instructions:\nhttps://vps.highrez.co.uk/downloads/InpOut32/default.htm\nFirst run: wolf3d.exe --no-config --diag --opl adlib\nThen use --opl adlib for gameplay. DBOPL remains the default. Native access\nis exclusive in practice: close other FM/MIDI playback applications. Digital\neffects continue to use waveOut. Physical NT hardware testing is pending.\n")
 endif()
 configure_file(packaging/WIN32-README.txt.in
                ${CMAKE_CURRENT_BINARY_DIR}/WIN32-README.txt @ONLY)
@@ -175,6 +187,11 @@ if(W3P_BUILD_WIN32)
     add_executable(wolf3d-win32 WIN32
         platforms/WG_HELP.c platforms/WG_TEXT_OUTPUT.c
         platforms/win32/WG_WIN32.c)
+    if(W3P_ENABLE_INPOUT32)
+        target_sources(wolf3d-win32 PRIVATE
+            platforms/dos/WG_DOS_ADLIB.c platforms/win32/WG_INPOUT32.c)
+        target_compile_definitions(wolf3d-win32 PRIVATE WG_INPOUT32=1)
+    endif()
     w3p_configure_host(wolf3d-win32)
     # Windows 2000 cannot attach a GUI process to its parent's console.
     # Inherit it at process creation for CLI output and the B800 exit card.

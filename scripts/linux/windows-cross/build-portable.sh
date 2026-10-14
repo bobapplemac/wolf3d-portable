@@ -87,6 +87,14 @@ case "$profile" in
     *) dist_crt=msvcrt ;;
 esac
 
+native_opl=OFF
+case ",$drivers," in
+    *,adlib,*)
+        case "$profile" in
+            mingw-win2k-x86|mingw-xp-x86) native_opl=ON ;;
+            *) echo "Native AdLib is currently supported only by win2k/XP x86 GDI profiles" >&2; exit 2 ;;
+        esac ;;
+esac
 build_dir="$root/build/windows-cross-$profile"
 cmake -S "$root" -B "$build_dir" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
@@ -99,7 +107,8 @@ cmake -S "$root" -B "$build_dir" -G Ninja \
     -DW3P_WARNINGS_AS_ERRORS=ON \
     -DW3P_COMPILER_LABEL="$compiler_label" \
     -DWG_STATIC_GNU_RUNTIME=ON \
-    -DWG_ENABLE_OPL_ADLIB=OFF \
+    -DW3P_ENABLE_INPOUT32="$native_opl" \
+    -DWG_ENABLE_OPL_ADLIB="$native_opl" \
     -DWG_ENABLE_OPL_NUKED=$(case ",$drivers," in *,nuked,*) echo ON;; *) echo OFF;; esac) \
     -DWG_ENABLE_OPL_DBOPL=$(case ",$drivers," in *,dbopl,*) echo ON;; *) echo OFF;; esac) \
     -DWG_ENABLE_OPL_SILENT=$(case ",$drivers," in *,silent,*) echo ON;; *) echo OFF;; esac) \

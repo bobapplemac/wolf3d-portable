@@ -1,6 +1,7 @@
 param(
     [Parameter(Mandatory = $true)][string]$PackagePath,
     [ValidateSet('win9x', 'win2k')][string]$Profile = 'win9x',
+    [switch]$NativeOpl,
     [string]$WorkRoot = (Join-Path $PSScriptRoot '../build/win9x-smoke')
 )
 $ErrorActionPreference = 'Stop'
@@ -20,7 +21,7 @@ if ([BitConverter]::ToUInt16($bytes, $pe + 92) -ne $expectedSubsystem) {
     throw 'Unexpected PE subsystem.'
 }
 $defaultDriver = if ($Profile -eq 'win9x') { 'adlib' } else { 'dbopl' }
-$compiledDrivers = if ($Profile -eq 'win9x') { 'dbopl silent adlib' } else { 'dbopl silent' }
+$compiledDrivers = if ($Profile -eq 'win9x' -or $NativeOpl) { 'dbopl silent adlib' } else { 'dbopl silent' }
 function Check-Run([string]$Arguments, [int]$ExpectedExit, [string]$ExpectedText) {
     $info = New-Object Diagnostics.ProcessStartInfo
     $info.FileName = $exe
@@ -53,7 +54,7 @@ if ($diagnostics -notmatch 'Config:.*[\\/]wolf3d\.ini') { throw 'INI was not loa
 $null = Check-Run '--diag --opl silent' 0 'Requested OPL driver \(not probed\): silent'
 $null = Check-Run '--no-config --diag' 0 "Requested OPL driver \(not probed\): $defaultDriver"
 $null = Check-Run '--no-config --opl dbpol' 1 'Unknown or unavailable OPL driver: dbpol'
-if ($Profile -eq 'win2k') {
+if ($Profile -eq 'win2k' -and -not $NativeOpl) {
     $null = Check-Run '--no-config --opl adlib' 1 'Unknown or unavailable OPL driver: adlib'
 }
 $null = Check-Run '--no-config --opl nuked' 1 'Unknown or unavailable OPL driver: nuked'

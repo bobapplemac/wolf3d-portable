@@ -1,10 +1,17 @@
 #include "WG_DOS_ADLIB.h"
 
+#ifdef WG_INPOUT32
+#include "../win32/WG_INPOUT32.h"
+#define inp WG_InpOutRead
+#define outp WG_InpOutWrite
+#else
 #include <conio.h>
 #ifdef WG_WIN9X
 #include <windows.h>
 #else
 #include <i86.h>
+#endif
+
 #endif
 
 #define WG_DOS_ADLIB_ADDRESS_PORT 0x388U
@@ -21,6 +28,12 @@ static uint8_t WG_DOSAdLibStatus(void)
 static void WG_DOSAdLibWritePort(uint16_t address_port,
                                   uint8_t register_number, uint8_t value)
 {
+#ifdef WG_INPOUT32
+    outp(address_port, register_number);
+    WG_InpOutWait(4U);
+    outp(address_port + 1U, value);
+    WG_InpOutWait(24U);
+#else
     unsigned delay;
 
     /* Preserve the original Wolfenstein 3-D alOut delays. The six address
@@ -42,6 +55,7 @@ static void WG_DOSAdLibWritePort(uint16_t address_port,
     {
         (void)inp(WG_DOS_ADLIB_ADDRESS_PORT);
     }
+#endif
 }
 
 void WG_DOSAdLibWrite(uint16_t register_number, uint8_t value)
@@ -57,9 +71,15 @@ int WG_DOSAdLibInit(void)
 {
     uint8_t status_before;
     uint8_t status_after;
+#ifndef WG_INPOUT32
     unsigned delay;
+#endif
     unsigned register_number;
 
+#ifdef WG_INPOUT32
+    if (wg_dos_adlib_active) return 1;
+    if (!WG_InpOutOpen()) return 0;
+#endif
 #ifdef WG_WIN9X
     /* NT does not allow user-mode ISA port I/O. Never probe it there. */
     if ((GetVersion() & 0x80000000UL) == 0UL)
@@ -72,16 +92,24 @@ int WG_DOSAdLibInit(void)
     status_before = WG_DOSAdLibStatus();
     WG_DOSAdLibWrite(2U, 0xffU);
     WG_DOSAdLibWrite(4U, 0x21U);
+#ifdef WG_INPOUT32
+    WG_InpOutWait(100U);
+#else
     for (delay = 0U; delay < 100U; ++delay)
     {
         (void)WG_DOSAdLibStatus();
     }
+#endif
     status_after = WG_DOSAdLibStatus();
     WG_DOSAdLibWrite(4U, 0x60U);
     WG_DOSAdLibWrite(4U, 0x80U);
 
     if ((status_before & 0xe0U) != 0U || (status_after & 0xe0U) != 0xc0U)
     {
+#ifdef WG_INPOUT32
+        WG_InpOutClose();
+        WG_InpOutError("OPL chip did not respond at 0x388");
+#endif
         return 0;
     }
 
@@ -131,4 +159,7 @@ void WG_DOSAdLibShutdown(void)
     WG_DOSAdLibWrite(4U, 0x60U);
     WG_DOSAdLibWrite(4U, 0x80U);
     wg_dos_adlib_active = 0U;
+#ifdef WG_INPOUT32
+    WG_InpOutClose();
+#endif
 }

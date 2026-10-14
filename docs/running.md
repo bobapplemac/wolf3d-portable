@@ -125,7 +125,8 @@ DOS and Win9x defaults include `dbopl,silent,adlib` and select native `adlib`.
 Nuked remains available as an explicit build choice. Use `--opl dbopl` for
 software OPL (the spelling is `dbopl`, not `dbpol`) or `--opl silent`.
 Win9x native AdLib requires accessible ISA OPL hardware at 388h/389h; it is
-not available on NT-based Windows. The Win9x console-subsystem launcher prints
+not available through that executable on NT-based Windows. The win2k/XP GDI
+host has a separate optional [InpOut32 native OPL path](native-opl.md). The Win9x console-subsystem launcher prints
 help/diagnostics in its invoking command prompt while the game opens a GDI window.
 
 

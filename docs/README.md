@@ -8,6 +8,7 @@ reference evidence and preserved historical material.
 - [building](building.md) — Build requirements, commands, IDEs and toolchain options.
 - [source-updates](source-updates.md) — Confirmed source updates, dependency selection and offline builds.
 - [running](running.md) — Game data, launch options, configuration precedence, input and audio.
+- [native-opl](native-opl.md) — Optional ISA OPL access on Windows 2000/XP.
 - [support-matrix](support-matrix.md) — Supported build/runtime matrix and validation limits.
 - [build-identity](build-identity.md) — Portable/engine version identity and reproducibility.
 

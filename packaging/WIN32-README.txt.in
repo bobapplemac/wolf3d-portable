@@ -59,6 +59,7 @@ wolf3d-sdl3.ini takes priority when applicable. Real command-line arguments
 override matching defaults. Use --config FILE, --no-config, or --diag for an
 explicit file, a clean launch, or a hardware/data report without starting.
 
+@W3P_NATIVE_OPL_NOTE@
 @W3P_OPL_KEEP_NOTE@
 
 Original CONFIG.<EXT> and SAVEGAMn.<EXT> files are stored in the selected

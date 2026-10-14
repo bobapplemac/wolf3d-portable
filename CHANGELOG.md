@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.85 - 2026-10-14 - Keep game frames running during window dragging
+
+- Pump the shared engine frame update during GDI move/resize/system-menu loops,
+  preserving demo progression, simulation, audio and memory rendering.
+- Skip GDI blits during the modal loop and show the latest frame on exit;
+  preserve explicit pauses and avoid duplicate elapsed time after a drag.
+- Require engine 1.4.85 for wolf3d_PumpFrame; test nested modal transitions.
+- Record successful physical listening validation of the native OPL scheduler.
+
 ## 1.4.84 - 2026-10-14 - Native OPL playback scheduling
 
 - Adapt all hosts to platform API v7; queue NT native writes by PCM frame and

@@ -28,7 +28,7 @@ static void WG_NTAdLibShutdown(void);
 #include <mmsystem.h>
 #include <shellapi.h>
 #include "WG_WIN32_DISPLAY.h"
-#include "WG_MODAL_AUDIO.h"
+#include "WG_MODAL_FRAME.h"
 
 /* Older Platform SDK headers omit this GetSystemMetrics index. */
 #ifndef SM_CMONITORS
@@ -571,18 +571,18 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
     {
         case WM_ENTERSIZEMOVE:
         case WM_ENTERMENULOOP:
-            WG_ModalAudioEnter(window);
+            WG_ModalFrameEnter(window);
             return 0;
         case WM_EXITSIZEMOVE:
         case WM_EXITMENULOOP:
-            WG_ModalAudioLeave(window);
+            WG_ModalFrameLeave(window);
             return 0;
         case WM_TIMER:
-            if (!WG_ModalAudioTick(wparam))
+            if (!WG_ModalFrameTick(wparam))
             {
-                WG_PrintLauncherError("Audio failed during window move/resize.");
+                WG_PrintLauncherError("Game update failed during window move/resize.");
                 wg_quit_pending = 1;
-                KillTimer(window, WG_MODAL_AUDIO_TIMER);
+                KillTimer(window, WG_MODAL_FRAME_TIMER);
             }
             return 0;
         case WM_SETCURSOR:

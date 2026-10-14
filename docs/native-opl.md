@@ -66,8 +66,8 @@ DOS/Win9x retain their tested direct-I/O delay loops pending separate review.
 it never loads a real access driver. Compile it with MinGW GCC and run it
 on Windows. Physical Windows 2000/Yamaha testing confirms access with Highrez
 1.5.0.1; the original Logix4U DLL lacks the required IsInpOutDriverOpen export.
-The first implementation played notes but exposed burst scheduling. The
-sample-positioned playback revision requires another physical listening test.
+The first implementation played notes but exposed burst scheduling. Physical testing of the
+sample-positioned playback revision confirms correct-sounding music/effects.
 
 For an integration check, cross-compile `tests/WG_INPOUT32_FAKE.c` with
 `i686-w64-mingw32-gcc -shared -Wl,--kill-at` and pass that fake DLL to
@@ -95,9 +95,11 @@ driver latency and scheduling can still introduce jitter. The 4/24-us chip
 recovery waits remain separate from musical event timestamps.
 
 Dragging/resizing a GDI window or opening its system menu enters a Windows
-modal loop. A window timer continues producing audio on the engine thread in
-that loop; the worker continues delivering the queued native writes. This
-avoids racing the engine mixer against gameplay state on another thread.
+modal loop. A window timer continues simulation, demo playback, audio production and
+framebuffer rendering on the engine thread in that loop; the worker continues
+delivering native writes. GDI presentation is skipped during the drag/menu and
+resumes with the latest frame when it ends. A visually frozen dragged window
+therefore does not mean the game is paused. Explicit game pauses still apply.
 A blocked UI thread outside those modal loops can still exhaust the audio queue.
 
 Maintainer tests (MinGW GCC, no native port-access DLL):
@@ -105,7 +107,7 @@ Maintainer tests (MinGW GCC, no native port-access DLL):
 ```text
 gcc -std=c99 -Wall -Wextra -Werror tests/WG_OPL_TIMELINE_TEST.c -o build/opl-timeline-test.exe
 gcc -std=c99 -Wall -Wextra -Werror tests/WG_OPL_PLAYBACK_TEST.c -lwinmm -o build/opl-playback-test.exe
-gcc -std=c99 -Wall -Wextra -Werror tests/WG_MODAL_AUDIO_TEST.c -o build/modal-audio-test.exe
+gcc -std=c99 -Wall -Wextra -Werror tests/WG_MODAL_FRAME_TEST.c -o build/modal-frame-test.exe
 ```
 
 Run the three executables on Windows. They cover event spacing/order, timestamp

@@ -168,3 +168,11 @@ audio clock.
 See [building.md](building.md) for compiling, [support-matrix.md](support-matrix.md)
 for validated platforms, and [DISTRIBUTION-CONTENTS.md](DISTRIBUTION-CONTENTS.md)
 for what must remain with a package.
+
+## Moving and resizing the GDI window
+
+Dragging/resizing or opening the window system menu keeps the engine, demo,
+audio and memory framebuffer running. To avoid expensive scaling on older
+machines, the host skips GDI presentation until the modal loop ends, then
+shows the latest frame. The visible image can remain still during a drag;
+gameplay is not paused unless an explicit game pause/menu already requires it.

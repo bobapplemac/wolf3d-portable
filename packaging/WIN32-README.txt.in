@@ -19,6 +19,9 @@ extensions are WL1, WL6, SOD, SDM, SD1, SD2, and SD3.
 
 The window aspect-corrects the original 320x200 VGA framebuffer to 4:3.
 Resizing to another shape keeps the game centered at 4:3 with black bars.
+While dragging/resizing the window, gameplay, audio and the internal image
+continue advancing. The visible image refreshes when the drag ends, avoiding
+expensive scaled GDI redraws during movement.
 Press F11 or Alt+Enter to toggle borderless desktop fullscreen. F11 is handled
 only by the host and will not dismiss an in-game "Press a key" prompt.
 

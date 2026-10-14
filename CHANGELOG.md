@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - SDL1 exit screen, cursor and scaling fixes
+
+- Route Windows SDL1 B800 exit/error cards through the native CP437 console renderer rather than ANSI/UTF-8 terminal output.
+- Hide the cursor while focused and fullscreen, including menus and disabled mouse input; restore it when unfocused or uncaptured in a window.
+- Cache horizontal sampling maps, copy repeated scaled rows and preserve software-surface borders instead of clearing/recomputing every frame. Reduce idle Windows input polling while keeping frame/command wakeups immediate and presentation uncapped.
+- Add Windows text-renderer routing, cursor/focus, palette-update, odd-size scaling and cached-map regression coverage.
+
 ## Unreleased - Windows SDL 1.2 and GDI optimization
 
 - Add an experimental Win2k SDL 1.2 Docker target with selectable windib/DirectDraw video, PCM, timestamped native OPL, and verified InpOut32 redistribution.

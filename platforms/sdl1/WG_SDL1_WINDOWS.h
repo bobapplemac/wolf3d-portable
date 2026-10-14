@@ -31,7 +31,8 @@ static DWORD WINAPI ui_run(LPVOID unused)
             EnterCriticalSection(&ui_lock);ui_events[(ui_read+ui_count)%256]=event;++ui_count;LeaveCriticalSection(&ui_lock);
         }
         if(draw)present(ui_work_pixels,ui_work_palette);
-        WaitForSingleObject(ui_wake,1);
+        /* Frames and commands wake immediately; idle input polls at 125 Hz. */
+        WaitForSingleObject(ui_wake,8);
     }
     shutdown_host();return 0;
 }

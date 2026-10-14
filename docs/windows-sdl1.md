@@ -2,7 +2,8 @@
 
 The experimental Win2k x86 SDL1 target uses genuine SDL 1.2.15. It is built
 with MinGW GCC/MSVCRT on Linux; it does not require a Windows build VM.
-Physical Windows 2000 video/audio validation is pending. Win9x and WinXP SDL1
+Both windib and directx video have run successfully on the Windows 2000 test machine.
+Full validation, including the latest exit-card and cursor fixes, remains pending. Win9x and WinXP SDL1
 packages, including applicable Visual Studio builds on the XP/Win7 build hosts,
 are follow-up work after Win2k validation. This is separate from the existing
 RH9 SDL1 target and does not change its Linux runtime requirements.
@@ -41,7 +42,11 @@ The engine runs independently of the SDL video/input thread. Presentation uses
 a copied, replaceable pending frame; dragging/resizing or a slow blit cannot
 block engine simulation or PCM submission. Input waits for the window thread
 while the OS is running its modal move/resize loop. Video uses nearest-neighbor
-scaling to a 4:3 rectangle. F11/`--fullscreen` uses SDL's display-mode fullscreen,
+scaling to a 4:3 rectangle, with cached horizontal maps and repeated-row copies.
+Presentation is uncapped; higher frame throughput can still use all available CPU.
+CPU percentage alone does not compare the frame rates of SDL and GDI.
+The cursor is hidden whenever the fullscreen window has focus, independently of
+mouse capture or whether mouse input is enabled. F11/`--fullscreen` uses SDL's display-mode fullscreen,
 not the GDI host's borderless fullscreen. `--windowed` is the default.
 
 Console output and the text exit card use the existing Windows text helpers.

@@ -46,6 +46,8 @@ static size_t pcm_read, pcm_count, pcm_limit;
 static unsigned pcm_channels;
 static int pcm_open;
 static SDL_Surface *screen;
+static unsigned *scale_x;
+static int scale_width;
 static int scale = 2, fullscreen, mouse = 1, joy = 1, capture, focused = 1;
 static SDL_Joystick *joysticks[WOLF3D_MAX_JOYSTICKS];
 static int16_t joy_x[WOLF3D_MAX_JOYSTICKS], joy_y[WOLF3D_MAX_JOYSTICKS];
@@ -88,7 +90,7 @@ static void mouse_capture(int value)
 {
     capture = value;
     SDL_WM_GrabInput(value && mouse && focused ? SDL_GRAB_ON : SDL_GRAB_OFF);
-    SDL_ShowCursor(value && mouse && focused ? SDL_DISABLE : SDL_ENABLE);
+    SDL_ShowCursor(focused && (fullscreen || (value && mouse)) ? SDL_DISABLE : SDL_ENABLE);
 }
 static int video(int width, int height)
 {
@@ -100,6 +102,9 @@ static int video(int width, int height)
         return 0;
     }
     screen = next;
+    free(scale_x);scale_x=NULL;scale_width=0;
+    /* Software surfaces retain their borders between flips. */
+    SDL_FillRect(screen,NULL,0);
     mouse_capture(capture);
     return 1;
 }
@@ -124,6 +129,7 @@ static void shutdown_host(void)
         joysticks[i]=NULL;
     }
     SDL_Quit(); screen=NULL;
+    free(scale_x);scale_x=NULL;scale_width=0;
 }
 static int init(void)
 {
@@ -143,19 +149,29 @@ static int init(void)
 static void present(const uint8_t *pixels, const uint8_t *palette)
 {
     Uint32 colors[256];
-    int x,y,w,h,left,top;
+    int x,y,w,h,left,top,last=-1;
     if(!screen || !pixels || !palette) return;
     w=screen->w; h=w*3/4;
     if(h>screen->h) { h=screen->h; w=h*4/3; }
     if(w<1 || h<1) return;
     left=(screen->w-w)/2; top=(screen->h-h)/2;
-    SDL_FillRect(screen,NULL,0);
+    if(scale_width!=w) {
+        unsigned *next=(unsigned *)malloc((size_t)w*sizeof(*next));
+        if(!next)return;
+        for(x=0;x<w;++x)next[x]=(unsigned)((uint64_t)x*WOLF3D_SCREEN_WIDTH/w);
+        free(scale_x);scale_x=next;scale_width=w;
+    }
     for(x=0;x<256;++x) colors[x]=SDL_MapRGB(screen->format,palette[x*3],palette[x*3+1],palette[x*3+2]);
     if(SDL_MUSTLOCK(screen) && SDL_LockSurface(screen)<0) return;
     for(y=0;y<h;++y) {
         Uint32 *row=(Uint32 *)((Uint8 *)screen->pixels+(y+top)*screen->pitch)+left;
-        const uint8_t *src=pixels+(y*WOLF3D_SCREEN_HEIGHT/h)*WOLF3D_SCREEN_WIDTH;
-        for(x=0;x<w;++x) row[x]=colors[src[x*WOLF3D_SCREEN_WIDTH/w]];
+        int sy=(int)((uint64_t)y*WOLF3D_SCREEN_HEIGHT/h);
+        if(sy==last)memcpy(row,(Uint8 *)row-screen->pitch,(size_t)w*sizeof(*row));
+        else {
+            const uint8_t *src=pixels+sy*WOLF3D_SCREEN_WIDTH;
+            for(x=0;x<w;++x)row[x]=colors[src[scale_x[x]]];
+        }
+        last=sy;
     }
     if(SDL_MUSTLOCK(screen)) SDL_UnlockSurface(screen);
     SDL_Flip(screen);
@@ -169,7 +185,11 @@ static void error(const char *text) { fprintf(stderr,"wolf3d: %s\n",text); }
 static void text_screen(const uint8_t *cells,uint16_t columns,uint16_t rows)
 {
     HOST_SHUTDOWN();
+#ifdef _WIN32
+    WG_WriteWindowsTextScreen(cells,columns,rows);
+#else
     WG_WriteTextScreen(stdout,cells,columns,rows,WG_TextOutputSupportsColor(stdout));
+#endif
 }
 static uint32_t devices(void)
 {

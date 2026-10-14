@@ -17,7 +17,19 @@ void WG_LinuxOPLWriteTimed(uint16_t reg,uint8_t value,uint64_t frame,uint32_t ra
 int WG_LinuxOPLSubmit(size_t frames,uint64_t queued)
 { if(!mock_active)return 1; ++mock_submits;mock_frames=frames;mock_queued=queued;return !mock_fail; }
 #endif
+#ifdef _WIN32
+#define WG_WriteWindowsTextScreen test_windows_text
+#endif
 #include "../platforms/sdl1/WG_SDL1.c"
+#ifdef _WIN32
+static int native_text_calls;
+void test_windows_text(const uint8_t *cells,uint16_t columns,uint16_t rows)
+{
+    assert(!ui_thread); /* Window/video must be shut down before the exit card. */
+    assert(columns==1 && rows==1 && cells[0]==0xdb && cells[1]==0x4f);
+    ++native_text_calls;
+}
+#endif
 int main(void)
 {
     wolf3d_pcm_format_t request={22050,2,16},got;
@@ -28,12 +40,31 @@ int main(void)
     assert(scan(SDLK_a)==0x1e && scan(SDLK_KP8)==WOLF3D_KEY_UP);
     assert(scan(SDLK_UNKNOWN)==0);
     assert(init());
+    fullscreen=1;mouse=0;mouse_capture(0);assert(SDL_ShowCursor(SDL_QUERY)==SDL_DISABLE);
+    focused=0;mouse_capture(0);assert(SDL_ShowCursor(SDL_QUERY)==SDL_ENABLE);
+    focused=1;mouse_capture(0);assert(SDL_ShowCursor(SDL_QUERY)==SDL_DISABLE);
+    fullscreen=0;mouse=1;mouse_capture(0);assert(SDL_ShowCursor(SDL_QUERY)==SDL_ENABLE);
+    mouse_capture(1);assert(SDL_ShowCursor(SDL_QUERY)==SDL_DISABLE);mouse_capture(0);
     memset(pixels,1,sizeof(pixels));memset(palette,0,sizeof(palette));palette[3]=255;
     present(pixels,palette);
     assert(screen->w==640 && screen->h==480 && screen->format->BytesPerPixel==4);
     assert(*(Uint32 *)screen->pixels==SDL_MapRGB(screen->format,255,0,0));
     assert(video(800,480));present(pixels,palette);
     assert(*(Uint32 *)screen->pixels==0); /* Pillarbox, never stretched. */
+    {
+        int x,y;unsigned *cached=scale_x;
+        palette[3]=0;palette[5]=255;present(pixels,palette);
+        assert(scale_x==cached && *(Uint32 *)screen->pixels==0);
+        assert(*(Uint32 *)((Uint8 *)screen->pixels+80*4)==SDL_MapRGB(screen->format,0,0,255));
+        for(i=0;i<320*200;++i)pixels[i]=(uint8_t)(i%251);
+        for(i=0;i<768;++i)palette[i]=(uint8_t)i;
+        assert(video(323,243));present(pixels,palette);
+        for(y=0;y<242;++y)for(x=0;x<323;++x) {
+            unsigned index=pixels[(y*200/242)*320+x*320/323];
+            Uint32 actual=*(Uint32 *)((Uint8 *)screen->pixels+y*screen->pitch+x*4);
+            assert(actual==SDL_MapRGB(screen->format,palette[index*3],palette[index*3+1],palette[index*3+2]));
+        }
+    }
     memset(&input,0,sizeof(input));input.type=SDL_KEYDOWN;input.key.keysym.sym=SDLK_ESCAPE;
     assert(SDL_PushEvent(&input)==0);assert(poll_event(&out));
     assert(out.type==WOLF3D_EVENT_KEY && out.key==WOLF3D_KEY_ESCAPE && out.pressed);
@@ -69,7 +100,9 @@ int main(void)
 #ifdef _WIN32
     /* Also exercise the real SDL lifecycle on the isolated window thread. */
     assert(ui_init());ui_present(pixels,palette);ui_set_capture(0);
-    ui_set_title("SDL1 worker lifecycle test");SDL_Delay(30);ui_shutdown();ui_shutdown();
+    ui_set_title("SDL1 worker lifecycle test");SDL_Delay(30);
+    { const uint8_t cells[]={0xdb,0x4f};text_screen(cells,1,1);assert(native_text_calls==1); }
+    ui_shutdown();
 #endif
     puts("SDL1: input, aspect ratio, PCM order/wrap/underrun/overflow and restart passed.");
     return 0;

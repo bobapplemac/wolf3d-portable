@@ -42,6 +42,36 @@ family. Use `--config FILE` to select another file or `--no-config` to bypass
 configuration entirely. Config files are never created automatically and are
 unrelated to the original game's `CONFIG.WL1`, `CONFIG.WL6`, and similar files.
 
+## Fullscreen modes (GDI, SDL1 and SDL3)
+
+`--fullscreen` starts fullscreen; `--windowed` starts windowed. F11 toggles
+between windowed and the selected fullscreen mode. Fullscreen windows stay
+above other windows while focused, releasing that priority on focus loss:
+
+- `--fullscreen-mode borderless`: cover the desktop without changing its
+  resolution (the default).
+- `--fullscreen-mode display`: use a display mode. Add
+  `--fullscreen-resolution 640x480` to request a specific resolution; otherwise
+  use the current desktop resolution. Unsupported resolutions fail explicitly.
+
+For compatibility, specifying a resolution without a mode implies `display`.
+An explicit `borderless` mode ignores the resolution setting regardless of
+argument order. These options also work in launcher config files; selecting a
+mode does not itself start fullscreen.
+
+GDI and Windows SDL1 use a borderless window with a temporary display-mode
+change. Windows SDL1 retains its normal-cooperative-level DirectDraw hardware
+scaler; it does not enter SDL's conflicting exclusive DirectDraw mode. SDL3 uses
+its exclusive fullscreen API for `display`; Linux SDL1 uses SDL fullscreen.
+Desktop modes are restored when leaving display fullscreen or shutting down.
+Windows SDL1/GDI also restore the mode and minimize on focus loss, then reapply
+it on activation. Physical validation of SDL1 display-mode acceleration is pending.
+
+```text
+wolf3d.exe --fullscreen --fullscreen-mode display --fullscreen-resolution 640x480
+wolf3d.exe --fullscreen --fullscreen-mode borderless
+```
+
 ## Diagnostics and saves
 
 Run any launcher with `--diag` to print the loaded config, effective arguments,

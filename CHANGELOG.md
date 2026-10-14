@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased - Shared fullscreen mode selection
+
+- Add `--fullscreen-mode borderless|display` and `--fullscreen-resolution WIDTHxHEIGHT` across GDI, SDL1 and SDL3, including launcher config support. Borderless remains the default; a resolution alone implies display mode.
+- Keep Windows SDL1 hardware stretching in normal DirectDraw cooperation while temporarily switching the display mode; restore the desktop on focus loss, windowed return and exit. SDL3 uses its exclusive-mode API.
+- Add mode/resolution parsing and display-lifecycle regressions; SDL1 display-mode acceleration awaits hardware confirmation.
+
 ## Unreleased - SDL1 joystick disable and borderless fullscreen
 
 - Skip joystick updates when the SDL joystick subsystem was not initialized, including `--nojoy` and initialization failure.

@@ -66,6 +66,8 @@ int main(void)
     assert(!start_video_with_fallback("directx",fake_start_driver) && driver_attempts==2);
     driver_attempts=0;assert(!start_video_with_fallback("windib",fake_start_driver) && driver_attempts==1);
 #endif
+    assert(WG_FullscreenOption(&fullscreen_options,"--fullscreen-mode","borderless")==1);
+    assert(!WG_FullscreenDisplay(&fullscreen_options));
     joy=0;assert(init());
     assert(!(SDL_WasInit(SDL_INIT_JOYSTICK)&SDL_INIT_JOYSTICK));
     while(poll_event(&out)) {}

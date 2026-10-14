@@ -9,6 +9,7 @@ typedef struct wg_display_mode
     int saved, active, changing;
 } wg_display_mode_t;
 
+#ifndef WG_DISPLAY_STATE_ONLY
 static int WG_DisplayNumber(const char **cursor, unsigned *value)
 {
     unsigned n = 0;
@@ -43,6 +44,8 @@ static int WG_ParseFullscreenResolution(const char *text, unsigned *width,
     *height = h;
     return 1;
 }
+
+#endif
 
 static int WG_DisplayEnable(wg_display_mode_t *state)
 {

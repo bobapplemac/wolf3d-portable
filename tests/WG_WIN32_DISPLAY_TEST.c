@@ -1,3 +1,4 @@
+#include "../platforms/WG_FULLSCREEN.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -47,6 +48,19 @@ static LONG ChangeDisplaySettingsA(DEVMODEA *mode, unsigned flags)
 int main(void)
 {
     unsigned scale = 3, w = 0, h = 0, before;
+    wg_fullscreen_options_t options={-1,0,0};
+    assert(!WG_FullscreenDisplay(&options));
+    assert(WG_FullscreenOption(&options,"--fullscreen-resolution","640x480")==1);
+    assert(WG_FullscreenDisplay(&options) && options.width==640 && options.height==480);
+    assert(WG_FullscreenOption(&options,"--fullscreen-mode","borderless")==1 && !WG_FullscreenDisplay(&options));
+    assert(WG_FullscreenOption(&options,"--fullscreen-resolution","800X600")==1 && !WG_FullscreenDisplay(&options));
+    assert(WG_FullscreenOption(&options,"--fullscreen-mode","display")==1 && WG_FullscreenDisplay(&options));
+    assert(WG_FullscreenOption(&options,"--fullscreen-mode","exclusive")==-1);
+    assert(WG_FullscreenOption(&options,"--fullscreen-mode",NULL)==-1);
+    assert(WG_FullscreenOption(&options,"--fullscreen-resolution","9999999999x480")==-1);
+    assert(WG_FullscreenOption(&options,"--fullscreen-resolution","320x240junk")==-1);
+    assert(WG_FullscreenOption(&options,"--fullscreen-resolution","319x240")==-1);
+    assert(WG_FullscreenOption(&options,"--fullscreen",NULL)==0);
     assert(WG_ParseWindowScale("1", &scale) && scale == 1);
     assert(WG_ParseWindowScale("8", &scale) && scale == 8);
     assert(!WG_ParseWindowScale("0", &scale));

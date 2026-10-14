@@ -1,5 +1,7 @@
 #include "../WG_ENGINE_COMPAT.h"
 #include "../WG_HELP.h"
+#include "../WG_FULLSCREEN.h"
+static wg_fullscreen_options_t fullscreen_options={-1,0,0};
 #include "../WG_TEXT_OUTPUT.h"
 #include <SDL/SDL.h>
 #ifdef _WIN32
@@ -55,6 +57,9 @@ static unsigned char joy_dirty[WOLF3D_MAX_JOYSTICKS], keys[256];
 
 #ifdef _WIN32
 #include "WG_SDL1_DDRAW.h"
+#define WG_DISPLAY_STATE_ONLY
+#include "../win32/WG_WIN32_DISPLAY.h"
+static wg_display_mode_t display_mode;
 static const char *video_driver_choice;
 static RECT windowed_rect;
 static int windowed_rect_valid, borderless_active;
@@ -133,17 +138,35 @@ static int video(int width, int height)
     SDL_VERSION(&wm.version);
     if(fullscreen && !borderless_active && screen && SDL_GetWMInfo(&wm))
         windowed_rect_valid=GetWindowRect(wm.window,&windowed_rect)!=0;
-    if(fullscreen) {width=GetSystemMetrics(SM_CXSCREEN);height=GetSystemMetrics(SM_CYSCREEN);}
     dd_close();dd_disabled=0;
+    if(fullscreen && WG_FullscreenDisplay(&fullscreen_options)) {
+        display_mode.width=fullscreen_options.width?fullscreen_options.width:(unsigned)GetSystemMetrics(SM_CXSCREEN);
+        display_mode.height=fullscreen_options.height?fullscreen_options.height:(unsigned)GetSystemMetrics(SM_CYSCREEN);
+        if(focused && !WG_DisplayEnable(&display_mode)) {
+            (void)WG_DisplayRestore(&display_mode,1);
+            fprintf(stderr,"SDL1: requested display mode unavailable\n");return 0;
+        }
+    } else if(!WG_DisplayRestore(&display_mode,1))return 0;
+    if(fullscreen) {width=GetSystemMetrics(SM_CXSCREEN);height=GetSystemMetrics(SM_CYSCREEN);}
     /* Stay in normal DirectDraw cooperative mode. SDL_FULLSCREEN takes exclusive
        ownership and prevents our separate hardware-stretch device from working. */
     next = SDL_SetVideoMode(width,height,32,
         SDL_SWSURFACE | (fullscreen ? SDL_NOFRAME : SDL_RESIZABLE));
 #else
+    if(fullscreen) {
+        const SDL_VideoInfo *info=SDL_GetVideoInfo();
+        width=WG_FullscreenDisplay(&fullscreen_options) && fullscreen_options.width?(int)fullscreen_options.width:info->current_w;
+        height=WG_FullscreenDisplay(&fullscreen_options) && fullscreen_options.height?(int)fullscreen_options.height:info->current_h;
+    }
     next = SDL_SetVideoMode(width, height, 32,
-        SDL_SWSURFACE | (fullscreen ? SDL_FULLSCREEN : SDL_RESIZABLE));
+        SDL_SWSURFACE | (fullscreen ? (WG_FullscreenDisplay(&fullscreen_options)?SDL_FULLSCREEN:SDL_NOFRAME) : SDL_RESIZABLE));
 #endif
-    if (!next) { fprintf(stderr, "SDL 1.2 video: %s\n", SDL_GetError()); return 0; }
+    if (!next) {
+#ifdef _WIN32
+        (void)WG_DisplayRestore(&display_mode,1);
+#endif
+        fprintf(stderr, "SDL 1.2 video: %s\n", SDL_GetError());return 0;
+    }
     if(next->format->BytesPerPixel != 4) {
         fprintf(stderr, "SDL 1.2 video requires a 32-bit software surface\n");
         return 0;
@@ -152,9 +175,11 @@ static int video(int width, int height)
 #ifdef _WIN32
     SDL_VERSION(&wm.version);
     if(SDL_GetWMInfo(&wm)) {
-        if(fullscreen)SetWindowPos(wm.window,HWND_TOP,0,0,width,height,SWP_FRAMECHANGED);
+        if(fullscreen)SetWindowPos(wm.window,focused?HWND_TOPMOST:HWND_NOTOPMOST,0,0,width,height,SWP_FRAMECHANGED);
+        else if(borderless_active && !windowed_rect_valid)
+            SetWindowPos(wm.window,HWND_NOTOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
         else if(borderless_active && windowed_rect_valid)
-            SetWindowPos(wm.window,NULL,windowed_rect.left,windowed_rect.top,0,0,SWP_NOSIZE|SWP_NOZORDER);
+            SetWindowPos(wm.window,HWND_NOTOPMOST,windowed_rect.left,windowed_rect.top,0,0,SWP_NOSIZE);
     }
     borderless_active=fullscreen;
 #endif
@@ -187,6 +212,7 @@ static void shutdown_host(void)
     }
 #ifdef _WIN32
     dd_close();
+    if(!WG_DisplayRestore(&display_mode,1))fprintf(stderr,"SDL1: could not restore desktop display mode\n");
 #endif
     SDL_Quit(); screen=NULL;
 #ifdef _WIN32
@@ -286,7 +312,26 @@ static int poll_event(wolf3d_event_t *out)
         case SDL_QUIT:out->type=WOLF3D_EVENT_QUIT;return 1;
         case SDL_VIDEORESIZE: if(!video(event.resize.w,event.resize.h)) {out->type=WOLF3D_EVENT_QUIT;return 1;} break;
         case SDL_ACTIVEEVENT:
-            if(event.active.state & SDL_APPINPUTFOCUS) { focused=event.active.gain; mouse_capture(capture); }
+            if(event.active.state & SDL_APPINPUTFOCUS) {
+                focused=event.active.gain;
+#ifdef _WIN32
+                if(fullscreen) {
+                    SDL_SysWMinfo wm;SDL_VERSION(&wm.version);
+                    if(SDL_GetWMInfo(&wm))SetWindowPos(wm.window,focused?HWND_TOPMOST:HWND_NOTOPMOST,
+                        0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+                }
+                if(fullscreen && WG_FullscreenDisplay(&fullscreen_options) && !display_mode.changing) {
+                    if(!focused) {
+                        SDL_SysWMinfo wm;dd_close();dd_disabled=0;
+                        (void)WG_DisplayRestore(&display_mode,0);
+                        SDL_VERSION(&wm.version);if(SDL_GetWMInfo(&wm))ShowWindow(wm.window,SW_MINIMIZE);
+                    } else if(!display_mode.active && !video(320*scale,240*scale)) {
+                        out->type=WOLF3D_EVENT_QUIT;return 1;
+                    }
+                }
+#endif
+                mouse_capture(capture);
+            }
             break;
         case SDL_KEYDOWN:case SDL_KEYUP:
             if(event.key.keysym.sym==SDLK_F11) {
@@ -427,10 +472,13 @@ static int run_main(int argc,char **argv)
     if(!WG_LoadLauncherArguments(argc,argv,&launcher,problem,sizeof(problem))) {WG_PrintLauncherError(problem);return 1;}
     argc=launcher.argc;argv=launcher.argv;
     if(WG_CommandLineHelpRequested(argc,argv)) {
-        WG_PrintCommandLineHelp(argv[0],"SDL 1.2 options:\n  --window-scale N     Initial 4:3 window scale (1-4; default 2)\n  --fullscreen         Fullscreen (Windows: borderless desktop)\n  --windowed           Windowed mode (default)\n","F11 toggles fullscreen.\n" WG_SDL1_VIDEO_HELP WG_SDL1_OPL_NOTE "\n");
+        WG_PrintCommandLineHelp(argv[0],"SDL 1.2 options:\n  --window-scale N     Initial 4:3 window scale (1-4; default 2)\n  --fullscreen         Start in the selected fullscreen mode\n  --windowed           Windowed mode (default)\n",WG_FULLSCREEN_HELP "F11 toggles fullscreen.\n" WG_SDL1_VIDEO_HELP WG_SDL1_OPL_NOTE "\n");
         WG_FreeLauncherArguments(&launcher);return 0;
     }
     for(i=1;i<argc;++i) {
+        int option=WG_FullscreenOption(&fullscreen_options,argv[i],i+1<argc?argv[i+1]:NULL);
+        if(option<0) {error(WG_FULLSCREEN_ERROR);WG_FreeLauncherArguments(&launcher);return 1;}
+        if(option) {++i;continue;}
 #ifdef _WIN32
         if(!strcmp(argv[i],"--sdl-video")) {
             if(++i>=argc || !set_video_driver(argv[i])) {error("--sdl-video requires directx or windib");WG_FreeLauncherArguments(&launcher);return 1;}

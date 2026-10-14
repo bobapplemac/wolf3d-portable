@@ -11,6 +11,8 @@
 
 #include "../WG_ENGINE_COMPAT.h"
 #include "../WG_HELP.h"
+#include "../WG_FULLSCREEN.h"
+static wg_fullscreen_options_t fullscreen_options={-1,0,0};
 #include "../WG_HOST.h"
 #include "../WG_TEXT_OUTPUT.h"
 #if defined(WG_WIN9X) || defined(WG_INPOUT32)
@@ -528,7 +530,7 @@ static int WG_Win32SetFullscreen(int fullscreen)
         SetWindowLong(wg_window, GWL_STYLE,
                       wg_windowed_style & ~(LONG)WS_OVERLAPPEDWINDOW);
 #endif
-        if (!SetWindowPos(wg_window, HWND_TOP, bounds.left, bounds.top,
+        if (!SetWindowPos(wg_window, HWND_TOPMOST, bounds.left, bounds.top,
                           bounds.right - bounds.left, bounds.bottom - bounds.top,
                           SWP_NOOWNERZORDER | SWP_FRAMECHANGED))
         {
@@ -553,8 +555,8 @@ static int WG_Win32SetFullscreen(int fullscreen)
         SetWindowLongPtrW(wg_window, GWL_STYLE, wg_windowed_style);
 #endif
         if (!SetWindowPlacement(wg_window, &wg_windowed_placement)
-            || !SetWindowPos(wg_window, NULL, 0, 0, 0, 0,
-                             SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER
+            || !SetWindowPos(wg_window, HWND_NOTOPMOST, 0, 0, 0, 0,
+                             SWP_NOMOVE | SWP_NOSIZE
                                  | SWP_NOOWNERZORDER | SWP_FRAMECHANGED)) return 0;
     }
     wg_fullscreen = fullscreen;
@@ -829,6 +831,8 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
         }
 
         case WM_ACTIVATE:
+            if(wg_fullscreen)SetWindowPos(window,LOWORD(wparam)==WA_INACTIVE?HWND_NOTOPMOST:HWND_TOPMOST,
+                0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
             if (wg_fullscreen && wg_display_mode.width != 0
                 && !wg_display_mode.changing)
             {
@@ -1588,6 +1592,14 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
 #endif
     for (index = 1; index < launcher_argc; ++index)
     {
+        int option=WG_FullscreenOption(&fullscreen_options,launcher_argv[index],
+            index+1<launcher_argc?launcher_argv[index+1]:NULL);
+        if(option<0) {
+            WG_PrintLauncherError(WG_FULLSCREEN_ERROR);
+            result=WOLF3D_RESULT_PLATFORM_ERROR;
+            WG_FreeLauncherArguments(&launcher_arguments);goto cleanup;
+        }
+        if(option) {++index;continue;}
         if (strcmp(launcher_argv[index], "--window-scale") == 0
             || strcmp(launcher_argv[index], "--fullscreen-resolution") == 0)
         {
@@ -1631,18 +1643,22 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
         }
     }
 
+    if(WG_FullscreenDisplay(&fullscreen_options)) {
+        wg_display_mode.width=fullscreen_options.width;
+        wg_display_mode.height=fullscreen_options.height;
+    }
     if (WG_CommandLineHelpRequested(launcher_argc, launcher_argv))
     {
         WG_PrintCommandLineHelp(
             launcher_argc > 0 ? launcher_argv[0] : "wolf3d.exe",
             "Win32 host options:\n"
-            "  --fullscreen         Start in borderless fullscreen mode\n"
+            "  --fullscreen         Start in the selected fullscreen mode\n"
             "  --windowed           Start in windowed mode\n"
 #if defined(WG_WIN9X) || defined(WG_CONSOLE_WIN32)
             "  --no-pause           Close a newly created console without waiting\n"
 #endif
             "  --window-scale N     Initial 320x240 scale, 1-8 (default 3)\n"
-            "  --fullscreen-resolution WxH  Optional primary-display mode\n",
+            WG_FULLSCREEN_HELP,
             "Press F11 or Alt+Enter to toggle windowed/fullscreen mode.\n");
         result = WOLF3D_RESULT_QUIT;
     }

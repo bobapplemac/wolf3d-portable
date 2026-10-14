@@ -52,7 +52,13 @@ mouse capture or whether mouse input is enabled. F11/`--fullscreen` uses
 borderless desktop-sized fullscreen on Windows, preserving the desktop resolution
 and the normal-cooperative-level DirectDraw hardware path. Exclusive SDL fullscreen
 previously conflicted with that path and could force slow software fallback.
-The Linux SDL1 host retains SDL display-mode fullscreen.
+`--fullscreen-mode display --fullscreen-resolution 640x480` temporarily switches
+the primary display resolution but retains normal DirectDraw cooperation and
+hardware stretching. It avoids SDL exclusive ownership; the desktop mode is
+restored on focus loss, windowed return and exit. Without a resolution, display
+mode uses the desktop dimensions. These mode transitions await hardware testing.
+See [fullscreen options](running.md#fullscreen-modes-gdi-sdl1-and-sdl3) for the
+shared GDI/SDL1/SDL3 interface.
 
 ## DirectDraw hardware scaling
 

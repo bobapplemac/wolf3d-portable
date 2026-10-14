@@ -8,6 +8,8 @@
 #endif
 #include "../WG_ENGINE_COMPAT.h"
 #include "../WG_HELP.h"
+#include "../WG_FULLSCREEN.h"
+static wg_fullscreen_options_t fullscreen_options={-1,0,0};
 #include "../WG_HOST.h"
 #include "../WG_TEXT_OUTPUT.h"
 
@@ -84,6 +86,25 @@ static int WG_SDLSetFullscreen(int fullscreen)
     {
         return 1;
     }
+    if(fullscreen) {
+        SDL_DisplayMode selected;const SDL_DisplayMode *mode=NULL;
+        if(WG_FullscreenDisplay(&fullscreen_options)) {
+            SDL_DisplayID display=SDL_GetDisplayForWindow(wg_window);
+            mode=SDL_GetDesktopDisplayMode(display);
+            if(!mode) {fprintf(stderr,"wolf3d: desktop display mode unavailable: %s\n",SDL_GetError());return 0;}
+            {
+                int width=fullscreen_options.width?(int)fullscreen_options.width:mode->w;
+                int height=fullscreen_options.height?(int)fullscreen_options.height:mode->h;
+                /* Desktop descriptions are not necessarily valid exclusive modes. */
+                if(!SDL_GetClosestFullscreenDisplayMode(display,width,height,0.0f,false,&selected)
+                    || selected.w!=width || selected.h!=height) {
+                    fprintf(stderr,"wolf3d: requested fullscreen resolution is unavailable\n");return 0;
+                }
+                mode=&selected;
+            }
+        }
+        if(!SDL_SetWindowFullscreenMode(wg_window,mode)) {fprintf(stderr,"wolf3d: could not select fullscreen display mode: %s\n",SDL_GetError());return 0;}
+    }
     if (!SDL_SetWindowFullscreen(wg_window, fullscreen != 0))
     {
         fprintf(stderr, "wolf3d: could not change fullscreen mode: %s\n",
@@ -91,6 +112,7 @@ static int WG_SDLSetFullscreen(int fullscreen)
         return 0;
     }
     wg_fullscreen = fullscreen;
+    (void)SDL_SetWindowAlwaysOnTop(wg_window,fullscreen && wg_window_focused);
     if (!((fullscreen || wg_mouse_enabled)
               ? SDL_HideCursor() : SDL_ShowCursor()))
     {
@@ -542,10 +564,12 @@ static int WG_SDLPollEvent(wolf3d_event_t *event)
                 }
                 break;
             case SDL_EVENT_WINDOW_FOCUS_GAINED:
+                (void)SDL_SetWindowAlwaysOnTop(wg_window,wg_fullscreen!=0);
                 wg_window_focused = 1;
                 (void)WG_SDLSetMouseCapture(wg_mouse_capture_requested);
                 break;
             case SDL_EVENT_WINDOW_FOCUS_LOST:
+                (void)SDL_SetWindowAlwaysOnTop(wg_window,false);
                 wg_window_focused = 0;
                 (void)WG_SDLSetMouseCapture(0);
                 break;
@@ -817,7 +841,8 @@ static void WG_SDLPrintHelp(const char *program)
     WG_PrintCommandLineHelp(
         program != NULL ? program : "wolf3d-sdl3",
         "SDL3 host options:\n"
-        "  --fullscreen         Start in borderless fullscreen mode\n"
+        WG_FULLSCREEN_HELP
+        "  --fullscreen         Start in the selected fullscreen mode\n"
         "  --windowed           Start in windowed mode\n"
         "  --sdl3-help          Alias for --help\n",
         "Press F11 or Alt+Enter to toggle windowed/fullscreen mode.\n");
@@ -886,6 +911,9 @@ int main(int argc, char **argv)
 
     for (index = 1; index < argc; ++index)
     {
+        int option=WG_FullscreenOption(&fullscreen_options,argv[index],index+1<argc?argv[index+1]:NULL);
+        if(option<0) {WG_PrintLauncherError(WG_FULLSCREEN_ERROR);WG_FreeLauncherArguments(&launcher_arguments);return 1;}
+        if(option) {++index;continue;}
         if (strcmp(argv[index], "--sdl3-help") == 0
             || WG_CommandLineHelpRequested(argc, argv))
         {

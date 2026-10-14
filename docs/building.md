@@ -476,9 +476,9 @@ Run `python tests/WG_ADLIB_INIT_TEST.py --cc gcc` to verify native AdLib registe
 initialization in DOS and Win9x builds. It simulates OPL3 hardware left in
 extended mode, an original OPL2 chip, absent hardware and the NT I/O guard.
 The companion `tests/WG_ADLIB_INIT_TEST.c` checks that only detected OPL3
-hardware receives second-bank reset writes. Physical Win9x playback remains
-a separate test; a passing register test does not establish mixer routing or
-exclusive access against the Windows sound driver.
+hardware receives second-bank reset writes. Physical Win9x native AdLib and DBOPL playback have been confirmed on a
+Pentium III with Yamaha OPL3-SAx hardware. A passing register test alone does
+not establish mixer routing or exclusive access against the Windows sound driver.
 
 Run `python tests/WG_DOS_VIDEO_TEST.py --cc gcc` for DOS exit cleanup regressions.
 The companion `tests/WG_DOS_VIDEO_TEST.c` checks real-mode INT 43h save/restore,

@@ -1,28 +1,20 @@
 # Changelog
 
-## Unreleased - 2026-10-14 - DOS exit video cleanup
-
-- Preserve and restore the real-mode INT 43h BIOS font pointer after the final
-  video mode change, addressing DOS/32A warning 9003.
-- Clear trailing exit-card cells to normal white-on-black spaces so DOS prompts
-  do not inherit colored attributes; reserve a prompt row for full-height cards.
-- Add mocked DPMI and text-framebuffer regression coverage.
-
-## Unreleased - 2026-10-14 - Native OPL3 compatibility initialization
-
-- Switch detected OPL3 hardware to OPL2-compatible mode before playing original
-  AdLib data, including when a Windows MIDI driver previously enabled OPL3 mode.
-- Add register-I/O regressions for inherited OPL3 mode, original OPL2 hardware,
-  missing hardware and the Windows NT port-access guard.
-
-
-## Unreleased - 2026-10-14 - DOS Sound Blaster compatibility
+## 1.4.80 - 2026-10-14 - DOS and Win9x hardware audio and exit cleanup
 
 - Add DSP 2.x/3.x 8-bit mono DMA output for SB2/SB Pro-compatible cards while
   retaining SB16 16-bit stereo and reporting the actual negotiated PCM rate.
-- Default DOS and Win9x builds to 22050 Hz, retaining explicit rate overrides.
-- Fix silent-fallback clock drift and DSP I/O timeout handling.
-- Probe and report the DOS PCM path with `--diag`; add simulated hardware regressions.
+- Default DOS and Win9x builds to 22050 Hz, retaining explicit rate overrides
+  and modern-platform defaults; fix fallback clock drift and DSP timeouts.
+- Switch detected OPL3 hardware to OPL2-compatible mode before playing original
+  AdLib data, including after a Windows MIDI driver enabled OPL3 mode.
+- Preserve the real-mode INT 43h BIOS font pointer across video mode changes
+  and clear trailing exit-card attributes so DOS returns to a normal prompt.
+- Add simulated audio/register/video regressions and a DOS/32A video smoke.
+- Confirm DOS native AdLib, DBOPL and digital playback, warning-free exit and
+  normal prompt colors on Pentium III/Yamaha OPL3-SAx hardware. Win9x native
+  AdLib and DBOPL playback are also confirmed on that machine.
+- Update the recorded engine dependency to 1.4.80; no public API change.
 
 ## Unreleased - 2026-10-11 - Microsoft toolset version vocabulary
 

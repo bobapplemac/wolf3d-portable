@@ -13,6 +13,7 @@ def run(*args,expected=0):
 assert 'SDL 1.2' in run('--help')
 assert 'selected' in run('--diag','--opl','auto')
 assert 'requires 1, 2, 3 or 4' in run('--window-scale','0',expected=1)
-assert 'Available OPL drivers' in run('--diag','--opl','adlib',expected=1)
+failure=run('--diag','--opl','adlib',expected=1)
+assert 'CAP_SYS_RAWIO' in failure or 'Available OPL drivers' in failure
 assert 'device 11025 Hz' in run('--diag','--opl','silent','--sample-rate','11025')
 print('Packaged RH9 CLI, auto audio, explicit rejection and sample-rate checks passed.')

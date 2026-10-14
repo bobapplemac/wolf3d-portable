@@ -76,6 +76,15 @@ hosts on glibc 2.28 and musl, plus full i686 glibc distributions and mocked
 worker tests. Physical Linux playback remains pending. See building.md for
 the i686 Docker profile and its CPU/runtime limits.
 
+## Red Hat Linux 9 / i586 SDL 1.2
+
+The [RH9 profile](linux-rh9.md#native-adlib--opl) also includes native AdLib by
+default, keeping SDL/OSS for PCM. It uses the shared port worker with a separate
+legacy timing path; modern clock APIs and ambient capabilities are unavailable.
+Auto prefers AdLib, then DBOPL, Nuked and silent. Built and mock-tested; physical
+RH9 timing, audio and port access remain pending confirmation. See the linked
+guide for permissions, clock limitations and the hardware test procedure.
+
 ## Windows 2000 and XP
 
 This experimental x86 GDI option uses the real ISA OPL chip at ports

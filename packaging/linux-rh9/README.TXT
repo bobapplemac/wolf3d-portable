@@ -3,7 +3,11 @@ Wolf3D portable - experimental Red Hat Linux 9 / original Pentium build
 Run ./wolf3d from a terminal in X11. Keep the shared libraries beside it.
 Place legally obtained game data beside the executable or use --data.
 Use --help for common options, --diag for audio/data diagnostics.
-Start with --opl dbopl; auto is the default. Native AdLib is deferred.
+Auto tries native AdLib, then DBOPL/Nuked/silent as compiled.
+--opl adlib requires an initialized chip at 0x388 and root/CAP_SYS_RAWIO.
+Explicit driver failures are reported; auto falls back quietly. Native OPL
+playback/timing is pending RH9 hardware testing. Avoid changing the system
+clock during playback. Use --opl dbopl to force software emulation.
 --sample-rate 11025 is useful on slower CPUs; auto prefers 22050 here.
 --window-scale 1 starts at 320x240; default 2 is 640x480, always 4:3.
 F11 toggles SDL fullscreen (may change the display mode).

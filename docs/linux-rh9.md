@@ -14,12 +14,12 @@ make rh9-sdl1 JOBS=8
 # Optional heavier emulator, still with automatic runtime selection:
 make rh9-sdl1 RH9_NUKED=ON
 # Silent-only build:
-make rh9-sdl1 RH9_DBOPL=OFF
+make rh9-sdl1 RH9_DBOPL=OFF RH9_ADLIB=OFF
 ```
 
 The guided `./build.sh` path is Linux distributions (Docker), then Red Hat 9
-i586 SDL 1.2. It offers DBOPL/silent by default and optional Nuked, with auto
-as the default selection. Native OPL is deliberately deferred for this host.
+i586 SDL 1.2. It offers AdLib/DBOPL/silent by default and optional Nuked, with auto
+as the default selection. Use `RH9_ADLIB=OFF` to omit native OPL.
 The legacy engine policy prefers DBOPL over Nuked when both are present;
 auto PCM defaults remain driver-dependent (DBOPL 22050 Hz, Nuked 44100 Hz).
 `--sample-rate` is the runtime override. The engine source/API is unchanged.
@@ -33,7 +33,7 @@ SDL uses its old joystick interface; newer input-event structs are not assumed.
 
 This is genuine SDL 1.2.15, built with software X11 and OSS support. It is not
 sdl12-compat, which would bring SDL2 back into the dependency chain. ALSA,
-PulseAudio, OpenGL, framebuffer-console and native OPL are not part of this
+PulseAudio, OpenGL and framebuffer-console are not part of this
 initial profile. SDL's timer/input/audio services isolate most host code so a
 future legacy Windows implementation can reuse it, but Windows is not supported
 by this target yet.
@@ -74,11 +74,46 @@ other programs may need to release the device. Lower `--sample-rate` if needed.
 The audio thread only drains a bounded PCM queue; all engine calls stay on the
 main thread. Queue underruns produce silence rather than replaying stale data.
 
+## Native AdLib / OPL
+
+Native OPL is compiled by default, but physical RH9 playback is **pending test
+confirmation**. Auto tries native AdLib, then DBOPL, Nuked and silent as compiled.
+Denied port access or an absent chip quietly falls back; explicit `--opl adlib`
+fails with a useful error. PCM still uses SDL/OSS, including digitized effects.
+No extra driver is bundled: the worker uses `ioperm` and ports 0x388-0x38b.
+
+Initialize the ISA card and unmute its FM mixer using RH9's sound driver/tools.
+Do not run another FM player concurrently. RH9 requires root or a process already
+holding CAP_SYS_RAWIO; the modern ambient-capability `setpriv` recipe does not
+apply to kernel 2.4. For a controlled hardware test, run a trusted package from
+an authorized root terminal in the X session:
+
+```sh
+./wolf3d --no-config --diag --opl adlib
+./wolf3d --no-config --opl adlib --data /path/to/game
+```
+
+The shared Linux OPL worker retains timestamped writes and 4/24 microsecond
+chip waits. The RH9-only timing path uses `gettimeofday`, since the original
+LinuxThreads library lacks selectable condition-variable clocks. Backwards or
+larger-than-five-second forward clock jumps fail the worker rather than corrupt
+its timeline; avoid setting the system clock during playback. Emergency chip
+silencing uses traditional status-read delays if the clock has failed. Relative waits
+keep shutdown bounded even if wall time changes. Linux 2.4 can round worker
+sleeps to scheduler ticks, and SDL/OSS device buffering adds latency: listening
+tests must establish musical timing and FM/PCM synchronization. A sustained
+process stall exceeding five seconds is also treated as a clock failure.
+The modern Linux SDL3/KMS monotonic-clock path remains unchanged.
+
 ## Validation and limitations
 
 The build runs `tests/WG_SDL1_TEST.c` against SDL dummy video/audio, checking
 input mapping, focus releases, 4:3 presentation, audio ordering/wrap/underrun,
-queue overflow and audio restart. Help and the public API consumer also run.
+queue overflow and audio restart. A mocked SDL/OPL integration test checks
+negotiated rate, accepted-PCM publication, overflow, worker failure and shutdown.
+The native worker test mocks port I/O while running real RH9 pthreads: permissions,
+absent/present chips, chip delays, timestamps, clock discontinuities and cleanup.
+Help, the OPL timeline test and the public API consumer also run.
 Tests use the RH9 loader and libraries inside Docker, but still the modern host
 kernel. This does **not** prove operation on Linux 2.4.
 

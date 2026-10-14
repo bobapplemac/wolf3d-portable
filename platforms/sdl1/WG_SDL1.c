@@ -2,6 +2,12 @@
 #include "../WG_HELP.h"
 #include "../WG_TEXT_OUTPUT.h"
 #include <SDL/SDL.h>
+#ifdef WG_LINUX_OPL
+#include "../linux/WG_LINUX_OPL.h"
+#define WG_SDL1_OPL_NOTE "Native OPL: direct ports 0x388-0x38b; RH9 elapsed-time waits, hardware confirmation pending"
+#else
+#define WG_SDL1_OPL_NOTE "Native OPL: not compiled"
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,6 +78,10 @@ static int video(int width, int height)
 }
 static void pcm_shutdown(void)
 {
+#ifdef WG_LINUX_OPL
+    WG_LinuxOPLShutdown();
+    WG_LinuxOPLSetRate(0);
+#endif
     if (pcm_open) SDL_CloseAudio();
     pcm_open = 0; pcm_count = pcm_read = 0;
 }
@@ -210,6 +220,9 @@ static int pcm_init_ex(const wolf3d_pcm_format_t *request,wolf3d_pcm_format_t *o
     if(pcm_limit<1024) pcm_limit=1024;
     if(pcm_limit>WG_QUEUE_FRAMES) pcm_limit=WG_QUEUE_FRAMES;
     obtained->sample_rate=(uint32_t)got.freq;obtained->channels=got.channels;obtained->bits_per_sample=16;
+#ifdef WG_LINUX_OPL
+    WG_LinuxOPLSetRate(obtained->sample_rate);
+#endif
     SDL_PauseAudio(0);return 1;
 }
 static int pcm_init(uint32_t rate,uint16_t channels)
@@ -229,13 +242,32 @@ static int submit(const int16_t *samples,size_t frames)
     if(frames>pcm_limit-pcm_count) {SDL_UnlockAudio();return 0;}
     for(i=0;i<frames;++i) for(c=0;c<pcm_channels;++c)
         pcm[((pcm_read+pcm_count+i)%WG_QUEUE_FRAMES)*pcm_channels+c]=samples[i*pcm_channels+c];
-    pcm_count+=frames;SDL_UnlockAudio();return 1;
+    pcm_count+=frames;
+#ifdef WG_LINUX_OPL
+    /* Publish before unlocking: the callback must not drain unannounced PCM. */
+    if (!WG_LinuxOPLSubmit(frames, pcm_count)) {
+        SDL_UnlockAudio();return 0;
+    }
+#endif
+    SDL_UnlockAudio();return 1;
 }
 int WG_InstallPlatform(void)
 {
     const wolf3d_platform_api_t api={WOLF3D_PLATFORM_API_VERSION,sizeof(api),
         init,shutdown_host,present,ticks,sleep_ms,poll_event,interactive,title,message,error,text_screen,
-        pcm_init,pcm_shutdown,writable,submit,pcm_init_ex,NULL,NULL,NULL,devices,mouse_capture,NULL};
+        pcm_init,pcm_shutdown,writable,submit,pcm_init_ex,
+#ifdef WG_LINUX_OPL
+        WG_LinuxOPLInit,WG_LinuxOPLShutdown,WG_LinuxOPLWrite,
+#else
+        NULL,NULL,NULL,
+#endif
+        devices,mouse_capture,
+#ifdef WG_LINUX_OPL
+        WG_LinuxOPLWriteTimed
+#else
+        NULL
+#endif
+    };
     return wolf3d_SetPlatform(&api)==WOLF3D_RESULT_OK;
 }
 #ifndef WG_SDL1_TEST
@@ -246,7 +278,7 @@ int main(int argc,char **argv)
     if(!WG_LoadLauncherArguments(argc,argv,&launcher,problem,sizeof(problem))) {WG_PrintLauncherError(problem);return 1;}
     argc=launcher.argc;argv=launcher.argv;
     if(WG_CommandLineHelpRequested(argc,argv)) {
-        WG_PrintCommandLineHelp(argv[0],"SDL 1.2 options:\n  --window-scale N     Initial 4:3 window scale (1-4; default 2)\n  --fullscreen         SDL fullscreen video mode\n  --windowed           Windowed mode (default)\n","F11 toggles fullscreen. This legacy host uses SDL 1.2 X11 and OSS PCM.\nNative OPL is not implemented for this host.\n");
+        WG_PrintCommandLineHelp(argv[0],"SDL 1.2 options:\n  --window-scale N     Initial 4:3 window scale (1-4; default 2)\n  --fullscreen         SDL fullscreen video mode\n  --windowed           Windowed mode (default)\n","F11 toggles fullscreen. This legacy host uses SDL 1.2 X11 and OSS PCM.\n" WG_SDL1_OPL_NOTE "\n");
         WG_FreeLauncherArguments(&launcher);return 0;
     }
     for(i=1;i<argc;++i) {
@@ -263,7 +295,7 @@ int main(int argc,char **argv)
     }
     if(!WG_InstallPlatform()) {WG_FreeLauncherArguments(&launcher);return 1;}
     if(WG_CommandLineDiagnosticsRequested(argc,argv)) {
-        ok=WG_PrintDiagnostics(argc,argv,launcher.config_path,"  SDL 1.2 host: X11 software video / OSS PCM\n  CPU baseline: i586; RH9 runtime confirmation pending\n  Native OPL: unavailable in this host\n");
+        ok=WG_PrintDiagnostics(argc,argv,launcher.config_path,"  SDL 1.2 host: X11 software video / OSS PCM\n  CPU baseline: i586; RH9 runtime confirmation pending\n  " WG_SDL1_OPL_NOTE "\n");
         shutdown_host();WG_FreeLauncherArguments(&launcher);return ok?0:1;
     }
     if(!WG_PrepareGameArguments(argc,argv,&game,problem,sizeof(problem))) {WG_PrintLauncherError(problem);WG_FreeLauncherArguments(&launcher);return 1;}

@@ -425,11 +425,12 @@ clean: clean-sdl3 clean-console clean-portable clean-musl clean-dos clean-window
 RH9_BUILD_IMAGE ?= wolf3d-portable-build-rh9-i586
 RH9_NUKED ?= OFF
 RH9_DBOPL ?= ON
+RH9_ADLIB ?= ON
 RH9_OPL_DEFAULT ?= auto
 .PHONY: rh9-image rh9-sdl1
 rh9-image:
 	$(DOCKER) build --platform linux/amd64 -t "$(RH9_BUILD_IMAGE)" packaging/linux-rh9
 rh9-sdl1: rh9-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" -v "$(CURDIR):/src" -w /src \
-		-e RH9_NUKED=$(RH9_NUKED) -e RH9_DBOPL=$(RH9_DBOPL) -e RH9_OPL_DEFAULT=$(RH9_OPL_DEFAULT) \
+		-e RH9_NUKED=$(RH9_NUKED) -e RH9_ADLIB=$(RH9_ADLIB) -e RH9_DBOPL=$(RH9_DBOPL) -e RH9_OPL_DEFAULT=$(RH9_OPL_DEFAULT) \
 		-e JOBS=$(if $(JOBS),$(JOBS),4) $(DOCKER_RUN_ARGS) "$(RH9_BUILD_IMAGE)" sh scripts/linux/build-rh9.sh

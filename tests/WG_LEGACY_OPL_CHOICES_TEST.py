@@ -65,8 +65,9 @@ class LegacyOplChoices(unittest.TestCase):
                 self.assertIn('invoke-build.sh rh9-sdl1',result.stdout)
                 self.assertIn('RH9_NUKED='+('ON' if custom else 'OFF'),result.stdout)
                 self.assertIn('RH9_DBOPL=ON',result.stdout)
+                self.assertIn('RH9_ADLIB=ON',result.stdout)
                 self.assertIn('RH9_OPL_DEFAULT=auto',result.stdout)
-                self.assertNotIn('adlib',result.stderr.split('Audio options')[-1])
+                self.assertIn('OPL drivers: '+('nuked,dbopl,silent,adlib' if custom else 'dbopl,silent,adlib'),result.stdout)
             result = subprocess.run(['bash', str(script)], input='5\nn\n', text=True,
                                     capture_output=True, env=env, timeout=10)
             self.assertEqual(result.returncode, 0, result.stderr)

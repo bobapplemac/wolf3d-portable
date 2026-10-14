@@ -2,10 +2,14 @@
 
 ## Unreleased - Red Hat Linux 9 / i586
 
+- Include native AdLib by default in the RH9 SDL1 target, with quiet auto fallback and strict explicit selection; SDL/OSS still supplies PCM.
+- Adapt the shared timestamped OPL worker to RH9 LinuxThreads and legacy clock interfaces, with clock-jump failure checks and relative waits.
+- Add mocked worker/integration tests and permission/timing documentation; physical native OPL playback remains pending confirmation.
+
 - Add a separate SDL 1.2 host with 4:3 software video, keyboard/mouse/joystick input and bounded OSS PCM buffering.
-- Add checksum-pinned RH9 Docker/sysroot builds, optional Nuked and default DBOPL/silent, without engine changes.
+- Add checksum-pinned RH9 Docker/sysroot builds, optional Nuked and default AdLib/DBOPL/silent, without engine changes.
 - Add host/ABI/i586 regression tests, guided-menu integration and setup/validation documentation.
-- Mark actual Linux 2.4 and physical i586 runtime validation pending; native OPL and legacy Windows SDL1 are deferred.
+- Mark actual Linux 2.4 and physical i586 runtime validation pending; legacy Windows SDL1 is deferred.
 
 ## 1.4.88 - 2026-10-14 - Build profiles and native OPL
 

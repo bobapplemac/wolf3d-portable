@@ -11,8 +11,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#ifdef WG_LINUX_OPL_LEGACY
+#include <sys/time.h>
+#endif
 static int permitted = 1, present = 1, opl3 = 1;
 static int grants, releases, reads, writes, bank2, markers;
+static int clock_fault_test;
 static unsigned char address;
 static pthread_t owner;
 static uint64_t last_port_ns, marker_ns;
@@ -21,9 +25,15 @@ static char error[256];
 static pthread_mutex_t trace_lock = PTHREAD_MUTEX_INITIALIZER;
 static uint64_t test_now(void)
 {
+#ifdef WG_LINUX_OPL_LEGACY
+    struct timeval tv;
+    assert(gettimeofday(&tv, NULL) == 0);
+    return (uint64_t)tv.tv_sec * 1000000000U + (uint64_t)tv.tv_usec * 1000U;
+#else
     struct timespec t;
     assert(clock_gettime(CLOCK_MONOTONIC, &t) == 0);
     return (uint64_t)t.tv_sec * 1000000000U + (uint64_t)t.tv_nsec;
+#endif
 }
 static int ioperm(unsigned long port, unsigned long count, int on)
 {
@@ -46,7 +56,7 @@ static void outb(unsigned char value, unsigned short port)
     uint64_t now = test_now();
     assert(pthread_equal(owner, pthread_self()));
     assert(port >= 0x388 && port <= 0x38b);
-    if (last_port_ns)
+    if (last_port_ns && !clock_fault_test)
         assert(now - last_port_ns >= ((last_port & 1) ? 24000U : 4000U));
     last_port_ns = now; last_port = port;
     ++writes;
@@ -79,6 +89,16 @@ int main(void)
 {
     uint64_t start;
     unsigned retry;
+#ifdef WG_LINUX_OPL_LEGACY
+    assert(WG_OPLLegacyClock(10000000000ULL));
+    assert(!WG_OPLLegacyClock(9999999999ULL)); /* Backwards clock fails closed. */
+    assert(!WG_OPLLegacyClock(11000000000ULL)); /* Failure remains sticky. */
+    wg_last_clock=0; wg_legacy_clock_failed=0;
+    assert(WG_OPLLegacyClock(10000000000ULL));
+    assert(!WG_OPLLegacyClock(16000000000ULL)); /* Large forward jump. */
+    wg_last_clock=0; wg_legacy_clock_failed=0;
+    assert(!WG_OPLLegacyClock(0)); /* System clock query failure. */
+#endif
     assert(!WG_LinuxOPLInit());
     assert(strstr(error, "requires PCM") && grants == 0);
     WG_LinuxOPLSetRate(22050);
@@ -113,6 +133,18 @@ int main(void)
     WG_LinuxOPLShutdown();
     assert(marker_count() == 1 && grants == releases);
     WG_LinuxOPLShutdown();
+#ifdef WG_LINUX_OPL_LEGACY
+    assert(WG_LinuxOPLInit());
+    { int previous=writes;
+    /* Inject the sticky clock failure; cleanup must still silence/revoke. */
+    pthread_mutex_lock(&wg_clock_lock);
+    clock_fault_test=1;
+    wg_legacy_clock_failed=1;
+    pthread_mutex_unlock(&wg_clock_lock);
+    assert(!WG_LinuxOPLSubmit(1,1));
+      WG_LinuxOPLShutdown();
+      assert(writes>previous && grants==releases); }
+#endif
     puts("Linux OPL permission, detection, timing, PCM publication and cleanup tests passed");
     return 0;
 }

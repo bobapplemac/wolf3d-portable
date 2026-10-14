@@ -138,7 +138,7 @@ default_opl=auto
 if [[ $target == dos-* || $target == windows-win9x || $target == windows-win2k || $target == windows-xp || ( $target == portable* && $linux_arch == x86 ) ]]; then
     drivers=dbopl-silent-adlib
 elif [[ $target == rh9-* ]]; then
-    drivers=dbopl-silent
+    drivers=dbopl-silent-adlib
 elif [[ $target == windows-* ]]; then
     drivers=nuked-dbopl-silent
 else
@@ -148,7 +148,7 @@ if [[ $target != clean ]]; then
     audio=$(choose 'Audio options' "Use recommended settings ($drivers; auto sample rate)" 'Customize compiled drivers and default')
     if [[ $audio == Customize* ]]; then
         if [[ $target == rh9-* ]]; then
-            drivers=$(choose 'Compiled OPL drivers' dbopl-silent nuked-dbopl-silent nuked-silent silent)
+            drivers=$(choose 'Compiled OPL drivers' dbopl-silent-adlib nuked-dbopl-silent-adlib nuked-silent dbopl-silent adlib-silent silent)
         else
         drivers=$(choose 'Compiled OPL drivers' "$drivers" nuked-dbopl-silent-adlib nuked-dbopl-silent nuked-silent dbopl-silent adlib-silent silent)
         fi
@@ -186,7 +186,7 @@ if [[ $target == windows-xp ]]; then
 fi
 if [[ $target == rh9-* ]]; then
     args=("$target" "RH9_NUKED=$(case $drivers in *nuked*) echo ON;; *) echo OFF;; esac)"
-          "RH9_DBOPL=$(case $drivers in *dbopl*) echo ON;; *) echo OFF;; esac)" "RH9_OPL_DEFAULT=$default_opl")
+          "RH9_DBOPL=$(case $drivers in *dbopl*) echo ON;; *) echo OFF;; esac)" "RH9_ADLIB=$(case $drivers in *adlib*) echo ON;; *) echo OFF;; esac)" "RH9_OPL_DEFAULT=$default_opl")
 fi
 [[ $target == portable* ]] && args+=("LINUX_ARCH=$linux_arch")
 [ -n "$jobs" ] && args+=("JOBS=$jobs")

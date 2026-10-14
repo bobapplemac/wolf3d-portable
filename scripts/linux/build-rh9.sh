@@ -7,6 +7,7 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 build="$root/build/linux-rh9-i586"
 cmake -S "$root/cmake/rh9" -B "$build" \
  -DCMAKE_TOOLCHAIN_FILE="$root/cmake/toolchains/linux-rh9-i586.cmake" \
+ -DWG_ENABLE_OPL_ADLIB="${RH9_ADLIB:-ON}" \
  -DCMAKE_BUILD_TYPE=Release -DWG_ENABLE_OPL_NUKED="${RH9_NUKED:-OFF}" \
  -DWG_ENABLE_OPL_DBOPL="${RH9_DBOPL:-ON}" -DWG_DEFAULT_OPL_DRIVER="${RH9_OPL_DEFAULT:-auto}"
 cmake --build "$build" --parallel "${JOBS:-4}"

@@ -12,3 +12,5 @@ packaging/linux-musl/wolf3d text eol=lf
 *.sln text eol=crlf
 *.vcxproj text eol=crlf
 
+third_party/InpOut32/inpout32.dll binary
+third_party/InpOut32/LICENSE.txt -text

@@ -98,7 +98,7 @@ endif()
 set(W3P_NATIVE_OPL_NOTE "")
 if(W3P_ENABLE_INPOUT32)
     set(W3P_NATIVE_OPL_NOTE
-        "Optional native AdLib: install the official InpOut32 1.5.0.1 Win32 driver\nas Administrator and place its inpout32.dll beside wolf3d.exe. Loading the\nDLL may install/start its embedded driver. Download and instructions:\nhttps://vps.highrez.co.uk/downloads/InpOut32/default.htm\nFirst run: wolf3d.exe --no-config --diag --opl adlib\nThen use --opl adlib for gameplay. DBOPL remains the default. Native access\nis exclusive in practice: close other FM/MIDI playback applications. Digital\neffects continue to use waveOut. Physical NT hardware testing is pending.\n")
+        "Optional native AdLib: use --opl adlib. DBOPL remains the default.\nThe win2k/winxp x86 GDI native-AdLib distributions bundle inpout32.dll.\nFor other profiles, obtain the official Highrez 1.5.0.1 Win32 DLL and place\nit beside wolf3d.exe. First use may install/start its embedded kernel driver;\nrun as Administrator on the destination computer for initial installation.\nInstructions: https://vps.highrez.co.uk/downloads/InpOut32/default.htm\nFirst run: wolf3d.exe --no-config --diag --opl adlib\nClose other FM/MIDI playback applications. Digital effects use waveOut.\n")
 endif()
 configure_file(packaging/WIN32-README.txt.in
                ${CMAKE_CURRENT_BINARY_DIR}/WIN32-README.txt @ONLY)
@@ -252,6 +252,10 @@ if(W3P_BUILD_WIN32)
             "${CMAKE_CURRENT_BINARY_DIR}/WOLF3D-LIB.txt" "${W3P_WIN32_RELEASE_DIR}/DOCS/ENGINE.TXT"
         COMMAND ${CMAKE_COMMAND} "-DDIST=${W3P_WIN32_RELEASE_DIR}" "-DROOT=${CMAKE_SOURCE_DIR}" "-DPRODUCT=wolf3d-portable"
             -P "${CMAKE_SOURCE_DIR}/cmake/WGPackageDocs.cmake"
+        COMMAND ${CMAKE_COMMAND} "-DDIST=${W3P_WIN32_RELEASE_DIR}"
+            "-DROOT=${CMAKE_SOURCE_DIR}" "-DENABLED=${W3P_ENABLE_INPOUT32}"
+            "-DADLIB=${WG_ENABLE_OPL_ADLIB}"
+            -P "${CMAKE_SOURCE_DIR}/cmake/W3PPackageInpOut32.cmake"
         DEPENDS ${W3P_WIN32_RELEASE_DEPENDS}
         COMMENT "Staging ${W3P_WIN32_RELEASE_DIR_ARCH} GDI release" VERBATIM)
 endif()

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Bundle verified Highrez InpOut32 for win2k/winxp x86 GDI native-AdLib packages,
+  with SHA-256 enforcement, verbatim MIT license, notices and build provenance.
+
 - Keep SDL3 simulation, audio and memory rendering running during native
   move/resize loops using main-thread live-resize event watches. Defer window
   presentation until normal polling resumes; test event and thread filtering.

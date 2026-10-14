@@ -1,0 +1,13 @@
+
+InpOut32 1.5.0.1 (Win32 DLL file version 1.5.0.0)
+------------------------------------------------
+Copyright (c) <2003-2015> Phil Gibbons <www.highrez.co.uk>
+Portions Copyright (c) <2000> <logix4u.net>
+MIT license: DOCS/LICENSES/INPOUT32.TXT
+Unmodified official prebuilt DLL, including its embedded kernel drivers.
+Upstream: https://vps.highrez.co.uk/downloads/InpOut32/default.htm
+DLL source: https://www.highrez.co.uk/scripts/download.asp?package=Inpout32_dll_source
+Driver source links are on the upstream page.
+Loaded only when native AdLib is explicitly selected. Loading may install/start
+its embedded driver; initial installation requires Administrator privileges on
+the destination computer. No separate InstallDriver.exe or SYS file is needed.

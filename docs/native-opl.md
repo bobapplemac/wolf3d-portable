@@ -20,12 +20,24 @@ default. Other cross profiles reject AdLib selection for now.
 
 ## Install and test
 
-Download the official [InpOut32 1.5.0.1 binaries](https://vps.highrez.co.uk/downloads/InpOut32/default.htm).
-Use its **Win32** folder: put `inpout32.dll` beside `wolf3d.exe` and run the
-supplied `InstallDriver.exe` as Administrator on the destination machine.
-Loading this DLL can itself install/start its embedded kernel driver and
-requires Administrator rights for initial installation. The game does not
-bundle or download the DLL or driver. Use a trusted upstream copy.
+Native-AdLib-enabled **win2k/winxp x86 GDI distributions include** the verified
+Highrez `inpout32.dll` beside `wolf3d.exe`. Keep it there. The DLL embeds its
+kernel drivers and can install/start the appropriate driver when loaded;
+initial installation requires Administrator privileges on the destination
+machine. No separate `InstallDriver.exe` or `.sys` download is required.
+DBOPL, help and ordinary diagnostics do not load it.
+
+Other profiles do not bundle this DLL. For a custom supported x86 GDI build,
+obtain the Win32 DLL from the official
+[InpOut32 1.5.0.1 binaries](https://vps.highrez.co.uk/downloads/InpOut32/default.htm).
+
+The repository vendors the unmodified binary and upstream MIT license in
+`third_party/InpOut32`. Packaging verifies its pinned SHA-256 and fails on a
+mismatch. `DOCS/BUILD.TXT` records the release, DLL file version and checksum;
+`DOCS/NOTICES.TXT` and `DOCS/LICENSES/INPOUT32.TXT` preserve attribution and
+license terms. Release 1.5.0.1 retains a 1.5.0.0 DLL version resource.
+Builds neither download nor execute the access DLL. Maintainers can run
+`tests/WG_INPOUT32_PACKAGE_TEST.py` to test inclusion and tamper rejection.
 
 Start with:
 

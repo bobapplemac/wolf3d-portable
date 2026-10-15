@@ -73,6 +73,27 @@ int main(void)
     assert(count == 2);
     assert((times[1] - times[0]) * 1000 / frequency.QuadPart >= 5);
     WG_OPLPlaybackStop(); before = count; Sleep(20); assert(count == before);
+    /* SDL1 waveOut refills large blocks: future writes must remain spaced
+       even when a half-second of PCM is published in one burst. */
+    count=0;
+    assert(WG_OPLPlaybackStart(NULL,22050));
+    WG_OPLPlaybackWrite(1,1,0,22050);
+    WG_OPLPlaybackWrite(1,2,2205,22050);
+    WG_OPLPlaybackWrite(1,3,4410,22050);
+    Sleep(15);assert(count==0);
+    assert(WG_OPLPlaybackSubmitClockedFrames(5512));
+    assert(WG_OPLPlaybackSubmitClockedFrames(5512));
+    EnterCriticalSection(&wg_opl_lock);
+    assert(wg_timeline.anchor_frame==0 && wg_timeline.observed==0);
+    LeaveCriticalSection(&wg_opl_lock);
+    start=GetTickCount();
+    while(count<3 && GetTickCount()-start<2000)Sleep(1);
+    assert(count==3);
+    assert((times[1]-times[0])*1000/frequency.QuadPart>=60);
+    assert((times[2]-times[1])*1000/frequency.QuadPart>=60);
+    WG_OPLPlaybackWrite(1,4,100000,22050);
+    WG_OPLPlaybackStop();before=count;Sleep(20);assert(count==before);
+    assert(WG_OPLPlaybackSubmitClockedFrames(5512)); /* Emulated OPL: no worker. */
     puts("OPL worker: events paced during PCM playback; stop/restart cancel pending writes.");
     return 0;
 }

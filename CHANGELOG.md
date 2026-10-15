@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - SDL1 native OPL scheduling on Win9x
+
+- Schedule Win9x SDL1 AdLib register writes on the timestamped Windows worker,
+  instead of emitting quarter-second batches while filling waveOut buffers.
+- Pace Windows SDL1 native OPL by elapsed time bounded by submitted PCM. SDL1
+  callback transfers are not hardware playback positions and no longer jump
+  the music clock forward. Existing GDI and SDL3 clock handling is unchanged.
+- Add worker regressions for large PCM submissions, spaced register writes
+  and cancellation on shutdown, including the Win9x direct-port configuration.
+
 ## Unreleased - SDL1 negotiated audio queue size
 
 - Size the PCM queue for at least two negotiated SDL callbacks. Legacy waveOut

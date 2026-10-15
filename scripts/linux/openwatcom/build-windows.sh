@@ -44,7 +44,7 @@ case ",$backends," in
     cp "$sdk/SDL-1.2.15/COPYING.txt" "$dist_dir/DOCS/LICENSES/SDL1.TXT"
     # The SDK predates Watcom stdint.h; SDL ABI settings are scoped in WG_SDL1_HEADERS.h.
     sed -i 's/defined(__GNUC__) || defined(__DMC__)/defined(__GNUC__) || defined(__DMC__) || defined(__WATCOMC__)/' "$sdk/include/SDL/SDL_config_win32.h"
-    sources="$sources sdl1/WG_SDL1 sdl1/WG_SDL1_DYNAMIC"
+    sources="$sources sdl1/WG_SDL1 sdl1/WG_SDL1_DYNAMIC win32/WG_OPL_PLAYBACK"
     defines="$defines -dWG_HAVE_SDL1=1 -dWG_SDL1_DYNAMIC=1"
     includes="-i=$sdk/include"
     ;;

@@ -2,7 +2,13 @@
    the chip. Probe/reset/shutdown remain synchronous with the worker stopped. */
 #include "WG_OPL_PLAYBACK.h"
 #include "../WG_OPL_TIMELINE.h"
+#ifdef WG_WIN9X
+#include <stdio.h>
+static void WG_OPLPlaybackError(const char *message) {fprintf(stderr,"Native OPL: %s\n",message);}
+#else
 #include "WG_INPOUT32.h"
+#define WG_OPLPlaybackError WG_InpOutError
+#endif
 #include "../dos/WG_DOS_ADLIB.h"
 static wg_opl_timeline_t wg_timeline;
 static CRITICAL_SECTION wg_opl_lock;
@@ -112,28 +118,42 @@ int WG_OPLPlaybackSubmit(const int16_t *samples, size_t frames, WAVEHDR *header)
         }
     }
     LeaveCriticalSection(&wg_opl_lock);
-    if (!ok) WG_InpOutError("native OPL playback queue/clock failed");
+    if (!ok) WG_OPLPlaybackError("native OPL playback queue/clock failed");
     SetEvent(wg_opl_wake);
     return ok;
 }
 
 /* SDL accepts PCM itself, then publishes its application-rate queue position.
    Unlike waveOut, no SDL API is called from the worker thread. */
-int WG_OPLPlaybackSubmitFrames(size_t frames, uint64_t queued)
+static int WG_OPLPlaybackPublishFrames(size_t frames, uint64_t queued, int observe)
 {
     LARGE_INTEGER now;
     int ok;
     if (!wg_opl_thread) return 1;
     EnterCriticalSection(&wg_opl_lock);
-    ok = !wg_opl_failed && frames <= 0xffffffffU && QueryPerformanceCounter(&now);
+    ok = !wg_opl_failed && QueryPerformanceCounter(&now);
+#ifdef _WIN64
+    if (frames > 0xffffffffU) ok = 0;
+#endif
     if (ok)
     {
         WG_OPLTimelineSubmit(&wg_timeline, (unsigned)frames, (uint64_t)now.QuadPart);
-        if (queued <= wg_timeline.submitted)
+        if (observe && queued <= wg_timeline.submitted)
             WG_OPLTimelineObserve(&wg_timeline, (uint32_t)(wg_timeline.submitted - queued), (uint64_t)now.QuadPart);
     }
     LeaveCriticalSection(&wg_opl_lock);
-    if (!ok) WG_InpOutError("native OPL playback queue/clock failed");
+    if (!ok) WG_OPLPlaybackError("native OPL playback queue/clock failed");
     SetEvent(wg_opl_wake);
     return ok;
+}
+int WG_OPLPlaybackSubmitFrames(size_t frames, uint64_t queued)
+{
+    return WG_OPLPlaybackPublishFrames(frames,queued,1);
+}
+int WG_OPLPlaybackSubmitClockedFrames(size_t frames)
+{
+    /* SDL1 may hand 250 ms to waveOut at once. That does not mean those
+       samples have played. Pace by QPC, bounded by accepted PCM, without
+       jumping the music clock forward on each callback/refill. */
+    return WG_OPLPlaybackPublishFrames(frames,0,0);
 }

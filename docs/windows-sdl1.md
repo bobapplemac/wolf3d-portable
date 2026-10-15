@@ -200,8 +200,11 @@ callback size, elapsed wall/SDL time, requested/consumed frames and underruns.
 The requested frame rate should be approximately the negotiated sample rate;
 short probes have callback-boundary and timer-rounding variation. This measures
 device callback pacing without game rendering or OPL synthesis, so a healthy
-probe does not rule out starvation during gameplay. Both emulated and native
-OPL music follow the engine's PCM production schedule on Win9x.
+probe does not rule out starvation during gameplay. Native OPL writes on
+Windows SDL1 are queued with sample timestamps and delivered by a background
+worker using elapsed time, bounded by accepted PCM. Large SDL callbacks are
+buffer transfers, not precise playback positions; they must not jump the
+native music clock forward. This applies to Win9x direct ports and NT InpOut32.
 
 For a comparison using SDL's waveOut driver, set `SDL_AUDIODRIVER=waveout` in
 the command prompt before launching. The diagnostic driver line confirms the

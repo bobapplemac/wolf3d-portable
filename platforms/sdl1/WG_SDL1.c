@@ -21,6 +21,9 @@ static void ui_shutdown(void);
 #endif
 #ifdef WG_INPOUT32
 #include "../win32/WG_INPOUT32.h"
+#endif
+#if defined(WG_INPOUT32) || defined(WG_WIN9X)
+#define WG_SDL1_OPL_WORKER
 #include "../win32/WG_OPL_PLAYBACK.h"
 #include "../dos/WG_DOS_ADLIB.h"
 static unsigned pcm_rate;
@@ -31,16 +34,13 @@ static int opl_init(void) {
     WG_DOSAdLibShutdown();return 0;
 }
 #endif
-#ifdef WG_WIN9X
-#include "../dos/WG_DOS_ADLIB.h"
-#endif
 #ifdef WG_LINUX_OPL
 #include "../linux/WG_LINUX_OPL.h"
 #define WG_SDL1_OPL_NOTE "Native OPL: direct ports 0x388-0x38b; RH9 elapsed-time waits, hardware confirmation pending"
 #elif defined(WG_INPOUT32)
 #define WG_SDL1_OPL_NOTE "Native OPL: InpOut32, timestamped playback"
 #elif defined(WG_WIN9X)
-#define WG_SDL1_OPL_NOTE "Native OPL: direct ISA ports on Windows 95/98/Me"
+#define WG_SDL1_OPL_NOTE "Native OPL: direct ISA ports on Windows 95/98/Me, timestamped playback"
 #else
 #define WG_SDL1_OPL_NOTE "Native OPL: not compiled"
 #endif
@@ -253,7 +253,7 @@ static int video(int width, int height)
 }
 static void pcm_shutdown(void)
 {
-#ifdef WG_INPOUT32
+#ifdef WG_SDL1_OPL_WORKER
     opl_shutdown();pcm_rate=0;
 #endif
 #ifdef WG_LINUX_OPL
@@ -498,7 +498,7 @@ static int pcm_init_ex(const wolf3d_pcm_format_t *request,wolf3d_pcm_format_t *o
 #ifdef WG_LINUX_OPL
     WG_LinuxOPLSetRate(obtained->sample_rate);
 #endif
-#ifdef WG_INPOUT32
+#ifdef WG_SDL1_OPL_WORKER
     pcm_rate=obtained->sample_rate;
 #endif
     SDL_PauseAudio(0);return 1;
@@ -529,8 +529,8 @@ static int submit(const int16_t *samples,size_t frames)
         SDL_UnlockAudio();return 0;
     }
 #endif
-#ifdef WG_INPOUT32
-    if(!WG_OPLPlaybackSubmitFrames(frames,pcm_count)) {SDL_UnlockAudio();return 0;}
+#ifdef WG_SDL1_OPL_WORKER
+    if(!WG_OPLPlaybackSubmitClockedFrames(frames)) {SDL_UnlockAudio();return 0;}
 #endif
     SDL_UnlockAudio();return 1;
 }
@@ -604,10 +604,8 @@ int WG_InstallPlatform(void)
         pcm_init,pcm_shutdown,writable,submit,pcm_init_ex,
 #ifdef WG_LINUX_OPL
         WG_LinuxOPLInit,WG_LinuxOPLShutdown,WG_LinuxOPLWrite,
-#elif defined(WG_INPOUT32)
+#elif defined(WG_SDL1_OPL_WORKER)
         opl_init,opl_shutdown,WG_DOSAdLibWrite,
-#elif defined(WG_WIN9X)
-        WG_DOSAdLibInit,WG_DOSAdLibShutdown,WG_DOSAdLibWrite,
 #else
         NULL,NULL,NULL,
 #endif
@@ -618,7 +616,7 @@ int WG_InstallPlatform(void)
 #endif
 #ifdef WG_LINUX_OPL
         WG_LinuxOPLWriteTimed
-#elif defined(WG_INPOUT32)
+#elif defined(WG_SDL1_OPL_WORKER)
         WG_OPLPlaybackWrite
 #else
         NULL

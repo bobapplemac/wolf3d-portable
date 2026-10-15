@@ -473,14 +473,14 @@ static void SDLCALL audio_callback(void *unused, Uint8 *stream, int length)
     pcm_read+=frames;if(pcm_read>=pcm_capacity)pcm_read-=pcm_capacity;
     pcm_count-=frames;
 }
-static int pcm_init_ex(const wolf3d_pcm_format_t *request,wolf3d_pcm_format_t *obtained)
+static int pcm_init_buffered(const wolf3d_pcm_format_t *request,wolf3d_pcm_format_t *obtained,Uint16 callback_frames)
 {
     SDL_AudioSpec want,got;
     pcm_shutdown();
     if(!request || !obtained || request->channels<1 || request->channels>2 || request->bits_per_sample!=16) return 0;
     if(SDL_InitSubSystem(SDL_INIT_AUDIO)<0) return 0;
     memset(&want,0,sizeof(want));want.freq=(int)request->sample_rate;
-    want.channels=(Uint8)request->channels;want.format=AUDIO_S16SYS;want.samples=512;want.callback=audio_callback;
+    want.channels=(Uint8)request->channels;want.format=AUDIO_S16SYS;want.samples=callback_frames;want.callback=audio_callback;
     if(SDL_OpenAudio(&want,&got)<0) {error(SDL_GetError());return 0;}
     pcm_open=1;
     if(got.format!=AUDIO_S16SYS || got.channels<1 || got.channels>2 || got.freq<=0 || !got.samples) {pcm_shutdown();return 0;}
@@ -502,6 +502,10 @@ static int pcm_init_ex(const wolf3d_pcm_format_t *request,wolf3d_pcm_format_t *o
     pcm_rate=obtained->sample_rate;
 #endif
     SDL_PauseAudio(0);return 1;
+}
+static int pcm_init_ex(const wolf3d_pcm_format_t *request,wolf3d_pcm_format_t *obtained)
+{
+    return pcm_init_buffered(request,obtained,512);
 }
 static int pcm_init(uint32_t rate,uint16_t channels)
 {
@@ -534,15 +538,15 @@ static int submit(const int16_t *samples,size_t frames)
 #endif
     SDL_UnlockAudio();return 1;
 }
-static void pcm_diagnostics(char *report,size_t capacity)
+static int pcm_probe_buffer(char *report,size_t capacity,Uint16 callback_frames)
 {
     wolf3d_pcm_format_t request={22050,2,16},got;
     char driver[64];
     uint32_t start,elapsed,sdl_start,sdl_elapsed;
-    unsigned long calls,requested,consumed;
+    unsigned long calls,requested,consumed,polls=0;
     size_t used=strlen(report);
-    if(!pcm_init_ex(&request,&got)) {
-        snprintf(report+used,capacity-used,"  SDL PCM probe: initialization failed: %s\n",SDL_GetError());return;
+    if(!pcm_init_buffered(&request,&got,callback_frames)) {
+        snprintf(report+used,capacity-used,"  SDL PCM probe: initialization failed: %s\n",SDL_GetError());return 0;
     }
     if(!SDL_AudioDriverName(driver,sizeof(driver)))strcpy(driver,"unknown");
     SDL_LockAudio();
@@ -557,6 +561,7 @@ static void pcm_diagnostics(char *report,size_t capacity)
 #endif
     do {
         SDL_Delay(1);
+        ++polls;
         SDL_LockAudio();pcm_count=pcm_limit;SDL_UnlockAudio();
 #ifdef _WIN32
         elapsed=GetTickCount()-start;
@@ -570,12 +575,22 @@ static void pcm_diagnostics(char *report,size_t capacity)
     SDL_UnlockAudio();
     snprintf(report+used,capacity-used,
         "  SDL PCM driver: %s\n  PCM probe: %lu Hz, %u channels, 16-bit; %u frames/callback\n"
-        "  Silent probe: %lu ms wall, %lu ms SDL; %lu callbacks\n"
+        "  Silent probe: %lu ms wall, %lu ms SDL; %lu callbacks; %lu refill polls\n"
         "  PCM frames requested/consumed: %lu/%lu (%lu frames/sec; %lu underrun frames)\n",
         driver,(unsigned long)got.sample_rate,(unsigned)got.channels,pcm_callback_samples,
-        (unsigned long)elapsed,(unsigned long)sdl_elapsed,calls,requested,consumed,
+        (unsigned long)elapsed,(unsigned long)sdl_elapsed,calls,polls,requested,consumed,
         requested*1000UL/elapsed,requested-consumed);
     pcm_shutdown();
+    return !strcmp(driver,"dsound");
+}
+static void pcm_diagnostics(char *report,size_t capacity)
+{
+    if(pcm_probe_buffer(report,capacity,512)) {
+        /* Compare fragment sizes without changing the gameplay default. */
+        (void)pcm_probe_buffer(report,capacity,1024);
+        (void)pcm_probe_buffer(report,capacity,2048);
+        (void)pcm_probe_buffer(report,capacity,4096);
+    }
 }
 #ifdef _WIN32
 #include "WG_SDL1_WINDOWS.h"
@@ -680,7 +695,7 @@ static int run_main(int argc,char **argv)
     if(!WG_InstallPlatform()) {WG_PrintLauncherError("SDL1: engine rejected the platform interface. Replace the complete package, including wolf3d.dll.\n");WG_FreeLauncherArguments(&launcher);return 1;}
     sdl_diagnostics=WG_CommandLineDiagnosticsRequested(argc,argv);
     if(sdl_diagnostics) {
-        char hardware_report[1536]="  SDL 1.2 host: platform SDL video and PCM\n  " WG_SDL1_OPL_NOTE "\n";
+        char hardware_report[4096]="  SDL 1.2 host: platform SDL video and PCM\n  " WG_SDL1_OPL_NOTE "\n";
 #ifdef _WIN32
         ok=ui_init();
 #else

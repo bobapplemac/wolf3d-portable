@@ -37,6 +37,17 @@ static int SDLCALL test_open_audio(SDL_AudioSpec *wanted,SDL_AudioSpec *obtained
 }
 #undef SDL_OpenAudio
 #define SDL_OpenAudio test_open_audio
+static int test_report_dsound;
+static char *SDLCALL test_audio_driver_name(char *name,int length)
+{
+    char *result=SDL_AudioDriverName(name,length);
+    if(result && test_report_dsound && length>=7) {
+        memcpy(name,"dsound",7);return name;
+    }
+    return result;
+}
+#undef SDL_AudioDriverName
+#define SDL_AudioDriverName test_audio_driver_name
 #ifdef _WIN32
 /* Model SDL1 DirectInput's cursor confinement without trapping the test user's
    actual cursor. Event pumping/teardown can establish a clip after GrabOff. */
@@ -274,9 +285,13 @@ int main(void)
         test_audio_samples=0;
     }
     {
-        char report[1024]="";
+        char report[4096]="";
+        test_report_dsound=1; /* Run the size sweep against deterministic dummy audio. */
         pcm_diagnostics(report,sizeof(report));
+        test_report_dsound=0;
         assert(strstr(report,"SDL PCM driver:") && strstr(report,"22050 Hz"));
+        assert(strstr(report,"512 frames/callback") && strstr(report,"1024 frames/callback"));
+        assert(strstr(report,"2048 frames/callback") && strstr(report,"4096 frames/callback"));
         assert(pcm_probe_calls>0 && pcm_probe_requested>0 && !pcm_probe_active && !pcm_open);
         assert(pcm_probe_consumed<=pcm_probe_requested);
         puts(report);

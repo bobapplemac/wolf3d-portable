@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - DirectSound fragment-size diagnostics
+
+- Extend SDL1 `--diag` with silent 512/1024/2048/4096-frame probes when
+  DirectSound is selected, to distinguish small-fragment pacing problems from
+  general audio starvation. Other audio drivers retain the single probe;
+  gameplay defaults are unchanged.
+
 ## Unreleased - SDL1 native OPL scheduling on Win9x
 
 - Schedule Win9x SDL1 AdLib register writes on the timestamped Windows worker,

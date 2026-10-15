@@ -195,7 +195,9 @@ cursor below it; it no longer guesses and redraws an existing shell prompt.
 ## PCM timing diagnostics
 
 `WOLF3D.EXE --backend sdl1 --diag --no-pause` includes a two-second silent PCM
-probe at 22050 Hz. It reports the actual SDL audio driver and negotiated format,
+probe at 22050 Hz. With DirectSound it compares requested buffer sizes of
+512, 1024, 2048 and 4096 frames (about eight seconds total). It reports the
+actual SDL audio driver and negotiated format,
 callback size, elapsed wall/SDL time, requested/consumed frames and underruns.
 The requested frame rate should be approximately the negotiated sample rate;
 short probes have callback-boundary and timer-rounding variation. This measures
@@ -216,3 +218,10 @@ replace the requested 512-frame buffer with a quarter-second buffer. Buffering
 can add latency; the fix prevents oversized callbacks from discarding most of
 each interval as silence. Win9x DirectSound pacing is still being investigated
 on the Yamaha OPL3-SAx test system; use explicit waveOut for that comparison.
+
+To investigate DirectSound, use `set SDL_AUDIODRIVER=dsound`, then run the
+diagnostic command above. Compare the requested frame rates across the four
+buffer sizes with the negotiated 22050 Hz. Larger buffers restoring normal
+throughput would support a coarse-cursor/fragment-size problem; it would not
+by itself identify whether SDL, DirectSound emulation, or the device driver
+causes it. The sweep does not change the buffer size used for gameplay.

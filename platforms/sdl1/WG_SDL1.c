@@ -433,11 +433,24 @@ static int submit(const int16_t *samples,size_t frames)
 #ifdef _WIN32
 #include "WG_SDL1_WINDOWS.h"
 #endif
+#ifdef WG_BACKEND_MODULE
+#include "../win32/WG_BACKEND.h"
+static int backend_init_failed;
+static int backend_init(void)
+{
+    int ok=ui_init();backend_init_failed=!ok;return ok;
+}
+#endif
 int WG_InstallPlatform(void)
 {
     const wolf3d_platform_api_t api={WOLF3D_PLATFORM_API_VERSION,sizeof(api),
 #ifdef _WIN32
-        ui_init,ui_shutdown,ui_present,ticks,sleep_ms,ui_poll,interactive,ui_set_title,message,error,text_screen,
+#ifdef WG_BACKEND_MODULE
+        backend_init,
+#else
+        ui_init,
+#endif
+        ui_shutdown,ui_present,ticks,sleep_ms,ui_poll,interactive,ui_set_title,message,error,text_screen,
 #else
         init,shutdown_host,present,ticks,sleep_ms,poll_event,interactive,title,message,error,text_screen,
 #endif
@@ -509,6 +522,16 @@ static int run_main(int argc,char **argv)
     HOST_SHUTDOWN();
     return result==WOLF3D_RESULT_QUIT || result==WOLF3D_RESULT_NOT_IMPLEMENTED ? 0:1;
 }
+#ifdef WG_BACKEND_MODULE
+__declspec(dllexport) int __cdecl WG_BackendVersion(void) {return WG_BACKEND_ABI;}
+__declspec(dllexport) int __cdecl WG_BackendRun(int argc,char **argv)
+{
+    int result;backend_init_failed=0;
+    SDL_SetModuleHandle(GetModuleHandle(NULL));
+    result=run_main(argc,argv);
+    return backend_init_failed?WG_BACKEND_UNAVAILABLE:result;
+}
+#else
 #ifdef _WIN32
 #include "../win32/WG_WIN32_CONSOLE.h"
 #endif
@@ -525,4 +548,5 @@ int main(int argc,char **argv)
 #endif
     return result;
 }
+#endif /* standalone entry point */
 #endif

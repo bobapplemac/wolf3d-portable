@@ -155,3 +155,9 @@ X11 and OSS, with AdLib/DBOPL/silent by default. Build/ABI tests are separate fr
 pending Linux 2.4 and physical original-Pentium runtime confirmation.
 
 Experimental Windows SDL 1.2: see [Windows SDL1](windows-sdl1.md) for the Win2k Docker target, validation limits and GDI comparison switches.
+
+## Modular Win2k pilot
+
+The [optional-backend Win2k package](windows-backends.md) supports GDI-only,
+SDL1-only, or combined GDI/SDL1 with runtime selection. All three compile and
+pass PE checks; combined-package physical gameplay validation is pending.

@@ -21,6 +21,10 @@ supported.
 
 ## Windows
 
+For the experimental combined Win2k GDI/SDL1 package, use
+`make windows-win2k-modular`; see [modular Windows backends](windows-backends.md)
+for compile-time selection and optional SDL loading. Existing builds are unchanged.
+
 Visual Studio, MinGW, and CLI builds share the CMake trees under `build/`:
 
 ```text

@@ -1480,14 +1480,18 @@ static void WG_Win32DiagnosticReport(char *report, size_t report_size)
         joystick_count, xinput_count);
 }
 
-#ifdef WG_WIN9X
+#ifdef WG_BACKEND_EMBEDDED
+int WG_GDIRun(int argc,char **argv)
+#elif defined(WG_WIN9X)
 int main(int argc, char **argv)
 #else
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
                     LPWSTR command_line, int show_command)
 #endif
 {
-#ifdef WG_WIN9X
+#if defined(WG_BACKEND_EMBEDDED)
+    /* UTF-8 arguments and console ownership belong to the shared launcher. */
+#elif defined(WG_WIN9X)
     char module_path[MAX_PATH];
     DWORD module_path_length;
 #else
@@ -1511,7 +1515,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     int no_pause = 0;
 #endif
 
-#ifndef WG_WIN9X
+#if !defined(WG_WIN9X) && !defined(WG_BACKEND_EMBEDDED)
     (void)instance;
     (void)previous_instance;
     (void)command_line;
@@ -1523,7 +1527,9 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
         return 1;
     }
 
-#ifdef WG_WIN9X
+#if defined(WG_BACKEND_EMBEDDED)
+    /* Arguments have already been converted by the shared launcher. */
+#elif defined(WG_WIN9X)
     module_path_length = GetModuleFileNameA(NULL, module_path, sizeof(module_path));
     if (argc > 0 && module_path_length > 0U
         && module_path_length < sizeof(module_path))
@@ -1711,7 +1717,7 @@ cleanup:
 #if defined(WG_WIN9X) || defined(WG_CONSOLE_WIN32)
     WG_PauseConsole(owned_console, no_pause);
 #endif
-#ifndef WG_WIN9X
+#if !defined(WG_WIN9X) && !defined(WG_BACKEND_EMBEDDED)
     for (index = 0; index < argc; ++index)
     {
         LocalFree(argv[index]);

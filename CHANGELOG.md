@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - Optional Win2k backends
+
+- Add a Win2k modular pilot with built-in GDI and optionally loaded SDL1, selected by `--backend auto|gdi|sdl1` or launcher config. Auto prefers SDL1 and falls back to GDI on missing/incompatible dependencies or video initialization failure; explicit selection is strict.
+- Build GDI-only without any SDL build/install dependency; also support SDL1-only and combined packages. Keep pilot output identities separate from existing distributions.
+- Verify module ABI, load optional DLLs beside the executable without Windows loader dialogs, and report availability in diagnostics. Preserve fullscreen, PCM/native OPL and console-exit behavior.
+- Add black-box dependency/fallback/config regressions and document the private module boundary. Record confirmed accelerated SDL1 borderless/display fullscreen on the physical Win2k test system.
+
 ## Unreleased - Shared fullscreen mode selection
 
 - Add `--fullscreen-mode borderless|display` and `--fullscreen-resolution WIDTHxHEIGHT` across GDI, SDL1 and SDL3, including launcher config support. Borderless remains the default; a resolution alone implies display mode.

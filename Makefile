@@ -121,6 +121,7 @@ help:
 		'' \
 		'Linux-hosted Windows cross-builds (Docker):' \
 		'  make windows-win9x          Open Watcom Win9x x86 GDI package.' \
+		'  make windows-win2k-modular  Win2k runtime GDI/SDL1 selection (pilot).' \
 		'  make windows-win2k-sdl1   Experimental Windows 2000 SDL 1.2 package.' \
 		'  make windows-win2k        MinGW GCC/MSVCRT Windows 2000 x86 package.' \
 		'  make windows-xp             MinGW GCC/MSVCRT XP x86 GDI package.' \
@@ -445,3 +446,18 @@ windows-win2k-sdl1: windows-sdl1-image
 	$(DOCKER) run --rm -v "$(CURDIR):/src" -w /src \
 		-e WIN2K_OPL_DRIVERS="$(WIN2K_OPL_DRIVERS)" -e WIN2K_OPL_DEFAULT="$(WIN2K_OPL_DEFAULT)" \
 		-e JOBS=$(if $(JOBS),$(JOBS),4) $(DOCKER_RUN_ARGS) "$(WINDOWS_SDL1_IMAGE)" sh scripts/linux/build-windows-sdl1.sh
+
+# Initial optional-backend Win2k pilot. A GDI-only build never builds SDL.
+WIN2K_BACKENDS ?= gdi,sdl1
+.PHONY: windows-win2k-modular
+ifeq ($(WIN2K_BACKENDS),gdi)
+windows-win2k-modular: windows-mingw-image
+WINDOWS_MODULAR_IMAGE = $(WINDOWS_MINGW_BUILD_IMAGE)
+else
+windows-win2k-modular: windows-sdl1-image
+WINDOWS_MODULAR_IMAGE = $(WINDOWS_SDL1_IMAGE)
+endif
+windows-win2k-modular:
+	$(DOCKER) run --rm -v "$(CURDIR):/src" -w /src \
+		-e WIN2K_BACKENDS="$(WIN2K_BACKENDS)" -e WIN2K_OPL_DRIVERS="$(WIN2K_OPL_DRIVERS)" -e WIN2K_OPL_DEFAULT="$(WIN2K_OPL_DEFAULT)" \
+		-e JOBS=$(if $(JOBS),$(JOBS),4) $(DOCKER_RUN_ARGS) "$(WINDOWS_MODULAR_IMAGE)" sh scripts/linux/build-windows-modular.sh

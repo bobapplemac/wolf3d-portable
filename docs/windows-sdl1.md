@@ -4,11 +4,13 @@ The experimental Win2k x86 SDL1 target uses genuine SDL 1.2.15. It is built
 with MinGW GCC/MSVCRT on Linux; it does not require a Windows build VM.
 Both windib and directx video have run successfully on the Windows 2000 test machine.
 DirectDraw hardware scaling has also been confirmed fast on the Win2k/Nvidia test machine.
-The border-flicker fix is confirmed. Borderless fullscreen and the joystick-disable
-fix await physical confirmation. Win9x and WinXP SDL1
+The border-flicker fix is confirmed. Accelerated borderless and display fullscreen are confirmed on that machine. Win9x and WinXP SDL1
 packages, including applicable Visual Studio builds on the XP/Win7 build hosts,
 are follow-up work after Win2k validation. This is separate from the existing
 RH9 SDL1 target and does not change its Linux runtime requirements.
+
+For a single executable with runtime GDI/SDL1 selection, see the
+[modular Win2k pilot](windows-backends.md).
 
 ## Build
 
@@ -56,7 +58,7 @@ previously conflicted with that path and could force slow software fallback.
 the primary display resolution but retains normal DirectDraw cooperation and
 hardware stretching. It avoids SDL exclusive ownership; the desktop mode is
 restored on focus loss, windowed return and exit. Without a resolution, display
-mode uses the desktop dimensions. These mode transitions await hardware testing.
+mode uses the desktop dimensions. Both fullscreen modes have been confirmed accelerated on the Win2k/Nvidia test machine.
 See [fullscreen options](running.md#fullscreen-modes-gdi-sdl1-and-sdl3) for the
 shared GDI/SDL1/SDL3 interface.
 

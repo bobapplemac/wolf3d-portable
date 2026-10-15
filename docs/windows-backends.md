@@ -15,8 +15,7 @@ make windows-win2k-modular WIN2K_BACKENDS=sdl1 JOBS=8
 ```
 
 The default `WIN2K_BACKENDS=gdi,sdl1` compiles both. GDI-only uses the regular
-MinGW Docker image, does not build/find SDL, and bundles neither SDL.dll nor
-wolf3d-sdl1.dll. SDL1-containing builds use the existing SDL1 Docker image.
+MinGW Docker image, does not build/find SDL and does not bundle SDL.dll. SDL1-containing builds use the existing SDL1 Docker image.
 `WIN2K_OPL_DRIVERS` and `WIN2K_OPL_DEFAULT` have the same meaning as the standalone
 Win2k builds. The initial CMake entry is `cmake/windows-modular`, with
 `WG_WINDOWS_BACKENDS=gdi,sdl1`, `gdi`, or `sdl1`. Build settings and revisions are
@@ -53,8 +52,8 @@ trigger a backend switch. Selection happens at startup, not during gameplay.
 `--backend` also works in `wolf3d.ini`; the command line overrides the config.
 The shared launcher merges configuration once and passes the resulting arguments
 to the chosen host. `--help` shows compiled choices and the selected host's help.
-`--diag` reports compiled choices, auto priority, SDL module/dependency loading
-and ABI availability, selection, and the chosen host's diagnostics. Dependency
+`--diag` reports compiled choices, auto priority, SDL.dll loading
+and required-export availability, selection, and the chosen host's diagnostics. Dependency
 availability does not promise that a video driver can initialize on that machine.
 
 GDI and SDL1 each still own video, input and PCM output. Selecting SDL1 does not
@@ -65,31 +64,43 @@ see [fullscreen modes](running.md#fullscreen-modes-gdi-sdl1-and-sdl3) and
 
 ## Optional SDL loading
 
-GDI is compiled into the executable. SDL1 is in `wolf3d-sdl1.dll`, which links
-against SDL.dll; neither is an executable import. The launcher explicitly loads
-both files from its own directory, suppresses Windows loader error dialogs,
-checks private backend ABI version 1, and unloads after the host shuts down.
-Keep the backend module from the same package as the executable. It is an
-internal host boundary, not a supported third-party plugin interface.
+Both compiled backends live in `wolf3d.exe`. The SDL1 backend uses a table of
+runtime-resolved SDL functions instead of linking SDL's import library. The
+launcher loads SDL.dll from its own directory, suppresses Windows loader error
+dialogs, verifies every required export and the SDL 1.2 version, then starts the
+backend. Missing exports are reported by name. Partial loads clear every pointer
+and release the DLL before fallback. Unloading happens after SDL audio and window
+workers have stopped.
 
-A combined package contains `wolf3d.exe`, `wolf3d.dll`, `wolf3d-sdl1.dll`, SDL.dll,
-and the existing optional OPL DLLs. SDL LGPL text/source information and InpOut32
-checksums/licenses are packaged as before. GDI remains usable if either SDL file
-is missing, damaged, incompatible, or unavailable to the loader.
+A combined package contains `wolf3d.exe`, `wolf3d.dll`, SDL.dll, and the existing
+optional OPL DLLs. **There is no `wolf3d-sdl1.dll` requirement or backend plugin
+ABI.** That file from the earlier pilot is no longer produced or loaded and may
+be removed from older installations. SDL.dll remains replaceable by a compatible
+SDL 1.2 build (1.2.10 or newer; the package uses 1.2.15). SDL LGPL text/source
+information and InpOut32 checksums/licenses are packaged as before. GDI remains
+usable if SDL.dll is missing, damaged, incompatible, or unavailable to the loader.
+
+The export list and calling conventions are maintained in
+`platforms/sdl1/WG_SDL1_FUNCTIONS.inc`, with call aliases in
+`WG_SDL1_DYNAMIC.h`. Loader tests check their types against the installed SDL
+headers. No SDL import library is linked: an accidentally unconverted SDL call
+fails linking rather than quietly making SDL a mandatory startup dependency.
 
 ## Validation
 
 All three backend combinations build and pass the Win2k PE audit. GDI-only is
 built in the non-SDL image. Black-box Windows tests cover actual SDL loading,
-missing DLL/module, mismatched module ABI, config precedence, uncompiled/invalid
+missing/corrupt DLL, missing required exports, config precedence, uncompiled/invalid
 choices, strict explicit selection, actual SDL video-init failure, and refusing
-to fall back on general game/runtime errors. Existing standalone SDL/GDI builds
-remain available. Combined-backend gameplay on physical Win2k hardware is pending.
+to fall back on general game/runtime errors. Loader tests additionally cover every required export, partial-load rollback,
+version rejection, repeated load/unload, and preservation of Windows error mode.
+The existing video/input/PCM/worker lifecycle tests also run through dynamically
+resolved calls. Existing standalone SDL/GDI builds remain available. Combined-backend gameplay on physical Win2k hardware is pending.
 
 Maintainer tests (not required for building):
 
 ```text
-cmake --build build/windows-modular-win2k-gdi-sdl1 --target wg-backend-test wg-backend-good wg-backend-bad
+cmake --build build/windows-modular-win2k-gdi-sdl1 --target wg-backend-test wg-sdl-incomplete wg-sdl1-dynamic-test wg-sdl1-dynamic-host-test
 python tests/WG_BACKEND_TEST.py --package <combined-dist> --fixtures <build-dir> --gdi-package <gdi-only-dist> --sdl-package <sdl-only-dist>
 ```
 

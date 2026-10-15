@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased - Direct SDL runtime loading
+
+- Compile both selected Win2k backends into wolf3d.exe and load SDL.dll directly; remove the separate wolf3d-sdl1.dll and private module ABI. GDI remains usable without SDL, and GDI-only builds still have no SDL dependency.
+- Resolve and verify required SDL exports before startup, report missing exports precisely, and clean up partial loads before automatic fallback. Preserve strict explicit backend selection and console behavior.
+- Add export-signature, per-export failure, version, reload and cleanup tests, and run SDL video/input/PCM lifecycle regressions through the runtime-loaded function table. Update package contents and documentation.
+
 ## Unreleased - Optional Win2k backends
 
 - Add a Win2k modular pilot with built-in GDI and optionally loaded SDL1, selected by `--backend auto|gdi|sdl1` or launcher config. Auto prefers SDL1 and falls back to GDI on missing/incompatible dependencies or video initialization failure; explicit selection is strict.

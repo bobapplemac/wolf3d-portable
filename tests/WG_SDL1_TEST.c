@@ -21,12 +21,18 @@ int WG_LinuxOPLSubmit(size_t frames,uint64_t queued)
 #define WG_WriteWindowsTextScreen test_windows_text
 #endif
 #include <SDL/SDL.h>
+#ifdef WG_SDL1_DYNAMIC
+#include "../platforms/sdl1/WG_SDL1_DYNAMIC.h"
+static int (SDLCALL *test_push_event)(SDL_Event *);
+#define SDL_PushEvent test_push_event
+#endif
 static int joystick_updates;
 static void checked_joystick_update(void)
 {
     assert(SDL_WasInit(SDL_INIT_JOYSTICK)&SDL_INIT_JOYSTICK);
     ++joystick_updates;SDL_JoystickUpdate();
 }
+#undef SDL_JoystickUpdate
 #define SDL_JoystickUpdate checked_joystick_update
 #include "../platforms/sdl1/WG_SDL1.c"
 #ifdef _WIN32
@@ -51,6 +57,15 @@ int main(void)
     wolf3d_event_t out; SDL_Event input;
     uint8_t pixels[320*200],palette[768];
     int i;
+#ifdef WG_SDL1_DYNAMIC
+    {
+        char reason[256];FARPROC address;
+        assert(WG_SDL1Load(reason,sizeof(reason)));
+        address=GetProcAddress(GetModuleHandleA("SDL.dll"),"SDL_PushEvent");
+        assert(address);memcpy(&test_push_event,&address,sizeof(test_push_event));
+        SDL_SetModuleHandle(GetModuleHandle(NULL));
+    }
+#endif
     assert(scan(SDLK_a)==0x1e && scan(SDLK_KP8)==WOLF3D_KEY_UP);
     assert(scan(SDLK_UNKNOWN)==0);
 #ifdef _WIN32
@@ -141,6 +156,9 @@ int main(void)
     ui_set_title("SDL1 worker lifecycle test");SDL_Delay(30);
     { const uint8_t cells[]={0xdb,0x4f};text_screen(cells,1,1);assert(native_text_calls==1); }
     ui_shutdown();
+#endif
+#ifdef WG_SDL1_DYNAMIC
+    WG_SDL1Unload();
 #endif
     puts("SDL1: input, aspect ratio, PCM order/wrap/underrun/overflow and restart passed.");
     return 0;

@@ -4,6 +4,10 @@
 static wg_fullscreen_options_t fullscreen_options={-1,0,0};
 #include "../WG_TEXT_OUTPUT.h"
 #include <SDL/SDL.h>
+#ifdef WG_SDL1_DYNAMIC
+#include "WG_SDL1_DYNAMIC.h"
+#define WG_InstallPlatform WG_SDL1InstallPlatform
+#endif
 #ifdef _WIN32
 #undef main
 #include <windows.h>
@@ -433,7 +437,7 @@ static int submit(const int16_t *samples,size_t frames)
 #ifdef _WIN32
 #include "WG_SDL1_WINDOWS.h"
 #endif
-#ifdef WG_BACKEND_MODULE
+#ifdef WG_SDL1_DYNAMIC
 #include "../win32/WG_BACKEND.h"
 static int backend_init_failed;
 static int backend_init(void)
@@ -445,7 +449,7 @@ int WG_InstallPlatform(void)
 {
     const wolf3d_platform_api_t api={WOLF3D_PLATFORM_API_VERSION,sizeof(api),
 #ifdef _WIN32
-#ifdef WG_BACKEND_MODULE
+#ifdef WG_SDL1_DYNAMIC
         backend_init,
 #else
         ui_init,
@@ -522,9 +526,8 @@ static int run_main(int argc,char **argv)
     HOST_SHUTDOWN();
     return result==WOLF3D_RESULT_QUIT || result==WOLF3D_RESULT_NOT_IMPLEMENTED ? 0:1;
 }
-#ifdef WG_BACKEND_MODULE
-__declspec(dllexport) int __cdecl WG_BackendVersion(void) {return WG_BACKEND_ABI;}
-__declspec(dllexport) int __cdecl WG_BackendRun(int argc,char **argv)
+#ifdef WG_SDL1_DYNAMIC
+int WG_SDL1Run(int argc,char **argv)
 {
     int result;backend_init_failed=0;
     SDL_SetModuleHandle(GetModuleHandle(NULL));

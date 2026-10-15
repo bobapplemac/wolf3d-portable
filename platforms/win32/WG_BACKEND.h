@@ -1,8 +1,9 @@
 #ifndef WG_BACKEND_H
 #define WG_BACKEND_H
-/* Private portable-host ABI, independent of the engine platform API. */
-#define WG_BACKEND_ABI 1
+#include <stddef.h>
+/* Private host selection boundary; no separate backend DLL or plugin ABI. */
 #define WG_BACKEND_UNAVAILABLE (-2)
-typedef int (__cdecl *wg_backend_version_t)(void);
-typedef int (__cdecl *wg_backend_run_t)(int argc,char **argv);
+int WG_SDL1Load(char *reason,size_t size);
+void WG_SDL1Unload(void);
+int WG_SDL1Run(int argc,char **argv);
 #endif

@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include "WOLF3D.h"
 #ifdef WG_LINUX_OPL_LEGACY
 #include <sys/time.h>
 #endif

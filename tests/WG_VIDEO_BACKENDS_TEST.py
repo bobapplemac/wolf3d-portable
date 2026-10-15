@@ -12,6 +12,8 @@ def main():
     parser.add_argument('package', type=Path)
     parser.add_argument('--sdl', choices=('sdl1', 'sdl3'), required=True)
     parser.add_argument('--native', choices=('gdi', 'kms-fbdev'), default='gdi')
+    parser.add_argument('--system-sdl-available', action='store_true',
+                        help='Linux host also provides SDL through the system library search path')
     args = parser.parse_args()
     dll = ('SDL.dll' if args.sdl == 'sdl1' else 'SDL3.dll') if os.name == 'nt' else 'libSDL3.so.0'
     with tempfile.TemporaryDirectory(prefix='wolf video ') as folder:
@@ -40,8 +42,8 @@ def main():
         run('--help', selected=args.native)
         run('--backend', args.sdl, '--help', selected=args.sdl)
         (root / dll).rename(root / (dll + '.saved'))
-        run('--no-config', '--help', selected=args.native)
-        run('--no-config', '--backend', args.sdl, '--help', success=False)
+        run('--no-config', '--help', selected=args.sdl if args.system_sdl_available else args.native)
+        run('--no-config', '--backend', args.sdl, '--help', success=args.system_sdl_available)
         # An invalid DLL must yield an application error, not a Windows dialog.
         (root / dll).write_bytes(b'not a PE library')
         run('--no-config', '--help', selected=args.native)

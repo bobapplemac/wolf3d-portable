@@ -144,6 +144,19 @@ static void mouse_capture(int value)
     capture = value;
     SDL_WM_GrabInput(value && mouse && focused ? SDL_GRAB_ON : SDL_GRAB_OFF);
     SDL_ShowCursor(focused && (fullscreen || (value && mouse)) ? SDL_DISABLE : SDL_ENABLE);
+#ifdef _WIN32
+    if(!mouse || !focused)ClipCursor(NULL);
+#endif
+}
+static int next_event(SDL_Event *event)
+{
+    int result=SDL_PollEvent(event);
+#ifdef _WIN32
+    /* SDL1 DirectInput can clip to a single pixel while pumping mouse events,
+       even with SDL_GRAB_OFF. --nomouse must leave the desktop cursor free. */
+    if(!mouse || !focused)ClipCursor(NULL);
+#endif
+    return result;
 }
 static int video(int width, int height)
 {
@@ -250,6 +263,11 @@ static void shutdown_host(void)
 {
     unsigned i;
     pcm_shutdown();
+    if(SDL_WasInit(SDL_INIT_VIDEO)) {
+        SDL_WM_GrabInput(SDL_GRAB_OFF);
+        SDL_ShowCursor(SDL_ENABLE);
+    }
+    capture=0;
     for(i=0;i<WOLF3D_MAX_JOYSTICKS;++i) {
         if(joysticks[i]) SDL_JoystickClose(joysticks[i]);
         joysticks[i]=NULL;
@@ -260,6 +278,8 @@ static void shutdown_host(void)
 #endif
     gl_close();SDL_Quit(); screen=NULL;gl_library_loaded=0;
 #ifdef _WIN32
+    /* Release after SDL teardown, which can pump additional DirectInput events. */
+    ClipCursor(NULL);
     borderless_active=windowed_rect_valid=0;
 #endif
     if(software_frame)SDL_FreeSurface(software_frame);
@@ -373,7 +393,7 @@ static int poll_event(wolf3d_event_t *out)
     if(!focused) for(i=0;i<256;++i) if(keys[i]) {
         keys[i]=0; out->type=WOLF3D_EVENT_KEY; out->key=(uint16_t)i; return 1;
     }
-    while(SDL_PollEvent(&event)) {
+    while(next_event(&event)) {
         switch(event.type) {
         case SDL_QUIT:out->type=WOLF3D_EVENT_QUIT;return 1;
         case SDL_VIDEORESIZE: if(!video(event.resize.w,event.resize.h)) {out->type=WOLF3D_EVENT_QUIT;return 1;} break;

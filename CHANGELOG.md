@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - SDL1 cursor release
+
+- Release Windows cursor confinement after SDL1 event polling when `--nomouse`
+  is active or the window lacks input focus. SDL1's DirectInput path can clip
+  the cursor even when SDL grabbing is disabled.
+- Explicitly release grabbing, restore the cursor and clear Windows clipping
+  on shutdown, including clipping reintroduced during SDL teardown. Add
+  regression coverage for event-pump and teardown confinement.
+
 ## Unreleased - Win9x worker startup
 
 - Supply the thread-ID output required by Windows 95/98 when creating GDI,

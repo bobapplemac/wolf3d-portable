@@ -26,6 +26,27 @@ int WG_LinuxOPLSubmit(size_t frames,uint64_t queued)
 static int (SDLCALL *test_push_event)(SDL_Event *);
 #define SDL_PushEvent test_push_event
 #endif
+#ifdef _WIN32
+/* Model SDL1 DirectInput's cursor confinement without trapping the test user's
+   actual cursor. Event pumping/teardown can establish a clip after GrabOff. */
+#include <windows.h>
+static int test_cursor_clipped, test_clip_on_pump, test_clip_on_quit;
+static BOOL WINAPI test_clip_cursor(const RECT *rect)
+{ test_cursor_clipped=rect!=NULL;return TRUE; }
+static int SDLCALL test_poll_event(SDL_Event *event)
+{
+    int result=SDL_PollEvent(event);
+    if(test_clip_on_pump)test_cursor_clipped=1;
+    return result;
+}
+static void SDLCALL test_quit(void)
+{ SDL_Quit();if(test_clip_on_quit)test_cursor_clipped=1; }
+#undef SDL_PollEvent
+#undef SDL_Quit
+#define SDL_PollEvent test_poll_event
+#define SDL_Quit test_quit
+#define ClipCursor test_clip_cursor
+#endif
 static int joystick_updates;
 static void checked_joystick_update(void)
 {
@@ -156,6 +177,14 @@ int main(void)
     fullscreen=1;mouse=0;mouse_capture(0);assert(SDL_ShowCursor(SDL_QUERY)==SDL_DISABLE);
     focused=0;mouse_capture(0);assert(SDL_ShowCursor(SDL_QUERY)==SDL_ENABLE);
     focused=1;mouse_capture(0);assert(SDL_ShowCursor(SDL_QUERY)==SDL_DISABLE);
+#ifdef _WIN32
+    test_clip_on_pump=1;
+    next_event(&input);assert(!test_cursor_clipped);
+    mouse_capture(1);assert(!test_cursor_clipped);
+    assert(SDL_WM_GrabInput(SDL_GRAB_QUERY)==SDL_GRAB_OFF);
+    mouse=1;focused=0;next_event(&input);assert(!test_cursor_clipped);
+    focused=1;test_clip_on_pump=0;
+#endif
     fullscreen=0;mouse=1;mouse_capture(0);assert(SDL_ShowCursor(SDL_QUERY)==SDL_ENABLE);
     mouse_capture(1);assert(SDL_ShowCursor(SDL_QUERY)==SDL_DISABLE);mouse_capture(0);
     memset(pixels,1,sizeof(pixels));memset(palette,0,sizeof(palette));palette[3]=255;
@@ -206,7 +235,13 @@ int main(void)
     assert(!mock_active && !mock_rate);
 #endif
     assert(pcm_init_ex(&request,&got));pcm_shutdown();
+#ifdef _WIN32
+    test_cursor_clipped=test_clip_on_quit=1;
+#endif
     shutdown_host();
+#ifdef _WIN32
+    assert(!test_cursor_clipped && !capture);test_clip_on_quit=0;
+#endif
     joy=1;assert(init());assert(SDL_WasInit(SDL_INIT_JOYSTICK)&SDL_INIT_JOYSTICK);
     while(poll_event(&out)) {}
     assert(joystick_updates>0);shutdown_host();joy=0;

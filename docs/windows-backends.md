@@ -107,3 +107,7 @@ python tests/WG_BACKEND_TEST.py --package <combined-dist> --fixtures <build-dir>
 For hardware validation, compare explicit GDI and SDL1, check fullscreen/F11 and
 native OPL, then temporarily rename SDL.dll and verify auto/GDI still launch while
 explicit SDL1 prints an error. Restore the DLL afterward.
+
+SDL1 also supports `--sdl-render auto|opengl|surface`; see
+[OpenGL presentation](windows-sdl1.md#opengl-presentation-windows-and-legacy-linux).
+Use `--backend sdl1 --sdl-render opengl` to require both SDL and OpenGL.

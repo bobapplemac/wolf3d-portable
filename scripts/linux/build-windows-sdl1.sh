@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
+grep -q "^#define SDL_VIDEO_OPENGL_WGL 1" /opt/sdl1/include/SDL/SDL_config.h
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 build="$root/build/windows-sdl1-win2k"
 drivers=${WIN2K_OPL_DRIVERS:-dbopl,silent,adlib}

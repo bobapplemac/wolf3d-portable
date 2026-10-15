@@ -27,7 +27,9 @@ with tempfile.TemporaryDirectory(prefix='wolf backend ') as directory:
         assert result.returncode == expected, (options, result.returncode, output)
         assert contains in output, (options, output)
         return output
-    run(options=['--help'], contains='Backend: sdl1')
+    run(options=['--help'], contains='--sdl-render auto|opengl|surface')
+    run(options=['--backend','sdl1','--sdl-render','invalid'], expected=1, contains='requires auto, opengl or surface')
+    run(options=['--backend','sdl1','--sdl-render','surface','--diag','--opl','silent'], contains='Backend: sdl1')
     run(options=['--diag','--opl','silent'], contains='SDL1 availability: SDL.dll loaded directly; required exports verified')
     run(options=['--backend', 'gdi', '--help'], contains='Backend: gdi')
     run(options=['--backend', 'unknown'], expected=1, contains='--backend requires')

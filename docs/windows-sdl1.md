@@ -117,3 +117,46 @@ joystick-disabled polling and borderless fullscreen flags/dimensions.
 Windows SDK syntax checks, Win2k/Win9x PE import audits and RH9 tests also pass.
 Physical testing confirmed a large performance improvement from hardware scaling;
 filtering and acceleration still depend on the installed display driver.
+
+## OpenGL presentation (Windows and legacy Linux)
+
+`--sdl-render auto|opengl|surface` selects presentation independently of the
+SDL video driver. It also works as an argument line in `wolf3d.ini`.
+
+- `auto` (default): Windows retains the DirectDraw/windib behavior above.
+  Legacy Linux tries OpenGL, then software surfaces if GL initialization fails.
+- `opengl`: require OpenGL; initialization failure is an error. Windows uses
+  SDL's windib driver to create the GL context, overriding `--sdl-video` and
+  `SDL_VIDEODRIVER`. This does not mean GDI is drawing the game frames.
+- `surface`: use the existing SDL surface path. On Windows, `--sdl-video` and
+  `--sdl-scale` retain their existing meanings. `--sdl-scale` does not affect GL.
+
+For the combined package, use:
+
+```bat
+wolf3d.exe --backend sdl1 --sdl-render opengl
+wolf3d.exe --backend sdl1 --sdl-render opengl --diag
+wolf3d.exe --backend sdl1 --sdl-render auto
+```
+
+GL uses the system driver, including software implementations when hardware
+acceleration is unavailable. Startup and `--diag` print vendor, renderer,
+version and a best-effort software-renderer classification; unknown names are
+not proof of hardware acceleration. We do not bundle or substitute a GL driver.
+The window may briefly appear during diagnostics while the renderer is probed.
+
+Only OpenGL 1.1 functions are used, dynamically resolved through SDL: no shaders,
+modern extensions, or mandatory GL DLL/shared-library imports. A 512x256 texture
+stores the 320x200 RGB frame, with nearest-neighbor filtering and a centered 4:3
+viewport. GPU or software GL scales it; the engine framebuffer remains unchanged.
+Windows GL calls stay on the video thread, separate from engine/audio work.
+Context recreation on resize/fullscreen changes reinitializes textures and state.
+
+Automated pixel readback on Windows/NVIDIA hardware GL and the legacy Linux
+executable with Mesa llvmpipe software GL confirms colors, orientation, black
+borders, nearest filtering and resize/context recreation. The Linux software-GL
+test runs on a modern kernel; it does not establish RH9 runtime compatibility. Win2k/FX 5900XT and
+physical RH9 validation remain pending. To run the optional real-GL host test,
+set `WG_TEST_GL=1` and run `wg-sdl1-dynamic-host-test.exe` (Windows) or
+`wg-sdl1-test` (Linux) with a working display. The ordinary test uses SDL's dummy
+video driver to cover surface fallback and PCM/input behavior without a display.

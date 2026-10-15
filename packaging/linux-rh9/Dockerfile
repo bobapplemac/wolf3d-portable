@@ -22,7 +22,7 @@ RUN cd /tmp/inputs && tar -xf SDL-1.2.15.tar.gz && cd SDL-1.2.15 \
  CFLAGS='-O2 -march=pentium -mno-mmx -mno-sse -mno-sse2 -mfpmath=387 -fno-stack-protector -fgnu89-inline' \
  LDFLAGS='-static-libgcc -Wl,--hash-style=sysv -L/opt/rh9/usr/X11R6/lib' \
  ./configure --host=i586-linux-gnu --prefix=/usr --disable-static \
- --disable-assembly --disable-input-events --disable-input-tslib --disable-video-opengl --disable-video-dga --disable-video-fbcon --disable-video-directfb \
+ --disable-assembly --disable-input-events --disable-input-tslib --enable-video-opengl --disable-video-dga --disable-video-fbcon --disable-video-directfb \
  --disable-alsa --disable-pulseaudio --disable-esd --disable-arts --disable-nas \
  --disable-video-x11-xrandr --disable-video-x11-xinerama --disable-video-x11-xv \
  --x-includes=/opt/rh9/usr/X11R6/include --x-libraries=/opt/rh9/usr/X11R6/lib \

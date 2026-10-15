@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - SDL1 OpenGL presentation
+
+- Add shared Windows/legacy Linux OpenGL 1.1 presentation with nearest-neighbor
+  scaling, 4:3 borders, and context recreation on resize/fullscreen changes.
+- Add `--sdl-render auto|opengl|surface`, keeping DirectDraw as Windows default;
+  Linux auto tries hardware or software GL before falling back to surfaces.
+- Resolve GL functions dynamically, report renderer details in startup/diagnostics,
+  enable GL in the RH9 SDL build, and add pixel-readback/lifecycle coverage.
+
 ## Unreleased - Direct SDL runtime loading
 
 - Compile both selected Win2k backends into wolf3d.exe and load SDL.dll directly; remove the separate wolf3d-sdl1.dll and private module ABI. GDI remains usable without SDL, and GDI-only builds still have no SDL dependency.

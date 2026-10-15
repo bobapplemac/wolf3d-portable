@@ -34,6 +34,25 @@ static void checked_joystick_update(void)
 }
 #undef SDL_JoystickUpdate
 #define SDL_JoystickUpdate checked_joystick_update
+#include <SDL/SDL_opengl.h>
+static int gl_checks;
+static void checked_gl_swap(void)
+{
+    void (APIENTRY *read_pixels)(GLint,GLint,GLsizei,GLsizei,GLenum,GLenum,GLvoid *);
+    void *address=SDL_GL_GetProcAddress("glReadPixels");
+    unsigned char rgb[4]={0};
+    assert(address);memcpy(&read_pixels,&address,sizeof(read_pixels));
+    /* Test window is 800x480: black pillarbox, red top, blue bottom. */
+    read_pixels(10,240,1,1,GL_RGB,GL_UNSIGNED_BYTE,rgb);
+    assert(rgb[0]==0 && rgb[1]==0 && rgb[2]==0);
+    read_pixels(400,400,1,1,GL_RGB,GL_UNSIGNED_BYTE,rgb);
+    assert(rgb[0]==255 && rgb[1]==0 && rgb[2]==0);
+    read_pixels(400,40,1,1,GL_RGB,GL_UNSIGNED_BYTE,rgb);
+    assert(rgb[0]==0 && rgb[1]==0 && rgb[2]==255);
+    ++gl_checks;SDL_GL_SwapBuffers();
+}
+#undef SDL_GL_SwapBuffers
+#define SDL_GL_SwapBuffers checked_gl_swap
 #include "../platforms/sdl1/WG_SDL1.c"
 #ifdef _WIN32
 static int native_text_calls,driver_attempts,accept_directx,accept_windib;
@@ -57,6 +76,14 @@ int main(void)
     wolf3d_event_t out; SDL_Event input;
     uint8_t pixels[320*200],palette[768];
     int i;
+    assert(set_renderer("auto") && render_choice==0);
+    assert(set_renderer("opengl") && render_choice==1);
+    assert(set_renderer("surface") && render_choice==2);
+    assert(!set_renderer("invalid") && render_choice==2);
+    assert(gl_software_renderer("GDI Generic"));
+    assert(gl_software_renderer("llvmpipe"));
+    assert(!gl_software_renderer("GeForce FX 5900XT"));
+    render_choice=0;
 #ifdef WG_SDL1_DYNAMIC
     {
         char reason[256];FARPROC address;
@@ -66,6 +93,29 @@ int main(void)
         SDL_SetModuleHandle(GetModuleHandle(NULL));
     }
 #endif
+    if(getenv("WG_TEST_GL")) {
+        GLint filtering=0;
+        void (APIENTRY *get_parameter)(GLenum,GLenum,GLint *);
+        void *address;
+        joy=0;render_choice=1;assert(init() && gl_active);
+        memset(pixels,1,sizeof(pixels)/2);
+        memset(pixels+sizeof(pixels)/2,2,sizeof(pixels)/2);
+        memset(palette,0,sizeof(palette));palette[3]=255;palette[8]=255;
+        for(i=0;i<3;++i) {
+            assert(video(800,480) && gl_active);present(pixels,palette);
+            address=SDL_GL_GetProcAddress("glGetTexParameteriv");assert(address);
+            memcpy(&get_parameter,&address,sizeof(get_parameter));
+            get_parameter(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,&filtering);
+            assert(filtering==GL_NEAREST);
+            assert(wg_glGetError()==GL_NO_ERROR);
+        }
+        assert(gl_checks==3);shutdown_host();assert(!gl_active && !gl_texture);
+#ifdef WG_SDL1_DYNAMIC
+        WG_SDL1Unload();
+#endif
+        puts("SDL1 OpenGL: pixel colors, orientation, 4:3 borders, nearest filtering, context recreation and shutdown passed");
+        return 0;
+    }
     assert(scan(SDLK_a)==0x1e && scan(SDLK_KP8)==WOLF3D_KEY_UP);
     assert(scan(SDLK_UNKNOWN)==0);
 #ifdef _WIN32

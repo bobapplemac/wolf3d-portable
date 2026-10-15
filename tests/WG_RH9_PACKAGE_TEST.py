@@ -11,6 +11,11 @@ def run(*args,expected=0):
     assert p.returncode==expected,p.stdout+p.stderr
     return p.stdout+p.stderr
 assert 'SDL 1.2' in run('--help')
+assert '--sdl-render' in run('--help')
+assert 'requires auto, opengl or surface' in run('--sdl-render','invalid',expected=1)
+assert 'OpenGL initialization failed' in run('--sdl-render','opengl','--diag',expected=1)
+assert 'trying software surfaces' in run('--sdl-render','auto','--diag','--opl','silent')
+assert 'trying software surfaces' not in run('--sdl-render','surface','--diag','--opl','silent')
 assert 'selected' in run('--diag','--opl','auto')
 assert 'requires 1, 2, 3 or 4' in run('--window-scale','0',expected=1)
 failure=run('--diag','--opl','adlib',expected=1)

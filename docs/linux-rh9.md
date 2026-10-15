@@ -31,12 +31,19 @@ checked against `packaging/linux-rh9/SHA256SUMS`. Do not replace these with host
 headers or libraries. GNU89 inline semantics are needed by the old glibc headers.
 SDL uses its old joystick interface; newer input-event structs are not assumed.
 
-This is genuine SDL 1.2.15, built with software X11 and OSS support. It is not
+This is genuine SDL 1.2.15, built with X11, optional OpenGL presentation and OSS support. It is not
 sdl12-compat, which would bring SDL2 back into the dependency chain. ALSA,
-PulseAudio, OpenGL and framebuffer-console are not part of this
+PulseAudio and framebuffer-console are not part of this
 initial profile. SDL's timer/input/audio services isolate most host code so a
 future legacy Windows implementation can reuse it, but Windows is not supported
 by this target yet.
+
+OpenGL presentation is shared with the Windows SDL1 host; see
+[renderer selection and diagnostics](windows-sdl1.md#opengl-presentation-windows-and-legacy-linux).
+The default `--sdl-render auto` tries the installed GL implementation (hardware
+or software), then falls back to X11 software surfaces. Use `--sdl-render surface`
+to skip GL, or `--sdl-render opengl` to require it. The distribution does not
+bundle libGL or graphics drivers and still works without them via surfaces.
 
 ## Package and naming
 

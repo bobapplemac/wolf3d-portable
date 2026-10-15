@@ -39,11 +39,12 @@ static int opl_init(void) {
 #ifdef _WIN32
 #define WG_SDL1_VIDEO_HELP "Windows options:\n  --sdl-video directx|windib  Default directx; falls back to windib\n  --sdl-scale hardware|software  Default hardware; falls back to software\n"
 #else
-#define WG_SDL1_VIDEO_HELP "Linux: X11 software video and OSS PCM.\n"
+#define WG_SDL1_VIDEO_HELP "Linux: X11 video and OSS PCM.\n"
 #endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "WG_SDL1_GL.h"
 
 /* The engine stays on the main thread. SDL's callback only drains this queue. */
 #define WG_QUEUE_FRAMES 16384U
@@ -137,8 +138,21 @@ static void mouse_capture(int value)
 static int video(int width, int height)
 {
     SDL_Surface *next;
+    Uint32 render_flags=SDL_SWSURFACE;
+    int want_gl=render_choice==1;
 #ifdef _WIN32
     SDL_SysWMinfo wm;
+#endif
+#ifndef _WIN32
+    want_gl=render_choice!=2;
+#endif
+    gl_close();
+    if(want_gl) {
+        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
+        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,0);
+        render_flags=SDL_OPENGL;
+    }
+#ifdef _WIN32
     SDL_VERSION(&wm.version);
     if(fullscreen && !borderless_active && screen && SDL_GetWMInfo(&wm))
         windowed_rect_valid=GetWindowRect(wm.window,&windowed_rect)!=0;
@@ -155,7 +169,7 @@ static int video(int width, int height)
     /* Stay in normal DirectDraw cooperative mode. SDL_FULLSCREEN takes exclusive
        ownership and prevents our separate hardware-stretch device from working. */
     next = SDL_SetVideoMode(width,height,32,
-        SDL_SWSURFACE | (fullscreen ? SDL_NOFRAME : SDL_RESIZABLE));
+        render_flags | (fullscreen ? SDL_NOFRAME : SDL_RESIZABLE));
 #else
     if(fullscreen) {
         const SDL_VideoInfo *info=SDL_GetVideoInfo();
@@ -163,15 +177,25 @@ static int video(int width, int height)
         height=WG_FullscreenDisplay(&fullscreen_options) && fullscreen_options.height?(int)fullscreen_options.height:info->current_h;
     }
     next = SDL_SetVideoMode(width, height, 32,
-        SDL_SWSURFACE | (fullscreen ? (WG_FullscreenDisplay(&fullscreen_options)?SDL_FULLSCREEN:SDL_NOFRAME) : SDL_RESIZABLE));
+        render_flags | (fullscreen ? (WG_FullscreenDisplay(&fullscreen_options)?SDL_FULLSCREEN:SDL_NOFRAME) : SDL_RESIZABLE));
 #endif
+    if(want_gl && (!next || !gl_open())) {
+        gl_close();
+        if(render_choice==0) {
+            int saved=render_choice,ok;
+            fprintf(stdout,"SDL1 OpenGL unavailable; trying software surfaces\n");
+            render_choice=2;ok=video(width,height);render_choice=saved;return ok;
+        }
+        fprintf(stderr,"SDL1 OpenGL initialization failed: %s\n",SDL_GetError());
+        return 0;
+    }
     if (!next) {
 #ifdef _WIN32
         (void)WG_DisplayRestore(&display_mode,1);
 #endif
         fprintf(stderr, "SDL 1.2 video: %s\n", SDL_GetError());return 0;
     }
-    if(next->format->BytesPerPixel != 4) {
+    if(!gl_active && next->format->BytesPerPixel != 4) {
         fprintf(stderr, "SDL 1.2 video requires a 32-bit software surface\n");
         return 0;
     }
@@ -190,7 +214,7 @@ static int video(int width, int height)
     if(software_frame)SDL_FreeSurface(software_frame);
     software_frame=NULL;
     /* Software surfaces retain their borders between flips. */
-    SDL_FillRect(screen,NULL,0);
+    if(!gl_active)SDL_FillRect(screen,NULL,0);
     mouse_capture(capture);
     return 1;
 }
@@ -218,7 +242,7 @@ static void shutdown_host(void)
     dd_close();
     if(!WG_DisplayRestore(&display_mode,1))fprintf(stderr,"SDL1: could not restore desktop display mode\n");
 #endif
-    SDL_Quit(); screen=NULL;
+    gl_close();SDL_Quit(); screen=NULL;
 #ifdef _WIN32
     borderless_active=windowed_rect_valid=0;
 #endif
@@ -242,6 +266,8 @@ static int init(void)
 #ifdef _WIN32
     /* Copy before SDL_putenv replaces the environment backing store. */
     char driver[64];const char *requested=requested_video_driver();
+    /* SDL 1.2 provides Windows GL contexts through windib. */
+    if(render_choice==1)requested="windib";
     if(strlen(requested)>=sizeof(driver))return 0;
     strcpy(driver,requested);
     if(!start_video_with_fallback(driver,try_video_driver)) {
@@ -268,6 +294,7 @@ static void present(const uint8_t *pixels, const uint8_t *palette)
     w=screen->w;h=w*3/4;if(h>screen->h) {h=screen->h;w=h*4/3;}
     if(w<1 || h<1)return;
     left=(screen->w-w)/2;top=(screen->h-h)/2;
+    if(gl_active) {gl_present(pixels,palette,left,top,w,h,screen->h);return;}
 #ifdef _WIN32
     if(dd_present(pixels,palette,left,top,w,h))return;
 #endif
@@ -489,13 +516,16 @@ static int run_main(int argc,char **argv)
     if(!WG_LoadLauncherArguments(argc,argv,&launcher,problem,sizeof(problem))) {WG_PrintLauncherError(problem);return 1;}
     argc=launcher.argc;argv=launcher.argv;
     if(WG_CommandLineHelpRequested(argc,argv)) {
-        WG_PrintCommandLineHelp(argv[0],"SDL 1.2 options:\n  --window-scale N     Initial 4:3 window scale (1-4; default 2)\n  --fullscreen         Start in the selected fullscreen mode\n  --windowed           Windowed mode (default)\n",WG_FULLSCREEN_HELP "F11 toggles fullscreen.\n" WG_SDL1_VIDEO_HELP WG_SDL1_OPL_NOTE "\n");
+        WG_PrintCommandLineHelp(argv[0],"SDL 1.2 options:\n  --window-scale N     Initial 4:3 window scale (1-4; default 2)\n  --fullscreen         Start in the selected fullscreen mode\n  --windowed           Windowed mode (default)\n",WG_FULLSCREEN_HELP "F11 toggles fullscreen.\n" WG_SDL1_VIDEO_HELP "  --sdl-render auto|opengl|surface  Presentation (default auto)\n" WG_SDL1_OPL_NOTE "\n");
         WG_FreeLauncherArguments(&launcher);return 0;
     }
     for(i=1;i<argc;++i) {
         int option=WG_FullscreenOption(&fullscreen_options,argv[i],i+1<argc?argv[i+1]:NULL);
         if(option<0) {error(WG_FULLSCREEN_ERROR);WG_FreeLauncherArguments(&launcher);return 1;}
         if(option) {++i;continue;}
+        if(!strcmp(argv[i],"--sdl-render")) {
+            if(++i>=argc || !set_renderer(argv[i])) {error("--sdl-render requires auto, opengl or surface");WG_FreeLauncherArguments(&launcher);return 1;}
+        }
 #ifdef _WIN32
         if(!strcmp(argv[i],"--sdl-video")) {
             if(++i>=argc || !set_video_driver(argv[i])) {error("--sdl-video requires directx or windib");WG_FreeLauncherArguments(&launcher);return 1;}
@@ -517,6 +547,12 @@ static int run_main(int argc,char **argv)
     }
     if(!WG_InstallPlatform()) {WG_FreeLauncherArguments(&launcher);return 1;}
     if(WG_CommandLineDiagnosticsRequested(argc,argv)) {
+#ifdef _WIN32
+        ok=ui_init();
+#else
+        ok=init();
+#endif
+        if(!ok) {HOST_SHUTDOWN();WG_FreeLauncherArguments(&launcher);return 1;}
         ok=WG_PrintDiagnostics(argc,argv,launcher.config_path,"  SDL 1.2 host: platform SDL video and PCM; physical validation pending\n  " WG_SDL1_OPL_NOTE "\n");
         HOST_SHUTDOWN();WG_FreeLauncherArguments(&launcher);return ok?0:1;
     }
@@ -532,7 +568,7 @@ int WG_SDL1Run(int argc,char **argv)
     int result;backend_init_failed=0;
     SDL_SetModuleHandle(GetModuleHandle(NULL));
     result=run_main(argc,argv);
-    return backend_init_failed?WG_BACKEND_UNAVAILABLE:result;
+    return backend_init_failed && render_choice!=1?WG_BACKEND_UNAVAILABLE:result;
 }
 #else
 #ifdef _WIN32

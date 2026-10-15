@@ -14,9 +14,15 @@ F11 toggles SDL fullscreen (may change the display mode).
 
 PCM uses OSS (/dev/dsp). The OS driver must initialize your sound card and
 mixer. SDL_AUDIODRIVER=dsp selects OSS; close other programs holding /dev/dsp.
-No ALSA, PulseAudio, OpenGL, SDL2/SDL3 or newer kernel is required by design.
+No ALSA, PulseAudio, SDL2/SDL3 or newer kernel is required by design.
 This is genuine SDL 1.2.15, not sdl12-compat.
 
 Built/audited for i586 without CMOV, MMX or SSE. Real RH9 kernel, display,
 audio and Pentium hardware validation remains pending. Docker tests alone
 do not establish compatibility with Linux 2.4.
+
+Video: --sdl-render auto|opengl|surface (default auto).
+Auto tries the system OpenGL implementation (hardware or software), then X11
+surfaces. OpenGL is optional, uses nearest-neighbor scaling, and is not bundled.
+Explicit opengl selection fails if GL cannot initialize; surface skips GL.
+--diag probes the selected renderer and prints GL vendor/renderer/version.

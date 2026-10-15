@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - Win9x SDL1 first keypress
+
+- Normalize a repeat-marked Windows key-down when SDL1's window has not seen
+  that key pressed. Fix the observed first Y being discarded at the quit
+  confirmation while retaining suppression of genuine repeats. Restore the
+  original window procedure before video recreation and SDL shutdown.
+- Test the captured Enter/release/Y sequence, genuine repeats, focus changes,
+  key release and keyboard-hook teardown. Temporary input tracing is excluded.
+
 ## Unreleased - console exit pause
 
 - Bound the exit-key release wait to 250 ms so a stuck key-state report cannot

@@ -99,6 +99,12 @@ other keys; its repeats are ignored until a key-release event arrives.
 SDL.dll remains a separate, replaceable LGPL library; its license,
 source URL/checksum and build recipe are included in the distribution notices.
 
+On Win9x, SDL1 keyboard handling tracks Windows press/release transitions to
+correct an incorrectly repeat-marked first key-down before SDL discards it.
+Genuine held-key repeats remain disabled; the same handling applies to OpenGL
+and surface presentation. The window hook is removed before video recreation
+or shutdown.
+
 ## GDI presentation
 
 All Windows GDI targets share the asynchronous presenter, not only Win2k.

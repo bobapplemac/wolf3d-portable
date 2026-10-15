@@ -57,6 +57,9 @@ static int opl_init(void) {
 #include "../WG_PRINTF_COMPAT.h"
 #include <stdlib.h>
 #include <string.h>
+#ifdef WG_WIN9X
+#include "WG_SDL1_WINKEYS.h"
+#endif
 #include "WG_SDL1_GL.h"
 
 /* The engine stays on the main thread. SDL's callback only drains this queue. */
@@ -178,6 +181,9 @@ static int video(int width, int height)
 #ifndef _WIN32
     want_gl=render_choice!=2;
 #endif
+#ifdef WG_WIN9X
+    WG_SDL1KeyDetach();
+#endif
     gl_close();
     if(want_gl && gl_library_path && !gl_library_loaded) {
       if(SDL_GL_LoadLibrary(gl_library_path)<0) {
@@ -241,6 +247,11 @@ static int video(int width, int height)
 #ifdef _WIN32
     SDL_VERSION(&wm.version);
     if(SDL_GetWMInfo(&wm)) {
+#ifdef WG_WIN9X
+        if(!WG_SDL1KeyAttach(wm.window)) {
+            fprintf(stderr,"SDL1: cannot install keyboard handler\n");return 0;
+        }
+#endif
         if(fullscreen)SetWindowPos(wm.window,focused?HWND_TOPMOST:HWND_NOTOPMOST,0,0,width,height,SWP_FRAMECHANGED);
         else if(borderless_active && !windowed_rect_valid)
             SetWindowPos(wm.window,HWND_NOTOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
@@ -275,6 +286,10 @@ static void pcm_shutdown(void)
 static void shutdown_host(void)
 {
     unsigned i;
+#ifdef WG_WIN9X
+    /* Restore SDL's procedure before it tears down the window/subsystems. */
+    WG_SDL1KeyDetach();
+#endif
     pcm_shutdown();
     if(SDL_WasInit(SDL_INIT_VIDEO)) {
         SDL_WM_GrabInput(SDL_GRAB_OFF);

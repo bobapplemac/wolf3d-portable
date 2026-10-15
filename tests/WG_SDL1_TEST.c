@@ -235,6 +235,14 @@ int main(void)
     assert(!mock_active && !mock_rate);
 #endif
     assert(pcm_init_ex(&request,&got));pcm_shutdown();
+    {
+        char report[1024]="";
+        pcm_diagnostics(report,sizeof(report));
+        assert(strstr(report,"SDL PCM driver:") && strstr(report,"22050 Hz"));
+        assert(pcm_probe_calls>0 && pcm_probe_requested>0 && !pcm_probe_active && !pcm_open);
+        assert(pcm_probe_consumed<=pcm_probe_requested);
+        puts(report);
+    }
 #ifdef _WIN32
     test_cursor_clipped=test_clip_on_quit=1;
 #endif

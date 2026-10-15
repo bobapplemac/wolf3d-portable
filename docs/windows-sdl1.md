@@ -191,3 +191,19 @@ renderer and acceleration), host hardware, audio runtime and game data.
 Real errors remain visible. The shared Windows B800 renderer clears the console
 buffer and attributes, resets the viewport, draws the card, and leaves a clean
 cursor below it; it no longer guesses and redraws an existing shell prompt.
+
+## PCM timing diagnostics
+
+`WOLF3D.EXE --backend sdl1 --diag --no-pause` includes a two-second silent PCM
+probe at 22050 Hz. It reports the actual SDL audio driver and negotiated format,
+callback size, elapsed wall/SDL time, requested/consumed frames and underruns.
+The requested frame rate should be approximately the negotiated sample rate;
+short probes have callback-boundary and timer-rounding variation. This measures
+device callback pacing without game rendering or OPL synthesis, so a healthy
+probe does not rule out starvation during gameplay. Both emulated and native
+OPL music follow the engine's PCM production schedule on Win9x.
+
+For a comparison using SDL's waveOut driver, set `SDL_AUDIODRIVER=waveout` in
+the command prompt before launching. The diagnostic driver line confirms the
+selection. Clear the override afterward with `set SDL_AUDIODRIVER=`.
+

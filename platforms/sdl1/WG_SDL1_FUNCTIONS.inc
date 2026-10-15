@@ -1,4 +1,5 @@
 /* Required SDL 1.2 exports. Include with WG_SDL1_FUNCTION defined. */
+WG_SDL1_FUNCTION(char *,SDL_AudioDriverName,(char *name,int length))
 WG_SDL1_FUNCTION(void,SDL_CloseAudio,(void))
 WG_SDL1_FUNCTION(SDL_Surface *,SDL_CreateRGBSurface,(Uint32 flags,int width,int height,int depth,Uint32 r,Uint32 g,Uint32 b,Uint32 a))
 WG_SDL1_FUNCTION(void,SDL_Delay,(Uint32 ms))

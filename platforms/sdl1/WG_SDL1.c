@@ -61,6 +61,10 @@ static int16_t pcm[WG_QUEUE_FRAMES * 2U];
 static size_t pcm_read, pcm_count, pcm_limit;
 static unsigned pcm_channels;
 static int pcm_open;
+static unsigned pcm_callback_samples;
+/* Only collected by the short silent --diag probe, under SDL's audio lock. */
+static int pcm_probe_active;
+static unsigned long pcm_probe_calls,pcm_probe_requested,pcm_probe_consumed;
 static int sdl_diagnostics;
 static char sdl_report[2048];
 static SDL_Surface *screen;
@@ -459,7 +463,9 @@ static void SDLCALL audio_callback(void *unused, Uint8 *stream, int length)
     int16_t *dst=(int16_t *)stream;
     (void)unused;
     memset(stream,0,(size_t)length);
+    if(pcm_probe_active) {++pcm_probe_calls;pcm_probe_requested+=(unsigned long)frames;}
     if(frames>pcm_count) frames=pcm_count;
+    if(pcm_probe_active)pcm_probe_consumed+=(unsigned long)frames;
     for(i=0;i<frames;++i) for(c=0;c<pcm_channels;++c)
         dst[i*pcm_channels+c]=pcm[((pcm_read+i)%WG_QUEUE_FRAMES)*pcm_channels+c];
     pcm_read=(pcm_read+frames)%WG_QUEUE_FRAMES;pcm_count-=frames;
@@ -476,6 +482,7 @@ static int pcm_init_ex(const wolf3d_pcm_format_t *request,wolf3d_pcm_format_t *o
     pcm_open=1;
     if(got.format!=AUDIO_S16SYS || got.channels<1 || got.channels>2 || got.freq<=0) {pcm_shutdown();return 0;}
     pcm_channels=got.channels;pcm_limit=(size_t)got.freq/10;
+    pcm_callback_samples=got.samples;
     if(pcm_limit<1024) pcm_limit=1024;
     if(pcm_limit>WG_QUEUE_FRAMES) pcm_limit=WG_QUEUE_FRAMES;
     obtained->sample_rate=(uint32_t)got.freq;obtained->channels=got.channels;obtained->bits_per_sample=16;
@@ -515,6 +522,49 @@ static int submit(const int16_t *samples,size_t frames)
     if(!WG_OPLPlaybackSubmitFrames(frames,pcm_count)) {SDL_UnlockAudio();return 0;}
 #endif
     SDL_UnlockAudio();return 1;
+}
+static void pcm_diagnostics(char *report,size_t capacity)
+{
+    wolf3d_pcm_format_t request={22050,2,16},got;
+    char driver[64];
+    uint32_t start,elapsed,sdl_start,sdl_elapsed;
+    unsigned long calls,requested,consumed;
+    size_t used=strlen(report);
+    if(!pcm_init_ex(&request,&got)) {
+        snprintf(report+used,capacity-used,"  SDL PCM probe: initialization failed: %s\n",SDL_GetError());return;
+    }
+    if(!SDL_AudioDriverName(driver,sizeof(driver)))strcpy(driver,"unknown");
+    SDL_LockAudio();
+    memset(pcm,0,sizeof(pcm));pcm_read=0;pcm_count=pcm_limit;
+    pcm_probe_calls=pcm_probe_requested=pcm_probe_consumed=0;pcm_probe_active=1;
+    SDL_UnlockAudio();
+    sdl_start=SDL_GetTicks();
+#ifdef _WIN32
+    start=GetTickCount();
+#else
+    start=sdl_start;
+#endif
+    do {
+        SDL_Delay(1);
+        SDL_LockAudio();pcm_count=pcm_limit;SDL_UnlockAudio();
+#ifdef _WIN32
+        elapsed=GetTickCount()-start;
+#else
+        elapsed=SDL_GetTicks()-start;
+#endif
+    } while(elapsed<2000U);
+    sdl_elapsed=SDL_GetTicks()-sdl_start;
+    SDL_LockAudio();pcm_probe_active=0;
+    calls=pcm_probe_calls;requested=pcm_probe_requested;consumed=pcm_probe_consumed;
+    SDL_UnlockAudio();
+    snprintf(report+used,capacity-used,
+        "  SDL PCM driver: %s\n  PCM probe: %lu Hz, %u channels, 16-bit; %u frames/callback\n"
+        "  Silent probe: %lu ms wall, %lu ms SDL; %lu callbacks\n"
+        "  PCM frames requested/consumed: %lu/%lu (%lu frames/sec; %lu underrun frames)\n",
+        driver,(unsigned long)got.sample_rate,(unsigned)got.channels,pcm_callback_samples,
+        (unsigned long)elapsed,(unsigned long)sdl_elapsed,calls,requested,consumed,
+        requested*1000UL/elapsed,requested-consumed);
+    pcm_shutdown();
 }
 #ifdef _WIN32
 #include "WG_SDL1_WINDOWS.h"
@@ -621,14 +671,16 @@ static int run_main(int argc,char **argv)
     if(!WG_InstallPlatform()) {WG_PrintLauncherError("SDL1: engine rejected the platform interface. Replace the complete package, including wolf3d.dll.\n");WG_FreeLauncherArguments(&launcher);return 1;}
     sdl_diagnostics=WG_CommandLineDiagnosticsRequested(argc,argv);
     if(sdl_diagnostics) {
+        char hardware_report[1536]="  SDL 1.2 host: platform SDL video and PCM\n  " WG_SDL1_OPL_NOTE "\n";
 #ifdef _WIN32
         ok=ui_init();
 #else
         ok=init();
 #endif
         if(!ok) {HOST_SHUTDOWN();WG_FreeLauncherArguments(&launcher);return 1;}
+        pcm_diagnostics(hardware_report,sizeof(hardware_report));
         WG_SetVideoInfo("sdl1","sdl1",sdl_report);
-        ok=WG_PrintDiagnostics(argc,argv,launcher.config_path,"  SDL 1.2 host: platform SDL video and PCM\n  " WG_SDL1_OPL_NOTE "\n");
+        ok=WG_PrintDiagnostics(argc,argv,launcher.config_path,hardware_report);
         HOST_SHUTDOWN();WG_FreeLauncherArguments(&launcher);return ok?0:1;
     }
     if(!WG_PrepareGameArguments(argc,argv,&game,problem,sizeof(problem))) {WG_PrintLauncherError(problem);WG_FreeLauncherArguments(&launcher);return 1;}

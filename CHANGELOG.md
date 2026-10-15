@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased - SDL1 PCM timing diagnostics
+
+- Add a two-second silent 22050 Hz PCM probe to SDL1 `--diag`: selected SDL
+  audio driver, negotiated format, callback size, wall/SDL elapsed time,
+  requested/consumed frames and underruns. Normal gameplay remains unchanged.
+
 ## Unreleased - SDL1 cursor release
 
 - Release Windows cursor confinement after SDL1 event polling when `--nomouse`

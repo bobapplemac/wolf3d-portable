@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - console exit pause
+
+- Bound the exit-key release wait to 250 ms so a stuck key-state report cannot
+  hide the owned-console exit prompt indefinitely. Ignore repeats from keys
+  still held at the deadline until their release, while accepting other keys.
+  Add tests for stale states, key release, timer wrap and pause bypass.
+
 ## Unreleased - independent Windows PCM output
 
 - Share GDI's four-by-512-frame waveOut transport with Windows SDL1 and SDL3.

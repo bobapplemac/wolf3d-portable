@@ -93,7 +93,10 @@ wolf3d.exe --sdl-video directx --sdl-scale software --window-scale 2 --opl adlib
 
 Console output and the text exit card use the existing Windows text helpers.
 Double-click launch pauses at exit; shell launch does not. `--no-pause` disables
-the pause. SDL.dll remains a separate, replaceable LGPL library; its license,
+the pause. The shared Windows pause allows at most 250 ms for the exit key to
+be released before showing the prompt. A key still reported held cannot block
+other keys; its repeats are ignored until a key-release event arrives.
+SDL.dll remains a separate, replaceable LGPL library; its license,
 source URL/checksum and build recipe are included in the distribution notices.
 
 ## GDI presentation

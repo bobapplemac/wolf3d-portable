@@ -39,19 +39,29 @@ static void WG_PauseConsole(int owned, int disabled)
 {
     HANDLE input = GetStdHandle(STD_INPUT_HANDLE);
     HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
-    DWORD input_mode, output_mode, count;
+    DWORD input_mode, output_mode, count, release_start;
     INPUT_RECORD event;
+    unsigned char held_keys[256];
     int key, held;
     const char prompt[] = "\nPress any key to close...";
     if (!owned || disabled || !GetConsoleMode(input, &input_mode)
         || !GetConsoleMode(output, &output_mode)) return;
     /* Do not let the key used to leave the game, or queued console events,
        dismiss the exit card. Mouse buttons are not keyboard keys. */
+    memset(held_keys, 0, sizeof(held_keys));
+    release_start = GetTickCount();
     do
     {
         held = 0;
         for (key = 8; key < 256; ++key)
-            if (GetAsyncKeyState(key) & 0x8000) { held = 1; break; }
+        {
+            held_keys[key] = (GetAsyncKeyState(key) & 0x8000) != 0;
+            if (held_keys[key]) held = 1;
+        }
+        /* A stale/unsupported key state must not hide the prompt forever.
+           Still suppress repeats from keys held when the grace period ends;
+           their console key-up event rearms them without blocking other keys. */
+        if ((DWORD)(GetTickCount() - release_start) >= 250U) break;
         if (held) Sleep(10);
     } while (held);
     if (!SetConsoleMode(input, input_mode
@@ -66,7 +76,15 @@ static void WG_PauseConsole(int owned, int disabled)
     {
         while (ReadConsoleInputA(input, &event, 1, &count) && count != 0)
         {
-            if (event.EventType == KEY_EVENT && event.Event.KeyEvent.bKeyDown) break;
+            if (event.EventType == KEY_EVENT)
+            {
+                key = event.Event.KeyEvent.wVirtualKeyCode;
+                if (!event.Event.KeyEvent.bKeyDown)
+                {
+                    if (key < 256) held_keys[key] = 0;
+                }
+                else if (key >= 256 || !held_keys[key]) break;
+            }
         }
     }
     (void)SetConsoleMode(input, input_mode);

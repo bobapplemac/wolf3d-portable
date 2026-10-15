@@ -38,3 +38,7 @@ endif()
 if(HAS_SDL1)
  file(APPEND "${DIST}/README.TXT" "SDL1: --sdl-render auto|opengl|surface (default auto keeps DirectDraw).\nOpenGL uses nearest-neighbor scaling and accepts hardware or software GL.\nUse --backend sdl1 --sdl-render opengl --diag to probe the installed GL driver.\n")
 endif()
+
+if(HAS_SDL1)
+ file(APPEND "${DIST}/README.TXT" "--gl-acceleration auto|hardware|software selects GL acceleration.\n--gl-library FILE selects a DLL; both options imply opengl.\nNormal SDL startup is quiet; --diag reports the actual rendering path.\n")
+endif()

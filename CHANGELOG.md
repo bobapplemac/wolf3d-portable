@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - Runtime diagnostics and console cleanup
+
+- Quiet SDL startup/resize announcements; group compiled video/audio capabilities and runtime diagnostics consistently across hosts.
+- Add explicit OpenGL library and auto/hardware/software acceleration selection, with verification of forced choices.
+- Remove temporary OPLTIME/GDI tracing while preserving audio scheduling and asynchronous presentation.
+- Clear and normalize the Windows console before B800 output; remove guessed shell-prompt restoration. Add dirty-buffer/viewport and renderer-selection regressions.
+
 ## Unreleased - SDL1 OpenGL presentation
 
 - Add shared Windows/legacy Linux OpenGL 1.1 presentation with nearest-neighbor

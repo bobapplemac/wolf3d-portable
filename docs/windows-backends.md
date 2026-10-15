@@ -52,9 +52,9 @@ trigger a backend switch. Selection happens at startup, not during gameplay.
 `--backend` also works in `wolf3d.ini`; the command line overrides the config.
 The shared launcher merges configuration once and passes the resulting arguments
 to the chosen host. `--help` shows compiled choices and the selected host's help.
-`--diag` reports compiled choices, auto priority, SDL.dll loading
-and required-export availability, selection, and the chosen host's diagnostics. Dependency
-availability does not promise that a video driver can initialize on that machine.
+`--diag` groups compiled video/audio choices, the selected backend, and the
+chosen host's runtime diagnostics. SDL dependency failures are reported when
+that backend is explicitly requested; normal automatic fallback stays quiet.
 
 GDI and SDL1 each still own video, input and PCM output. Selecting SDL1 does not
 mix SDL video with GDI input/audio. Native OPL remains separate from PCM output.

@@ -83,6 +83,11 @@ int main(void)
     assert(gl_software_renderer("GDI Generic"));
     assert(gl_software_renderer("llvmpipe"));
     assert(!gl_software_renderer("GeForce FX 5900XT"));
+    assert(set_gl_acceleration("hardware") && gl_acceleration==1);
+    assert(set_gl_acceleration("software") && gl_acceleration==0);
+    assert(set_gl_acceleration("auto") && gl_acceleration==-1);
+    assert(!set_gl_acceleration("invalid"));
+    assert(sizeof(gl_library_storage)>1024);
     render_choice=0;
 #ifdef WG_SDL1_DYNAMIC
     {
@@ -97,6 +102,11 @@ int main(void)
         GLint filtering=0;
         void (APIENTRY *get_parameter)(GLenum,GLenum,GLint *);
         void *address;
+        if(getenv("WG_TEST_GL_LIBRARY")) {
+            assert(strlen(getenv("WG_TEST_GL_LIBRARY"))<sizeof(gl_library_storage));
+            strcpy(gl_library_storage,getenv("WG_TEST_GL_LIBRARY"));gl_library_path=gl_library_storage;
+        }
+        if(strcmp(getenv("WG_TEST_GL"),"1"))assert(set_gl_acceleration(getenv("WG_TEST_GL")));
         joy=0;render_choice=1;assert(init() && gl_active);
         memset(pixels,1,sizeof(pixels)/2);
         memset(pixels+sizeof(pixels)/2,2,sizeof(pixels)/2);

@@ -144,7 +144,6 @@ static int WG_NTAdLibInit(void)
     {
         if (WG_OPLPlaybackStart(wg_wave_out, wg_wave_rate))
         {
-            WG_OPLPlaybackTrackBuffers(wg_wave_headers, WG_PCM_BUFFER_COUNT);
             wg_native_playback = 1; return 1;
         }
         WG_DOSAdLibShutdown();
@@ -1655,6 +1654,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     }
     if (WG_CommandLineHelpRequested(launcher_argc, launcher_argv))
     {
+        WG_SetVideoInfo("gdi","gdi",NULL);
         WG_PrintCommandLineHelp(
             launcher_argc > 0 ? launcher_argv[0] : "wolf3d.exe",
             "Win32 host options:\n"
@@ -1682,6 +1682,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
             if (strlen(report) + strlen(options) < sizeof(report)) strcat(report, options);
         }
 
+        WG_SetVideoInfo("gdi","gdi",NULL);
         result = WG_PrintDiagnostics(launcher_argc, launcher_argv,
                             launcher_arguments.config_path, report)
             ? WOLF3D_RESULT_QUIT : WOLF3D_RESULT_PLATFORM_ERROR;

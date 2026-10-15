@@ -838,6 +838,7 @@ int WG_InstallPlatform(void)
 
 static void WG_SDLPrintHelp(const char *program)
 {
+    WG_SetVideoInfo("sdl3","sdl3",NULL);
     WG_PrintCommandLineHelp(
         program != NULL ? program : "wolf3d-sdl3",
         "SDL3 host options:\n"
@@ -964,6 +965,7 @@ int main(int argc, char **argv)
         WG_SDLDiagnosticReport(report, sizeof(report));
         (void)SDL_InitSubSystem(SDL_INIT_AUDIO);
         (void)WG_InstallPlatform();
+        WG_SetVideoInfo("sdl3","sdl3",NULL);
         result = WG_PrintDiagnostics(argc, argv, launcher_arguments.config_path,
                             report);
         WG_FreeLauncherArguments(&launcher_arguments);

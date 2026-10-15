@@ -180,14 +180,34 @@ int WG_CommandLineDiagnosticsRequested(int argc, char **argv)
     return 0;
 }
 
+static const char *wg_launcher_config;
+void WG_SetLauncherConfigPath(const char *path) {wg_launcher_config=path;}
+static const char *wg_compiled_video, *wg_selected_video, *wg_video_details;
+void WG_SetVideoInfo(const char *compiled,const char *selected,const char *details)
+{
+    if(compiled && !wg_compiled_video)wg_compiled_video=compiled;
+    if(selected)wg_selected_video=selected;
+    if(details)wg_video_details=details;
+}
+static void WG_WriteCapabilities(wg_help_stream_t *stream)
+{
+    size_t index;
+    WG_HelpWrite(stream,"Build capabilities\n  Compiled video backends: ");
+    WG_HelpWrite(stream,wg_compiled_video?wg_compiled_video:"host-specific");
+    WG_HelpWrite(stream,"\n  Selected video backend: ");
+    WG_HelpWrite(stream,wg_selected_video?wg_selected_video:"host-specific");
+    WG_HelpWrite(stream,"\n  Compiled OPL drivers:");
+    for(index=0;index<wolf3d_GetOPLDriverCount();++index) {
+        WG_HelpWrite(stream," ");WG_HelpWrite(stream,wolf3d_GetOPLDriverName(index));
+    }
+    WG_HelpWrite(stream,"\n  Default OPL driver: ");
+    WG_HelpWrite(stream,wolf3d_GetSelectedOPLDriver());WG_HelpWrite(stream,"\n");
+}
 void WG_PrintCommandLineHelp(const char *program,
                              const char *host_options,
                              const char *runtime_notes)
 {
     wg_help_stream_t stream = WG_OpenHelpStream();
-    size_t driver_count;
-    size_t index;
-
     if (!WG_HelpStreamValid(&stream))
     {
         return;
@@ -195,33 +215,26 @@ void WG_PrintCommandLineHelp(const char *program,
     WG_HelpWrite(&stream, "Usage: ");
     WG_HelpWrite(&stream, program != NULL ? program : "wolf3d");
     WG_HelpWrite(&stream, " [options]\n\n");
+    WG_WriteCapabilities(&stream);
+    WG_HelpWrite(&stream,"\n");
     WG_HelpWrite(&stream,
         "Launcher:\n"
         "  --config FILE        Load defaults from a specific argument file\n"
         "  --no-config          Do not load an automatic config file\n"
         "  --diag               Print diagnostics and exit without starting the game\n"
-        "  --help, -h, /?       Print this help and exit\n\n");
+        "  --help, -h, /?       Print this help and exit\n");
+#ifdef _WIN32
+    WG_HelpWrite(&stream,"  --no-pause          Close an owned console without waiting for a key\n");
+#endif
+    if(wg_compiled_video && strchr(wg_compiled_video,' '))
+        WG_HelpWrite(&stream,"  --backend auto|gdi|sdl1  Host selection; auto prefers SDL1 then GDI\n\n");
+    WG_HelpWrite(&stream,"\n");
     WG_HelpWrite(&stream, wolf3d_GetCommandLineHelp());
     if (host_options != NULL && host_options[0] != '\0')
     {
         WG_HelpWrite(&stream, "\n");
         WG_HelpWrite(&stream, host_options);
     }
-    driver_count = wolf3d_GetOPLDriverCount();
-    WG_HelpWrite(&stream, "\nCompiled OPL drivers:");
-    for (index = 0U; index < driver_count; ++index)
-    {
-        const char *name = wolf3d_GetOPLDriverName(index);
-
-        if (name != NULL)
-        {
-            WG_HelpWrite(&stream, " ");
-            WG_HelpWrite(&stream, name);
-        }
-    }
-    WG_HelpWrite(&stream, "\nDefault OPL driver: ");
-    WG_HelpWrite(&stream, wolf3d_GetSelectedOPLDriver());
-    WG_HelpWrite(&stream, "\n");
     if (runtime_notes != NULL && runtime_notes[0] != '\0')
     {
         WG_HelpWrite(&stream, "\n");
@@ -1513,7 +1526,6 @@ int WG_PrintDiagnostics(int argc, char **argv,
     wg_discovery_results_t results;
     wg_game_arguments_t selected;
     char error[2048];
-    char number[32];
     char *root;
     size_t index;
     int audio_ok = 0;
@@ -1525,14 +1537,45 @@ int WG_PrintDiagnostics(int argc, char **argv,
     WG_HelpWrite(&stream, "wolf3d portable diagnostics\n\nExecutable: ");
     WG_HelpWrite(&stream, argc > 0 ? argv[0] : "(unknown)");
     WG_HelpWrite(&stream, "\nConfig:     ");
-    WG_HelpWrite(&stream, config_path != NULL ? config_path : "(none)");
+    WG_HelpWrite(&stream, wg_launcher_config ? wg_launcher_config : config_path != NULL ? config_path : "(none)");
     WG_HelpWrite(&stream, "\nArguments:");
     for (index = 1U; index < (size_t)argc; ++index)
     {
         WG_HelpWrite(&stream, " ");
         WG_HelpWrite(&stream, argv[index]);
     }
-    WG_HelpWrite(&stream, "\n\nGame data scan\n");
+    WG_HelpWrite(&stream, "\n\n");
+    WG_WriteCapabilities(&stream);
+    WG_HelpWrite(&stream,"\nVideo runtime\n");
+    WG_HelpWrite(&stream,wg_video_details?wg_video_details:"  See host hardware report below.\n");
+    WG_HelpWrite(&stream, "\nHost hardware\n");
+    WG_HelpWrite(&stream, host_report != NULL ? host_report
+                                               : "  No host report available.\n");
+    WG_HelpWrite(&stream, "\nAudio runtime\n");
+    {
+        const char *requested = NULL;
+        const char *rate = "auto";
+
+        for (index = 1U; index + 1U < (size_t)argc; ++index)
+        {
+            if (strcmp(argv[index], "--opl") == 0) requested = argv[index + 1U];
+            if (strcmp(argv[index], "--sample-rate") == 0) rate = argv[index + 1U];
+        }
+        WG_HelpWrite(&stream, "  Requested OPL: ");
+        WG_HelpWrite(&stream, requested != NULL ? requested : wolf3d_GetSelectedOPLDriver());
+        WG_HelpWrite(&stream, "\n  Requested sample rate: ");
+        WG_HelpWrite(&stream, rate);
+        WG_HelpWrite(&stream, "\n");
+        audio_ok = wolf3d_ProbeAudio(requested, rate);
+        WG_HelpWrite(&stream, wolf3d_GetAudioDiagnostics());
+        if (!audio_ok)
+        {
+            WG_HelpWrite(&stream, "  Audio initialization failed: ");
+            WG_HelpWrite(&stream, wolf3d_GetAudioError());
+            WG_HelpWrite(&stream, "\n");
+        }
+    }
+    WG_HelpWrite(&stream, "\nGame data scan\n");
     root = WG_ExecutableDirectory(argc > 0 ? argv[0] : NULL);
     if (root == NULL)
     {
@@ -1590,45 +1633,6 @@ int WG_PrintDiagnostics(int argc, char **argv,
     {
         WG_HelpWrite(&stream, "  Selection error: ");
         WG_HelpWrite(&stream, error);
-    }
-    WG_HelpWrite(&stream, "\nHost hardware\n");
-    WG_HelpWrite(&stream, host_report != NULL ? host_report
-                                               : "  No host report available.\n");
-    (void)sprintf(number, "%lu", (unsigned long)wolf3d_GetOPLDriverCount());
-    WG_HelpWrite(&stream, "\nAudio emulation\n  Compiled OPL drivers: ");
-    WG_HelpWrite(&stream, number);
-    WG_HelpWrite(&stream, " (");
-    for (index = 0U; index < wolf3d_GetOPLDriverCount(); ++index)
-    {
-        if (index != 0U)
-        {
-            WG_HelpWrite(&stream, ", ");
-        }
-        WG_HelpWrite(&stream, wolf3d_GetOPLDriverName(index));
-    }
-    WG_HelpWrite(&stream, ")\n");
-    {
-        const char *requested = NULL;
-        const char *rate = "auto";
-
-        for (index = 1U; index + 1U < (size_t)argc; ++index)
-        {
-            if (strcmp(argv[index], "--opl") == 0) requested = argv[index + 1U];
-            if (strcmp(argv[index], "--sample-rate") == 0) rate = argv[index + 1U];
-        }
-        WG_HelpWrite(&stream, "  Requested OPL: ");
-        WG_HelpWrite(&stream, requested != NULL ? requested : wolf3d_GetSelectedOPLDriver());
-        WG_HelpWrite(&stream, "\n  Requested sample rate: ");
-        WG_HelpWrite(&stream, rate);
-        WG_HelpWrite(&stream, "\n");
-        audio_ok = wolf3d_ProbeAudio(requested, rate);
-        WG_HelpWrite(&stream, wolf3d_GetAudioDiagnostics());
-        if (!audio_ok)
-        {
-            WG_HelpWrite(&stream, "  Audio initialization failed: ");
-            WG_HelpWrite(&stream, wolf3d_GetAudioError());
-            WG_HelpWrite(&stream, "\n");
-        }
     }
     WG_CloseHelpStream(&stream);
     return audio_ok;

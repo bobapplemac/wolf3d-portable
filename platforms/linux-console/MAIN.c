@@ -104,6 +104,7 @@ static void WG_LinuxConsoleDiagnosticReport(char *report, size_t report_size)
 
 static void WG_PrintHelp(const char *program)
 {
+    WG_SetVideoInfo("kms-fbdev","kms-fbdev",NULL);
     WG_PrintCommandLineHelp(
         program != NULL ? program : "wolf3d",
         "Linux console host options:\n"
@@ -212,6 +213,7 @@ int main(int argc, char **argv)
 
         WG_LinuxConsoleDiagnosticReport(report, sizeof(report));
         (void)WG_InstallPlatform();
+        WG_SetVideoInfo("kms-fbdev","kms-fbdev",NULL);
         result = WG_PrintDiagnostics(argc, argv, launcher_arguments.config_path,
                             report);
         free(game_argv);

@@ -71,14 +71,14 @@ to the 4:3 client rectangle, using a window clipper. No smoothing filter is
 requested, but the display driver controls hardware stretch filtering; this path
 does not guarantee nearest-neighbor output. Even integer window scales stretch
 the original 320x200 frame to a 4:3 rectangle (for example, 640x480). Black borders
-are cleared separately without blanking the game image. Successful presentation reports:
+are cleared separately without blanking the game image. `--diag` reports the selected path:
 
 ```text
-SDL1 scaling: DirectDraw hardware stretch (320x200 upload)
+Presentation: DirectDraw hardware stretch
 ```
 
 If capability checks, video-memory allocation, surface locking or the blit fail,
-the same frame falls back to SDL software presentation, with a reason printed.
+the same frame falls back to SDL software presentation, with the reason available through `--diag`.
 Surface loss also selects fallback; a resize or mode change permits a new attempt.
 The software path uses SDL's `SDL_SoftStretch`, not a custom scaling loop.
 `windib` always uses this software path. Hardware scaling is the default;
@@ -104,7 +104,7 @@ Scaling is delegated to `StretchDIBits` with `COLORONCOLOR`; the worker submits
 the original 320x200 indexed framebuffer and palette. Custom software scaling
 and the experimental DIB/DDB comparison paths were removed because testing had
 not demonstrated a benefit. `WOLF3D_GDI_BITMAP` and `WOLF3D_GDI_FORMAT` are no
-longer used. Audio/engine isolation and `WOLF3D_OPL_TIMING=1` timing logs remain.
+longer used. Audio/engine isolation remains; temporary timing-file instrumentation has been removed.
 
 ## Validation
 
@@ -140,7 +140,7 @@ wolf3d.exe --backend sdl1 --sdl-render auto
 ```
 
 GL uses the system driver, including software implementations when hardware
-acceleration is unavailable. Startup and `--diag` print vendor, renderer,
+acceleration is unavailable. `--diag` prints vendor, renderer,
 version and a best-effort software-renderer classification; unknown names are
 not proof of hardware acceleration. We do not bundle or substitute a GL driver.
 The window may briefly appear during diagnostics while the renderer is probed.
@@ -155,8 +155,40 @@ Context recreation on resize/fullscreen changes reinitializes textures and state
 Automated pixel readback on Windows/NVIDIA hardware GL and the legacy Linux
 executable with Mesa llvmpipe software GL confirms colors, orientation, black
 borders, nearest filtering and resize/context recreation. The Linux software-GL
-test runs on a modern kernel; it does not establish RH9 runtime compatibility. Win2k/FX 5900XT and
-physical RH9 validation remain pending. To run the optional real-GL host test,
+test runs on a modern kernel; it does not establish RH9 runtime compatibility. OpenGL has also been confirmed working on the Win2k test system;
+physical RH9 validation remains pending. To run the optional real-GL host test,
 set `WG_TEST_GL=1` and run `wg-sdl1-dynamic-host-test.exe` (Windows) or
 `wg-sdl1-test` (Linux) with a working display. The ordinary test uses SDL's dummy
 video driver to cover surface fallback and PCM/input behavior without a display.
+
+## OpenGL implementation and acceleration selection
+
+`--gl-acceleration auto|hardware|software` requires OpenGL and chooses an
+acceleration policy. Auto lets SDL/the driver prefer hardware and accept
+software fallback. Explicit hardware/software must match the resulting context,
+otherwise startup fails. On Linux, explicit requests also set Mesa's
+`LIBGL_ALWAYS_SOFTWARE` policy before SDL initializes; this is not a Mesa install.
+On Windows, software may select Microsoft's built-in GDI Generic OpenGL 1.1.
+Both Microsoft software GL and NVIDIA hardware GL pass the pixel/lifecycle tests.
+
+`--gl-library FILE` requires OpenGL and loads a particular implementation using
+SDL_GL_LoadLibrary. Use a full path to avoid ambiguous library searches. The
+library and its dependencies must match the executable's architecture, OS and
+CPU requirements. No Mesa library is bundled; current Mesa builds must not be
+assumed compatible with Win2k or Pentium III. SDL1 does not enumerate every
+installed vendor implementation; this is explicit selection of a known library.
+Combining either option with `--sdl-render surface`/`auto` is rejected; use
+`--sdl-render opengl` or omit that argument. All options work in the config file.
+
+```bat
+wolf3d.exe --backend sdl1 --gl-acceleration software
+wolf3d.exe --backend sdl1 --gl-acceleration hardware --diag
+wolf3d.exe --backend sdl1 --gl-library "C:\GL\opengl32.dll" --diag
+```
+
+Normal SDL startup, resize and fallback announcements are quiet. `--diag` groups
+compiled video/audio capabilities, video runtime (including actual GL library,
+renderer and acceleration), host hardware, audio runtime and game data.
+Real errors remain visible. The shared Windows B800 renderer clears the console
+buffer and attributes, resets the viewport, draws the card, and leaves a clean
+cursor below it; it no longer guesses and redraws an existing shell prompt.

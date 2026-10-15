@@ -141,7 +141,30 @@ int main(int argc, char **argv)
     clear(output);
     for (i = 0; i < 2000; ++i) { cells[i*2] = ' '; cells[i*2+1] = 7; }
     cells[0] = 'W'; cells[1] = 0x1e;
+    {
+        COORD dirty={12,40};CONSOLE_SCREEN_BUFFER_INFO info;
+        SMALL_RECT view;
+        assert(GetConsoleScreenBufferInfo(output,&info));
+        if(info.dwSize.Y<80) {COORD enlarged={info.dwSize.X,80};assert(SetConsoleScreenBufferSize(output,enlarged));}
+        assert(FillConsoleOutputCharacterA(output,'Z',3000,origin,&count));
+        assert(FillConsoleOutputAttribute(output,0x4c,3000,origin,&count));
+        assert(SetConsoleTextAttribute(output,0x4c));
+        assert(SetConsoleCursorPosition(output,dirty));
+        assert(GetConsoleScreenBufferInfo(output,&info));
+        view=info.srWindow;view.Bottom=view.Bottom-view.Top+20;view.Top=20;
+        assert(SetConsoleWindowInfo(output,TRUE,&view));
+    }
     WG_WriteWindowsTextScreen(cells, 80, 25);
+    {
+        CONSOLE_SCREEN_BUFFER_INFO info;COORD tail={0,30};WORD attribute;
+        assert(GetConsoleScreenBufferInfo(output,&info));
+        assert(info.dwCursorPosition.X==0 && info.dwCursorPosition.Y==1);
+        assert(info.srWindow.Top==0 && info.wAttributes==7);
+        assert(ReadConsoleOutputCharacterA(output,text,80,tail,&count));
+        for(i=0;i<count;++i)assert(text[i]==' ');
+        assert(ReadConsoleOutputAttribute(output,&attribute,1,tail,&count) && attribute==7);
+    }
+
     assert(ReadConsoleOutputA(output, &cell, size, origin, &region));
     assert(cell.Char.AsciiChar == 'W' && cell.Attributes == 0x1e);
     assert(WG_NoPause(2, options) && !WG_NoPause(1, options));

@@ -13,7 +13,7 @@ int WG_GDIRun(int argc,char **argv);
 static int launch(int argc,char **argv,int *no_pause)
 {
     wg_launcher_arguments_t options;char error[2048];const char *choice="auto";
-    char **effective;int i,count=0,result=1,automatic,diag,help;
+    char **effective;int i,count=0,result=1,automatic,diag;
     if(!WG_LoadLauncherArguments(argc,argv,&options,error,sizeof(error))) {WG_PrintLauncherError(error);return 1;}
     effective=(char **)calloc((size_t)options.argc+2,sizeof(*effective));
     if(!effective) {WG_FreeLauncherArguments(&options);return 1;}
@@ -24,41 +24,26 @@ static int launch(int argc,char **argv,int *no_pause)
                 WG_PrintLauncherError("--backend requires auto, gdi or sdl1.\n");goto done;
             }
             choice=options.argv[i];
-        } else effective[count++]=options.argv[i];
+        } else if(strcmp(options.argv[i],"--no-config"))effective[count++]=options.argv[i];
     }
     /* Config has already been merged. Backends must not read it a second time. */
     effective[count++]="--no-config";
     *no_pause=WG_NoPause(count,effective);
+    WG_SetLauncherConfigPath(options.config_path);
     automatic=!strcmp(choice,"auto");
     diag=WG_CommandLineDiagnosticsRequested(count,effective);
-    help=WG_CommandLineHelpRequested(count,effective);
-    if(help || diag) {
-        printf("Compiled backends:");
-#ifdef WG_HAVE_SDL1
-        printf(" sdl1");
+#if defined(WG_HAVE_GDI) && defined(WG_HAVE_SDL1)
+    WG_SetVideoInfo("gdi sdl1",choice,NULL);
+#elif defined(WG_HAVE_GDI)
+    WG_SetVideoInfo("gdi",choice,NULL);
+#else
+    WG_SetVideoInfo("sdl1",choice,NULL);
 #endif
-#ifdef WG_HAVE_GDI
-        printf(" gdi");
-#endif
-        printf("\nAuto preference: SDL1, then GDI (compiled backends only)\n");
-        printf("--backend auto|gdi|sdl1 selects the complete video/input/PCM host.\n");
-        if(options.config_path)printf("Launcher config: %s\n",options.config_path);
-    }
-    if(diag) {
-#ifdef WG_HAVE_GDI
-        printf("GDI availability: built in (no SDL dependency)\n");
-#endif
-#ifdef WG_HAVE_SDL1
-        char reason[256];
-        if(WG_SDL1Load(reason,sizeof(reason))) {printf("SDL1 availability: SDL.dll loaded directly; required exports verified\n");WG_SDL1Unload();}
-        else printf("SDL1 availability: %s\n",reason);
-#endif
-    }
 #ifdef WG_HAVE_SDL1
     if(automatic || !strcmp(choice,"sdl1")) {
         char reason[256];
         if(WG_SDL1Load(reason,sizeof(reason))) {
-            printf("Backend: sdl1\n");
+            WG_SetVideoInfo(NULL,"sdl1",NULL);
             result=WG_SDL1Run(count,effective);
             WG_SDL1Unload();
             if(result!=WG_BACKEND_UNAVAILABLE)goto done;
@@ -74,7 +59,7 @@ static int launch(int argc,char **argv,int *no_pause)
 #endif
 #ifdef WG_HAVE_GDI
     if(automatic || !strcmp(choice,"gdi")) {
-        printf("Backend: gdi\n");result=WG_GDIRun(count,effective);goto done;
+        WG_SetVideoInfo(NULL,"gdi",NULL);result=WG_GDIRun(count,effective);goto done;
     }
 #else
     if(!strcmp(choice,"gdi")) {WG_PrintLauncherError("GDI is not compiled into this package.\n");goto done;}

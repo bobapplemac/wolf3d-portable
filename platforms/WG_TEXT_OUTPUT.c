@@ -153,14 +153,14 @@ void WG_WriteWindowsTextScreen(const uint8_t *cells,
     HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD mode;
     CHAR_INFO *characters;
-    CHAR_INFO *prompt = NULL;
     CONSOLE_SCREEN_BUFFER_INFO console_info;
     COORD size;
     COORD origin = { 0, 0 };
     SMALL_RECT rectangle;
-    SHORT prompt_length = 0;
     uint16_t content_rows;
     UINT previous_output_code_page;
+    DWORD cleared;
+    int close_output = 0;
     size_t cell_count;
     size_t index;
 
@@ -172,6 +172,7 @@ void WG_WriteWindowsTextScreen(const uint8_t *cells,
         || !GetConsoleMode(output, &mode))
     {
         (void)WG_AttachParentConsole();
+        close_output = 1;
         output = CreateFile(TEXT("CONOUT$"), GENERIC_READ | GENERIC_WRITE,
                              FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                              OPEN_EXISTING, 0, NULL);
@@ -181,35 +182,24 @@ void WG_WriteWindowsTextScreen(const uint8_t *cells,
         WG_WriteTextScreen(stdout, cells, columns, rows, 0);
         return;
     }
-    if (GetConsoleScreenBufferInfo(output, &console_info)
-        && console_info.dwCursorPosition.X > 0)
+    fflush(stdout);fflush(stderr);
+    if (GetConsoleScreenBufferInfo(output, &console_info))
     {
-        COORD prompt_size;
-        COORD prompt_origin = { 0, 0 };
-        SMALL_RECT prompt_rectangle;
-
-        prompt_length = console_info.dwCursorPosition.X;
-        prompt = (CHAR_INFO *)malloc((size_t)prompt_length * sizeof(*prompt));
-        prompt_size.X = prompt_length;
-        prompt_size.Y = 1;
-        prompt_rectangle.Left = 0;
-        prompt_rectangle.Top = console_info.dwCursorPosition.Y;
-        prompt_rectangle.Right = (SHORT)(prompt_length - 1);
-        prompt_rectangle.Bottom = console_info.dwCursorPosition.Y;
-        if (prompt == NULL
-            || !ReadConsoleOutputA(output, prompt, prompt_size, prompt_origin,
-                                   &prompt_rectangle))
-        {
-            free(prompt);
-            prompt = NULL;
-            prompt_length = 0;
-        }
+        DWORD total = (DWORD)console_info.dwSize.X * (DWORD)console_info.dwSize.Y;
+        SMALL_RECT view = console_info.srWindow;
+        view.Bottom -= view.Top;view.Top = 0;
+        view.Right -= view.Left;view.Left = 0;
+        (void)FillConsoleOutputCharacterA(output, ' ', total, origin, &cleared);
+        (void)FillConsoleOutputAttribute(output, 7, total, origin, &cleared);
+        (void)SetConsoleTextAttribute(output, 7);
+        (void)SetConsoleCursorPosition(output, origin);
+        (void)SetConsoleWindowInfo(output, TRUE, &view);
     }
     cell_count = (size_t)columns * rows;
     characters = (CHAR_INFO *)malloc(cell_count * sizeof(*characters));
     if (characters == NULL)
     {
-        free(prompt);
+        if(close_output)CloseHandle(output);
         return;
     }
     for (index = 0U; index < cell_count; ++index)
@@ -240,22 +230,7 @@ void WG_WriteWindowsTextScreen(const uint8_t *cells,
     {
         origin.Y = (SHORT)(console_info.dwSize.Y - 1);
     }
-    if (prompt != NULL)
-    {
-        COORD prompt_size;
-        COORD prompt_origin = { 0, 0 };
-        SMALL_RECT prompt_rectangle;
 
-        prompt_size.X = prompt_length;
-        prompt_size.Y = 1;
-        prompt_rectangle.Left = 0;
-        prompt_rectangle.Top = origin.Y;
-        prompt_rectangle.Right = (SHORT)(prompt_length - 1);
-        prompt_rectangle.Bottom = origin.Y;
-        (void)WriteConsoleOutputA(output, prompt, prompt_size, prompt_origin,
-                                  &prompt_rectangle);
-        origin.X = prompt_length;
-    }
     (void)SetConsoleCursorPosition(output, origin);
 #ifndef WG_WIN9X
     if (previous_output_code_page != 0U)
@@ -263,7 +238,7 @@ void WG_WriteWindowsTextScreen(const uint8_t *cells,
         (void)SetConsoleOutputCP(previous_output_code_page);
     }
 #endif
-    free(prompt);
+    if(close_output)CloseHandle(output);
 }
 #endif
 

@@ -12,7 +12,7 @@ static LPDIRECTDRAWSURFACE dd_primary,dd_frame;
 static LPDIRECTDRAWCLIPPER dd_clipper;
 static HWND dd_window;
 static DDPIXELFORMAT dd_format;
-static int dd_disabled,dd_announced,dd_software_requested;
+static int dd_disabled,dd_software_requested;
 static const char *dd_reason="not initialized";
 static void dd_close(void)
 {
@@ -22,7 +22,7 @@ static void dd_close(void)
     if(dd_device)IDirectDraw_Release(dd_device);
     dd_frame=dd_primary=NULL;dd_clipper=NULL;dd_device=NULL;
     if(dd_library)FreeLibrary(dd_library);
-    dd_library=NULL;dd_announced=0;
+    dd_library=NULL;
 }
 static DWORD dd_component(unsigned value,DWORD mask)
 {
@@ -121,11 +121,10 @@ static int dd_present(const uint8_t *pixels,const uint8_t *palette,int left,int 
     }
     dd_reason="hardware stretch blit failed";
     if(FAILED(IDirectDrawSurface_Blt(dd_primary,&dst,dd_frame,&source,DDBLT_WAIT,NULL)))goto fail;
-    if(!dd_announced) {fprintf(stdout,"SDL1 scaling: DirectDraw hardware stretch (320x200 upload)\n");dd_announced=1;}
     return 1;
 fail:
     dd_close();dd_disabled=1;
-    fprintf(stdout,"SDL1 scaling: software (%s)\n",dd_reason);
+
     return 0;
 }
 #endif

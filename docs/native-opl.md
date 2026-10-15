@@ -239,40 +239,10 @@ and DBOPL. The engine uses the same 700 Hz music clock for both. Chip recovery
 waits are separate from timestamp scheduling; they should not add to song time
 unless the playback worker cannot keep up.
 
-To collect an opt-in Win2k/XP native timing report, launch from Command Prompt
-in a writable package directory:
-
-```bat
-set WOLF3D_OPL_TIMING=1
-wolf3d.exe --opl adlib --sample-rate 22050
-set WOLF3D_OPL_TIMING=
-```
-
-Leave the same menu song playing for about a minute, then quit normally.
-`OPLTIME.TXT` is appended after each native playback session stops. It records
-elapsed counter time, submitted PCM, last reported device position, late events,
-port-write/query workload and starvation counts. Counters stay in memory during
-playback; tracing adds counter-query overhead and is disabled unless requested.
-A position slightly behind elapsed time can be ordinary buffering/report latency;
-these figures are diagnostic evidence, not an automatic tempo correction.
-
-The Windows worker polls device position at most every 20 ms (50 queries/second),
-while QPC interpolation and event dispatch continue between reports. Timing logs
-also report total and longest **estimated** PCM starvation durations for gaps
-ending at successful refills. These derive from the current timeline anchor;
-they are not hardware underrun measurements and exclude any unrefilled tail at
-shutdown. A zero-duration restart can occur exactly at the published queue end.
-
-For GDI scaling comparisons, repeat with `--windowed --window-scale 1`, `2`,
-and `3`, keeping the song, sample rate and duration the same. Save each run's
-`OPLTIME.TXT` separately. The `Async GDI presentation` block covers the whole
-window lifetime (all music sessions), and includes destination pixel dimensions,
-worker presentation count/total/average/maximum, and pending-frame replacements.
-The worker submits the original indexed framebuffer and palette to
-`StretchDIBits` with `COLORONCOLOR`, leaving scaling to GDI.
-`StretchDIBits + worker GdiFlush` is timed separately. The custom software
-scaler and experimental DIB/DDB paths were removed after hardware comparisons
-did not establish a benefit; the asynchronous worker remains.
+The Windows worker polls device position at most every 20 ms while QPC
+interpolation and event dispatch continue between reports. Temporary OPLTIME
+and GDI timing instrumentation has been removed after hardware validation;
+`--diag` remains the supported diagnostic interface.
 
 Engine/audio production only publishes a small framebuffer snapshot. A single
 pending frame is overwritten by newer frames while the worker is busy, so slow
@@ -280,14 +250,3 @@ presentation drops display frames instead of blocking audio production. All
 scaling and GDI calls run outside the mailbox lock, on a below-normal-priority
 worker. Window destruction joins that worker first. The game engine remains
 single-threaded; this change does not make concurrent engine API calls.
-The existing PCM/OPL timing blocks remain per audio session. Target-machine
-captures are still needed to verify whether driver-level contention persists.
-
-The OPL worker also samples all waveOut header flags independently of the music
-timeline, and submission checks them before refilling. Once playback has started,
-no header still in flight means the driver queue was observed empty. Each transition
-is counted once, with the observed empty duration until refill and the longest gap.
-Durations are sampled lower bounds, not exact hardware-silence measurements;
-short gaps between observations can be missed. An unrefilled shutdown tail is
-marked `open` and excluded from completed durations. These counters distinguish
-observed driver-queue exhaustion from the earlier timeline-derived estimates.

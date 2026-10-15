@@ -6,6 +6,8 @@
 #include "WG_SDL1_FUNCTIONS.inc"
 #undef WG_SDL1_FUNCTION
 #ifndef WG_SDL1_NO_ALIASES
+#define SDL_GL_GetAttribute wg_SDL_GL_GetAttribute
+#define SDL_GL_LoadLibrary wg_SDL_GL_LoadLibrary
 #define SDL_GL_SetAttribute wg_SDL_GL_SetAttribute
 #define SDL_GL_GetProcAddress wg_SDL_GL_GetProcAddress
 #define SDL_GL_SwapBuffers wg_SDL_GL_SwapBuffers

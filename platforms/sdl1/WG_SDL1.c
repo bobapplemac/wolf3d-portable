@@ -52,6 +52,8 @@ static int16_t pcm[WG_QUEUE_FRAMES * 2U];
 static size_t pcm_read, pcm_count, pcm_limit;
 static unsigned pcm_channels;
 static int pcm_open;
+static int sdl_diagnostics;
+static char sdl_report[2048];
 static SDL_Surface *screen;
 static SDL_Surface *software_frame;
 static int scale = 2, fullscreen, mouse = 1, joy = 1, capture, focused = 1;
@@ -92,7 +94,6 @@ static int start_video_with_fallback(const char *driver,int (*start)(const char 
 {
     if(start(driver))return 1;
     if(strcmp(driver,"directx"))return 0;
-    fprintf(stdout,"SDL1 video: DirectDraw unavailable; trying windib\n");
     return start("windib");
 }
 #endif
@@ -147,7 +148,14 @@ static int video(int width, int height)
     want_gl=render_choice!=2;
 #endif
     gl_close();
+    if(want_gl && gl_library_path && !gl_library_loaded) {
+      if(SDL_GL_LoadLibrary(gl_library_path)<0) {
+        fprintf(stderr,"SDL1 OpenGL library %s: %s\n",gl_library_path,SDL_GetError());return 0;
+      }
+      gl_library_loaded=1;
+    }
     if(want_gl) {
+        SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL,gl_acceleration);
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
         SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,0);
         render_flags=SDL_OPENGL;
@@ -183,7 +191,6 @@ static int video(int width, int height)
         gl_close();
         if(render_choice==0) {
             int saved=render_choice,ok;
-            fprintf(stdout,"SDL1 OpenGL unavailable; trying software surfaces\n");
             render_choice=2;ok=video(width,height);render_choice=saved;return ok;
         }
         fprintf(stderr,"SDL1 OpenGL initialization failed: %s\n",SDL_GetError());
@@ -242,7 +249,7 @@ static void shutdown_host(void)
     dd_close();
     if(!WG_DisplayRestore(&display_mode,1))fprintf(stderr,"SDL1: could not restore desktop display mode\n");
 #endif
-    gl_close();SDL_Quit(); screen=NULL;
+    gl_close();SDL_Quit(); screen=NULL;gl_library_loaded=0;
 #ifdef _WIN32
     borderless_active=windowed_rect_valid=0;
 #endif
@@ -256,13 +263,17 @@ static int try_video_driver(const char *driver)
     sprintf(environment,"SDL_VIDEODRIVER=%s",driver);SDL_putenv(environment);
     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER)<0) {SDL_Quit();return 0;}
     if(!video(320*scale,240*scale)) {shutdown_host();return 0;}
-    fprintf(stdout,"SDL1 video: %s\n",driver);
     return 1;
 }
 #endif
 static int init(void)
 {
     unsigned i;
+#ifndef _WIN32
+    static char software_env[]="LIBGL_ALWAYS_SOFTWARE=1";
+    static char hardware_env[]="LIBGL_ALWAYS_SOFTWARE=0";
+    if(gl_acceleration>=0)SDL_putenv(gl_acceleration?hardware_env:software_env);
+#endif
 #ifdef _WIN32
     /* Copy before SDL_putenv replaces the environment backing store. */
     char driver[64];const char *requested=requested_video_driver();
@@ -277,6 +288,21 @@ static int init(void)
     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) {fprintf(stderr,"SDL 1.2 initialization: %s\n",SDL_GetError());return 0;}
     if(!video(320*scale,240*scale)) { shutdown_host(); return 0; }
 #endif
+    if(sdl_diagnostics) {
+        char driver[64];const char *presentation="SDL software surfaces";
+        SDL_VideoDriverName(driver,sizeof(driver));
+#ifdef _WIN32
+        if(!gl_active && dd_open())presentation="DirectDraw hardware stretch";
+#endif
+        snprintf(sdl_report,sizeof(sdl_report),"  SDL video driver: %s\n  Presentation: %s\n%s",
+            driver,gl_active?"OpenGL":presentation,gl_active?gl_report:"");
+#ifdef _WIN32
+        if(!gl_active && !dd_device) {
+            size_t used=strlen(sdl_report);
+            snprintf(sdl_report+used,sizeof(sdl_report)-used,"  Surface fallback: %s\n",dd_reason);
+        }
+#endif
+    }
     SDL_WM_SetCaption("wolf3d", "wolf3d");
     SDL_EnableKeyRepeat(0,0);
     memset(keys,0,sizeof(keys));
@@ -516,13 +542,23 @@ static int run_main(int argc,char **argv)
     if(!WG_LoadLauncherArguments(argc,argv,&launcher,problem,sizeof(problem))) {WG_PrintLauncherError(problem);return 1;}
     argc=launcher.argc;argv=launcher.argv;
     if(WG_CommandLineHelpRequested(argc,argv)) {
-        WG_PrintCommandLineHelp(argv[0],"SDL 1.2 options:\n  --window-scale N     Initial 4:3 window scale (1-4; default 2)\n  --fullscreen         Start in the selected fullscreen mode\n  --windowed           Windowed mode (default)\n",WG_FULLSCREEN_HELP "F11 toggles fullscreen.\n" WG_SDL1_VIDEO_HELP "  --sdl-render auto|opengl|surface  Presentation (default auto)\n" WG_SDL1_OPL_NOTE "\n");
+        WG_SetVideoInfo("sdl1","sdl1",NULL);
+        WG_PrintCommandLineHelp(argv[0],"SDL 1.2 options:\n  --window-scale N     Initial 4:3 window scale (1-4; default 2)\n  --fullscreen         Start in the selected fullscreen mode\n  --windowed           Windowed mode (default)\n",WG_FULLSCREEN_HELP "F11 toggles fullscreen.\n" WG_SDL1_VIDEO_HELP "  --sdl-render auto|opengl|surface  Presentation (default auto)\n  --gl-acceleration auto|hardware|software  Require OpenGL with this acceleration\n  --gl-library FILE     Load this OpenGL implementation (implies opengl)\n" WG_SDL1_OPL_NOTE "\n");
         WG_FreeLauncherArguments(&launcher);return 0;
     }
     for(i=1;i<argc;++i) {
         int option=WG_FullscreenOption(&fullscreen_options,argv[i],i+1<argc?argv[i+1]:NULL);
         if(option<0) {error(WG_FULLSCREEN_ERROR);WG_FreeLauncherArguments(&launcher);return 1;}
         if(option) {++i;continue;}
+        if(!strcmp(argv[i],"--gl-acceleration")) {
+            if(++i>=argc || !set_gl_acceleration(argv[i])) {error("--gl-acceleration requires auto, hardware or software");WG_FreeLauncherArguments(&launcher);return 1;}
+            render_choice=1;continue;
+        }
+        if(!strcmp(argv[i],"--gl-library")) {
+            if(++i>=argc || !argv[i][0]) {error("--gl-library requires a DLL/shared-library path");WG_FreeLauncherArguments(&launcher);return 1;}
+            if(strlen(argv[i])>=sizeof(gl_library_storage)) {error("OpenGL library path is too long");WG_FreeLauncherArguments(&launcher);return 1;}
+            strcpy(gl_library_storage,argv[i]);gl_library_path=gl_library_storage;render_choice=1;continue;
+        }
         if(!strcmp(argv[i],"--sdl-render")) {
             if(++i>=argc || !set_renderer(argv[i])) {error("--sdl-render requires auto, opengl or surface");WG_FreeLauncherArguments(&launcher);return 1;}
         }
@@ -545,15 +581,20 @@ static int run_main(int argc,char **argv)
             scale=argv[i][0]-'0';
         }
     }
+    if((gl_library_path || gl_acceleration>=0) && render_choice!=1) {
+        error("--gl-library and --gl-acceleration require --sdl-render opengl");WG_FreeLauncherArguments(&launcher);return 1;
+    }
     if(!WG_InstallPlatform()) {WG_FreeLauncherArguments(&launcher);return 1;}
-    if(WG_CommandLineDiagnosticsRequested(argc,argv)) {
+    sdl_diagnostics=WG_CommandLineDiagnosticsRequested(argc,argv);
+    if(sdl_diagnostics) {
 #ifdef _WIN32
         ok=ui_init();
 #else
         ok=init();
 #endif
         if(!ok) {HOST_SHUTDOWN();WG_FreeLauncherArguments(&launcher);return 1;}
-        ok=WG_PrintDiagnostics(argc,argv,launcher.config_path,"  SDL 1.2 host: platform SDL video and PCM; physical validation pending\n  " WG_SDL1_OPL_NOTE "\n");
+        WG_SetVideoInfo("sdl1","sdl1",sdl_report);
+        ok=WG_PrintDiagnostics(argc,argv,launcher.config_path,"  SDL 1.2 host: platform SDL video and PCM\n  " WG_SDL1_OPL_NOTE "\n");
         HOST_SHUTDOWN();WG_FreeLauncherArguments(&launcher);return ok?0:1;
     }
     if(!WG_PrepareGameArguments(argc,argv,&game,problem,sizeof(problem))) {WG_PrintLauncherError(problem);WG_FreeLauncherArguments(&launcher);return 1;}

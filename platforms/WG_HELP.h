@@ -18,6 +18,8 @@ typedef struct wg_launcher_arguments
     char *config_path;
 } wg_launcher_arguments_t;
 
+void WG_SetLauncherConfigPath(const char *path);
+void WG_SetVideoInfo(const char *compiled, const char *selected, const char *details);
 int WG_CommandLineHelpRequested(int argc, char **argv);
 int WG_CommandLineDiagnosticsRequested(int argc, char **argv);
 void WG_PrintCommandLineHelp(const char *program,

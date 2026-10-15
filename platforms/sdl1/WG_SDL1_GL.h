@@ -27,7 +27,19 @@
 WG_GL_FUNCTIONS(WG_GL_DECLARE)
 #undef WG_GL_DECLARE
 /* 0=auto, 1=OpenGL (strict), 2=surface. */
-static int render_choice,gl_active;
+static int render_choice,gl_active,gl_acceleration=-1;
+static const char *gl_library_path;
+static char gl_library_storage[32768];
+static int gl_library_loaded;
+static char gl_report[1024];
+static int set_gl_acceleration(const char *value)
+{
+    if(!strcmp(value,"auto"))gl_acceleration=-1;
+    else if(!strcmp(value,"hardware"))gl_acceleration=1;
+    else if(!strcmp(value,"software"))gl_acceleration=0;
+    else return 0;
+    return 1;
+}
 static GLuint gl_texture;
 static unsigned char gl_pixels[320*200*3];
 static int set_renderer(const char *value)
@@ -58,18 +70,26 @@ static void gl_close(void)
 }
 static int gl_open(void)
 {
-    const char *renderer;GLint maximum=0;void *address;
+    const char *renderer;GLint maximum=0;void *address;int acceleration=-1,software;
 #define WG_GL_LOAD(result,name,args) \
     address=SDL_GL_GetProcAddress("gl" #name); \
-    if(!address) {fprintf(stderr,"SDL1 OpenGL: missing gl%s\n",#name);return 0;} \
+    if(!address) {if(render_choice==1)fprintf(stderr,"SDL1 OpenGL: missing gl%s\n",#name);return 0;} \
     memcpy(&wg_gl##name,&address,sizeof(wg_gl##name));
     WG_GL_FUNCTIONS(WG_GL_LOAD)
 #undef WG_GL_LOAD
     renderer=(const char *)wg_glGetString(GL_RENDERER);
-    fprintf(stdout,"SDL1 OpenGL: vendor=%s; renderer=%s; version=%s\n",
-        wg_glGetString(GL_VENDOR),renderer?renderer:"unknown",wg_glGetString(GL_VERSION));
-    fprintf(stdout,"SDL1 OpenGL implementation: %s\n",
-        gl_software_renderer(renderer)?"software":"hardware or unclassified");
+    (void)SDL_GL_GetAttribute(SDL_GL_ACCELERATED_VISUAL,&acceleration);
+    software=gl_software_renderer(renderer) || acceleration==0;
+    if((gl_acceleration==0 && !software) || (gl_acceleration==1 && (software || acceleration!=1))) {
+        fprintf(stderr,"SDL1 OpenGL: requested %s rendering is unavailable (renderer: %s)\n",
+            gl_acceleration==0?"software":"hardware",renderer?renderer:"unknown");return 0;
+    }
+    snprintf(gl_report,sizeof(gl_report),
+        "  GL library: %s\n  GL acceleration requested: %s\n  GL vendor: %s\n  GL renderer: %s\n  GL version: %s\n  GL acceleration: %s\n  GL filtering: nearest-neighbor\n",
+        gl_library_path?gl_library_path:"system default",
+        gl_acceleration<0?"auto":gl_acceleration?"hardware":"software",
+        wg_glGetString(GL_VENDOR),renderer?renderer:"unknown",wg_glGetString(GL_VERSION),
+        software?"software":acceleration==1?"hardware":"unknown");
     wg_glGetIntegerv(GL_MAX_TEXTURE_SIZE,&maximum);
     if(maximum<512)return 0;
     wg_glGenTextures(1,&gl_texture);wg_glBindTexture(GL_TEXTURE_2D,gl_texture);
@@ -86,7 +106,6 @@ static int gl_open(void)
     wg_glMatrixMode(GL_PROJECTION);wg_glLoadIdentity();
     wg_glMatrixMode(GL_MODELVIEW);wg_glLoadIdentity();
     wg_glClearColor(0,0,0,1);gl_active=1;
-    fprintf(stdout,"SDL1 presentation: OpenGL 1.1, nearest-neighbor scaling\n");
     return 1;
 }
 static void gl_present(const uint8_t *pixels,const uint8_t *palette,int left,int top,int w,int h,int height)

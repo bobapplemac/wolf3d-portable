@@ -894,6 +894,14 @@ static LRESULT CALLBACK wg_window_proc(HWND window, UINT message,
 
 #include "WG_GDI_PRESENTER.h"
 
+static int WG_Win32InitFailure(const char *stage)
+{
+    char message[256];
+    sprintf(message, "GDI: %s failed (Windows error %lu).\n", stage, (unsigned long)GetLastError());
+    WG_PrintLauncherError(message);
+    return 0;
+}
+
 static int WG_Win32Init(void)
 {
 #ifndef WG_LEGACY_WIN32
@@ -920,7 +928,7 @@ static int WG_Win32Init(void)
 
     if (!RegisterClass(&window_class) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
     {
-        return 0;
+        return WG_Win32InitFailure("RegisterClass");
     }
 
     rectangle.left = 0;
@@ -945,7 +953,7 @@ static int WG_Win32Init(void)
                                 NULL, NULL, instance, NULL);
     if (wg_window == NULL)
     {
-        return 0;
+        return WG_Win32InitFailure("CreateWindowEx");
     }
 
     memset(cursor_and_mask, 0xff, sizeof(cursor_and_mask));
@@ -954,6 +962,7 @@ static int WG_Win32Init(void)
                                    cursor_and_mask, cursor_xor_mask);
     if (wg_blank_cursor == NULL)
     {
+        (void)WG_Win32InitFailure("CreateCursor");
         DestroyWindow(wg_window);
         wg_window = NULL;
         return 0;
@@ -1006,6 +1015,7 @@ static int WG_Win32Init(void)
         return 0;
     }
     if(!WG_PresenterStart(wg_window)) {
+        (void)WG_Win32InitFailure("presentation worker startup");
         DestroyWindow(wg_window);wg_window=NULL;
         DestroyCursor(wg_blank_cursor);wg_blank_cursor=NULL;
         return 0;
@@ -1441,6 +1451,7 @@ static void WG_Win32DiagnosticReport(char *report, size_t report_size)
     UINT joystick;
     JOYINFO info;
 
+    printf("GDI diagnostic probe: legacy joysticks\n"); fflush(stdout);
     for (joystick = 0U; joystick < joyGetNumDevs(); ++joystick)
     {
         if (joyGetPos(joystick, &info) == JOYERR_NOERROR)
@@ -1448,6 +1459,7 @@ static void WG_Win32DiagnosticReport(char *report, size_t report_size)
             ++joystick_count;
         }
     }
+    printf("GDI diagnostic probe: XInput\n"); fflush(stdout);
     wg_load_xinput();
     if (wg_xinput_get_state != NULL)
     {
@@ -1470,6 +1482,7 @@ static void WG_Win32DiagnosticReport(char *report, size_t report_size)
         wg_xinput_module = NULL;
         wg_xinput_get_state = NULL;
     }
+    printf("GDI diagnostic probe: display and waveOut\n"); fflush(stdout);
     (void)report_size;
     (void)sprintf(report,
         "  Video: %d x %d desktop, %d monitor(s)\n"
@@ -1526,6 +1539,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
 
     if (!WG_InstallPlatform())
     {
+        WG_PrintLauncherError("GDI: engine rejected the platform interface. Replace the complete package, including wolf3d.dll.\n");
         return 1;
     }
 

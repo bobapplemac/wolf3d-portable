@@ -42,7 +42,7 @@ case ",$backends," in
     cp "$sdk/SDL-1.2.15/include/"* "$sdk/include/SDL/"
     cp "$sdk/SDL-1.2.15/lib/x86/SDL.dll" "$dist_dir/SDL.dll"
     cp "$sdk/SDL-1.2.15/COPYING.txt" "$dist_dir/DOCS/LICENSES/SDL1.TXT"
-    # SDL's public ABI uses four-byte enums. Its SDK predates Watcom stdint.h.
+    # The SDK predates Watcom stdint.h; SDL ABI settings are scoped in WG_SDL1_HEADERS.h.
     sed -i 's/defined(__GNUC__) || defined(__DMC__)/defined(__GNUC__) || defined(__DMC__) || defined(__WATCOMC__)/' "$sdk/include/SDL/SDL_config_win32.h"
     sources="$sources sdl1/WG_SDL1 sdl1/WG_SDL1_DYNAMIC"
     defines="$defines -dWG_HAVE_SDL1=1 -dWG_SDL1_DYNAMIC=1"
@@ -53,11 +53,19 @@ objects=""
 for source in $sources; do
     echo "Open Watcom C: platforms/$source.c"
     object="$build_dir/objects/$(basename "$source").obj"
-    wcc386 -zq -bt=nt -5r -ei -ox -fr -w4 -we $defines $includes \
+    wcc386 -zq -bt=nt -5r -ox -fr -w4 -we $defines $includes \
         -i="$WATCOM/h/nt" -i="$root/lib/wolf3d/include" -i="$root/platforms" \
         -fo="$object" "$root/platforms/$source.c"
     objects="${objects:+$objects,}$object"
 done
+case ",$backends," in
+ *,sdl1,*)
+    wcc386 -zq -bt=nt -5r -ox -fr -w4 -we $includes \
+        -i="$WATCOM/h/nt" -i="$root/lib/wolf3d/include" \
+        -fo="$build_dir/objects/WG_SDL1_ABI.obj" "$root/tests/WG_SDL1_WATCOM_ABI_TEST.c"
+    wlink system nt option quiet name "$build_dir/WG_SDL1_ABI.EXE" file "$build_dir/objects/WG_SDL1_ABI.obj"
+    ;;
+esac
 wlink system nt option quiet name "$dist_dir/WOLF3D.EXE" file "$objects" \
     library "$library_dist/WOLF3D.LIB,user32.lib,gdi32.lib,winmm.lib,shell32.lib"
 

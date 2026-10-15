@@ -42,6 +42,7 @@ static int ui_init(void)
     InitializeCriticalSection(&ui_lock);
     ui_ready=CreateEvent(NULL,FALSE,FALSE,NULL);ui_wake=CreateEvent(NULL,FALSE,FALSE,NULL);
     ui_thread=(ui_ready && ui_wake)?CreateThread(NULL,0,ui_run,NULL,0,NULL):NULL;
+    if(!ui_thread) fprintf(stderr,"SDL1: cannot create video worker (Windows error %lu).\n",(unsigned long)GetLastError());
     if(ui_thread) {
         WaitForSingleObject(ui_ready,INFINITE);
         if(ui_ok) {SetThreadPriority(ui_thread,THREAD_PRIORITY_BELOW_NORMAL);return 1;}

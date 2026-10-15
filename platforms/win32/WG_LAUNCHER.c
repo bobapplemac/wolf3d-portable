@@ -1,7 +1,7 @@
 #if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
 #define _CRT_SECURE_NO_WARNINGS
 #endif
-/* Win2k combined host. GDI is linked in; SDL1 and its dependencies are optional. */
+/* Windows entry point for the compiled, runtime-selectable video hosts. */
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,8 +14,12 @@
 #ifdef WG_WIN9X
 int main(int argc, char **argv)
 {
+    char module_path[MAX_PATH];
+    DWORD length = GetModuleFileNameA(NULL, module_path, sizeof(module_path));
     int owned = WG_OwnConsole(), no_pause = WG_NoPause(argc, argv);
-    int result = WG_LaunchBackends(argc, argv, &no_pause);
+    int result;
+    if (argc > 0 && length > 0 && length < sizeof(module_path)) argv[0] = module_path;
+    result = WG_LaunchBackends(argc, argv, &no_pause);
     WG_PauseConsole(owned, no_pause);
     return result;
 }

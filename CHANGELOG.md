@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased - Win9x startup ABI correction
+
+- Limit SDL1's four-byte enum/packing requirements to its SDK headers; retain
+  the Open Watcom engine DLL's enum ABI in the host. Add compile-time layout
+  checks and a return-value regression executable to the Win9x build.
+- Restore the Win9x executable-path normalization and report platform/worker
+  startup failures. GDI diagnostics identify hardware-probe stages.
+
 ## Unreleased - unified video backend packages
 
 - Build one executable with a selectable subset of GDI/SDL1 on legacy Windows,

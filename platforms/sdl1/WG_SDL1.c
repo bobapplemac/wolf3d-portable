@@ -6,7 +6,7 @@
 #include "../WG_FULLSCREEN.h"
 static wg_fullscreen_options_t fullscreen_options={-1,0,0};
 #include "../WG_TEXT_OUTPUT.h"
-#include <SDL/SDL.h>
+#include "WG_SDL1_HEADERS.h"
 #ifdef WG_SDL1_DYNAMIC
 #include "WG_SDL1_DYNAMIC.h"
 #define WG_InstallPlatform WG_SDL1InstallPlatform
@@ -598,7 +598,7 @@ static int run_main(int argc,char **argv)
     if((gl_library_path || gl_acceleration>=0) && render_choice!=1) {
         error("--gl-library and --gl-acceleration require --sdl-render opengl");WG_FreeLauncherArguments(&launcher);return 1;
     }
-    if(!WG_InstallPlatform()) {WG_FreeLauncherArguments(&launcher);return 1;}
+    if(!WG_InstallPlatform()) {WG_PrintLauncherError("SDL1: engine rejected the platform interface. Replace the complete package, including wolf3d.dll.\n");WG_FreeLauncherArguments(&launcher);return 1;}
     sdl_diagnostics=WG_CommandLineDiagnosticsRequested(argc,argv);
     if(sdl_diagnostics) {
 #ifdef _WIN32

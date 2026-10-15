@@ -13,7 +13,7 @@ int WG_GDIRun(int argc,char **argv);
 static int launch(int argc,char **argv,int *no_pause)
 {
     wg_launcher_arguments_t options;char error[2048];const char *choice="auto";
-    char **effective;int i,count=0,result=1,automatic,diag;
+    char **effective;int i,count=0,result=1,automatic;
     if(!WG_LoadLauncherArguments(argc,argv,&options,error,sizeof(error))) {WG_PrintLauncherError(error);return 1;}
     effective=(char **)calloc((size_t)options.argc+2,sizeof(*effective));
     if(!effective) {WG_FreeLauncherArguments(&options);return 1;}
@@ -31,7 +31,6 @@ static int launch(int argc,char **argv,int *no_pause)
     *no_pause=WG_NoPause(count,effective);
     WG_SetLauncherConfigPath(options.config_path);
     automatic=!strcmp(choice,"auto");
-    diag=WG_CommandLineDiagnosticsRequested(count,effective);
 #if defined(WG_HAVE_GDI) && defined(WG_HAVE_SDL1)
     WG_SetVideoInfo("gdi sdl1",choice,NULL);
 #elif defined(WG_HAVE_GDI)
@@ -48,9 +47,9 @@ static int launch(int argc,char **argv,int *no_pause)
             WG_SDL1Unload();
             if(result!=WG_BACKEND_UNAVAILABLE)goto done;
             if(!automatic) {WG_PrintLauncherError("SDL1 video initialization failed.\n");result=1;goto done;}
-            if(diag)printf("SDL1 video initialization failed; trying GDI.\n");
+            if(WG_CommandLineDiagnosticsRequested(count,effective))printf("SDL1 video initialization failed; trying GDI.\n");
         } else {
-            if(diag)printf("SDL1 unavailable: %s\n",reason);
+            if(WG_CommandLineDiagnosticsRequested(count,effective))printf("SDL1 unavailable: %s\n",reason);
             if(!automatic) {snprintf(error,sizeof(error),"%s\nKeep a compatible SDL.dll beside wolf3d.exe.\n",reason);WG_PrintLauncherError(error);goto done;}
         }
     }

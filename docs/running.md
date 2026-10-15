@@ -72,6 +72,44 @@ wolf3d.exe --fullscreen --fullscreen-mode display --fullscreen-resolution 640x48
 wolf3d.exe --fullscreen --fullscreen-mode borderless
 ```
 
+## Windows PCM audio output
+
+`--audio-output auto|sdl|waveout` chooses PCM output independently of Windows
+video. It also works in `wolf3d.ini`; command-line values override the config.
+It does not select an OPL synthesizer (`--opl` does that).
+
+| Choice | With SDL1 or SDL3 video | With GDI video |
+| --- | --- | --- |
+| `auto` (default) | Try SDL audio; use shared waveOut if SDL PCM initialization fails | Use shared waveOut |
+| `sdl` | Require SDL audio; no waveOut fallback | Error: unavailable with GDI |
+| `waveout` | Require the shared GDI waveOut implementation | Require shared waveOut |
+
+Auto fallback is initialization-only: it does not benchmark playback or switch
+outputs during a game. Explicit choices never fall back. SDL1 normally selects
+DirectSound on Windows, but `SDL_AUDIODRIVER` can override that. SDL3 selects its
+own platform driver (often WASAPI on modern Windows); `sdl` does not specifically
+mean DirectSound. `--diag` shows requested/selected outputs and the actual driver.
+
+Shared waveOut uses four 512-frame buffers: about 93 ms of queued PCM at
+22050 Hz, excluding device/OS latency. This is distinct from SDL1's internal
+waveOut driver, which may use quarter-second callbacks and add much more latency.
+It works with SDL rendering without using SDL's audio subsystem. Native AdLib
+still uses the OPL chip; Windows SDL hosts schedule writes against the selected
+PCM output. No additional DLL is required for shared waveOut.
+
+```text
+WOLF3D.EXE --backend sdl1 --audio-output waveout --opl adlib
+wolf3d.exe --backend sdl3 --audio-output auto
+```
+
+On the Win98/Yamaha OPL3-SAx test machine, setting the system DirectSound
+acceleration slider to None caused slow SDL1 playback; restoring Full fixed it.
+If another game needs None, explicitly select shared waveOut here. Auto does
+not detect this performance problem. The new shared SDL/waveOut combination
+still needs confirmation on that physical machine.
+
+Linux SDL hosts support `auto`/`sdl`; Windows waveOut is unavailable there.
+
 ## Diagnostics and saves
 
 Run any launcher with `--diag` to print the loaded config, effective arguments,

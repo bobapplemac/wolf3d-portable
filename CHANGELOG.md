@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased - independent Windows PCM output
+
+- Share GDI's four-by-512-frame waveOut transport with Windows SDL1 and SDL3.
+  Add `--audio-output auto|sdl|waveout` and launcher-config support. SDL auto
+  prefers SDL audio and falls back only on initialization failure; explicit
+  selection is strict. GDI supports auto/waveout, and diagnostics report the
+  requested and selected output plus the actual driver.
+- Keep native OPL scheduling tied to the selected PCM transport. Test shared
+  buffer lifecycle, failures, submission ordering, option validation, SDL
+  preference, strict choices and automatic fallback.
+- Record confirmation that restoring Full DirectSound acceleration fixed the
+  Win98 test machine's slow SDL playback. Shared waveOut provides an alternative
+  with smaller buffers when acceleration must remain None.
+
 ## Unreleased - DirectSound fragment-size diagnostics
 
 - Extend SDL1 `--diag` with silent 512/1024/2048/4096-frame probes when

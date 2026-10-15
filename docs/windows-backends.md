@@ -69,6 +69,11 @@ from its bundle/search path. Every required export is checked; partial loads are
 rolled back. No SDL library is a mandatory executable import. Engine and any
 compiled OPL libraries remain required. Linux KMS/fbdev retains libdrm and ALSA.
 
+PCM output is independently selectable on Windows SDL1/SDL3 hosts with
+`--audio-output auto|sdl|waveout`. GDI and SDL share the same Windows waveOut
+transport; see [audio selection](running.md#windows-pcm-audio-output) for strict
+selection, initialization-only fallback and diagnostic behavior.
+
 ## Package identity and validation
 
 Video backend names and `_modular` are absent from distribution folder names.

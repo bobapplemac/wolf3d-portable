@@ -127,16 +127,10 @@ static int16_t wg_joystick_y[WOLF3D_MAX_JOYSTICKS];
 static uint32_t wg_joystick_buttons[WOLF3D_MAX_JOYSTICKS];
 static uint8_t wg_joystick_connected[WOLF3D_MAX_JOYSTICKS];
 
-#define WG_PCM_BUFFER_COUNT 4U
-#define WG_PCM_BUFFER_FRAMES 512U
+#include "WG_WAVEOUT.h"
+static wg_waveout_t wg_pcm;
 #define WG_DISPLAY_ASPECT_WIDTH 4
 #define WG_DISPLAY_ASPECT_HEIGHT 3
-static HWAVEOUT wg_wave_out;
-static WAVEHDR wg_wave_headers[WG_PCM_BUFFER_COUNT];
-static int16_t wg_wave_samples[WG_PCM_BUFFER_COUNT]
-                              [WG_PCM_BUFFER_FRAMES * 2U];
-static uint8_t wg_wave_used[WG_PCM_BUFFER_COUNT];
-
 static void WG_Win32PCMShutdown(void);
 #ifdef WG_INPOUT32
 static uint32_t wg_wave_rate;
@@ -145,7 +139,7 @@ static int WG_NTAdLibInit(void)
 {
     if (WG_DOSAdLibInit())
     {
-        if (WG_OPLPlaybackStart(wg_wave_out, wg_wave_rate))
+        if (WG_OPLPlaybackStart(wg_pcm.handle, wg_wave_rate))
         {
             wg_native_playback = 1; return 1;
         }
@@ -1241,151 +1235,44 @@ static void WG_Win32PresentText(const uint8_t *cells, uint16_t columns,
     wg_text_rows = rows;
 }
 
-static int WG_Win32PCMInit(uint32_t sample_rate, uint16_t channels)
+static int WG_Win32PCMInit(uint32_t sample_rate,uint16_t channels)
 {
-    WAVEFORMATEX format;
-    size_t index;
-
-    if (sample_rate == 0U || channels != 2U)
-    {
-        return 0;
-    }
     WG_Win32PCMShutdown();
-    ZeroMemory(&format, sizeof(format));
-    format.wFormatTag = WAVE_FORMAT_PCM;
-    format.nChannels = channels;
-    format.nSamplesPerSec = sample_rate;
-    format.wBitsPerSample = 16U;
-    format.nBlockAlign = (WORD)(channels * sizeof(int16_t));
-    format.nAvgBytesPerSec = sample_rate * format.nBlockAlign;
-    if (waveOutOpen(&wg_wave_out, WAVE_MAPPER, &format, 0, 0,
-                    CALLBACK_NULL) != MMSYSERR_NOERROR)
-    {
-        wg_wave_out = NULL;
-        return 0;
-    }
-    ZeroMemory(wg_wave_headers, sizeof(wg_wave_headers));
-    ZeroMemory(wg_wave_used, sizeof(wg_wave_used));
-    for (index = 0U; index < WG_PCM_BUFFER_COUNT; ++index)
-    {
-        wg_wave_headers[index].lpData = (LPSTR)wg_wave_samples[index];
-        wg_wave_headers[index].dwBufferLength =
-            (DWORD)sizeof(wg_wave_samples[index]);
-        if (waveOutPrepareHeader(wg_wave_out, &wg_wave_headers[index],
-                                 sizeof(wg_wave_headers[index]))
-            != MMSYSERR_NOERROR)
-        {
-            WG_Win32PCMShutdown();
-            return 0;
-        }
+    if (!WG_WaveOutOpen(&wg_pcm,sample_rate,channels)) {
+        WG_SetAudioOutputInfo(NULL,"unavailable","waveOut initialization failed");return 0;
     }
 #ifdef WG_INPOUT32
-    wg_wave_rate = sample_rate;
+    wg_wave_rate=sample_rate;
 #endif
+    WG_SetAudioOutputInfo(NULL,"waveout","Windows waveOut (4 x 512 frames)");
     return 1;
 }
-
-static int WG_Win32PCMInitEx(const wolf3d_pcm_format_t *requested,
-                             wolf3d_pcm_format_t *obtained)
+static int WG_Win32PCMInitEx(const wolf3d_pcm_format_t *requested,wolf3d_pcm_format_t *obtained)
 {
-    if (requested == NULL || obtained == NULL
-        || requested->bits_per_sample != 16U
-        || !WG_Win32PCMInit(requested->sample_rate, requested->channels))
-    {
-        return 0;
-    }
-    *obtained = *requested;
-    return 1;
+    if (!requested || !obtained || requested->bits_per_sample!=16U
+        || !WG_Win32PCMInit(requested->sample_rate,requested->channels)) return 0;
+    *obtained=*requested;return 1;
 }
-
 static void WG_Win32PCMShutdown(void)
 {
-    size_t index;
-
 #ifdef WG_INPOUT32
-    WG_OPLPlaybackStop(); wg_native_playback = 0; wg_wave_rate = 0;
+    WG_OPLPlaybackStop();wg_native_playback=0;wg_wave_rate=0;
 #endif
-    if (wg_wave_out == NULL)
-    {
-        return;
-    }
-    waveOutReset(wg_wave_out);
-    for (index = 0U; index < WG_PCM_BUFFER_COUNT; ++index)
-    {
-        if ((wg_wave_headers[index].dwFlags & WHDR_PREPARED) != 0U)
-        {
-            waveOutUnprepareHeader(wg_wave_out, &wg_wave_headers[index],
-                                   sizeof(wg_wave_headers[index]));
-        }
-    }
-    waveOutClose(wg_wave_out);
-    wg_wave_out = NULL;
-    ZeroMemory(wg_wave_headers, sizeof(wg_wave_headers));
-    ZeroMemory(wg_wave_used, sizeof(wg_wave_used));
+    WG_WaveOutClose(&wg_pcm);
 }
-
-static size_t WG_Win32PCMWritableFrames(void)
+static size_t WG_Win32PCMWritableFrames(void) {return WG_WaveOutWritable(&wg_pcm);}
+static int WG_Win32PCMSubmit(const int16_t *samples,size_t frames)
 {
-    size_t index;
-
-    if (wg_wave_out == NULL)
-    {
-        return 0U;
-    }
-    for (index = 0U; index < WG_PCM_BUFFER_COUNT; ++index)
-    {
-        if (wg_wave_used[index]
-            && (wg_wave_headers[index].dwFlags & WHDR_DONE) != 0U)
-        {
-            wg_wave_used[index] = 0U;
-        }
-        if (!wg_wave_used[index])
-        {
-            return WG_PCM_BUFFER_FRAMES;
-        }
-    }
-    return 0U;
-}
-
-static int WG_Win32PCMSubmit(const int16_t *samples, size_t frame_count)
-{
-    size_t index;
-
-    if (wg_wave_out == NULL || samples == NULL || frame_count == 0U
-        || frame_count > WG_PCM_BUFFER_FRAMES)
-    {
-        return 0;
-    }
-    for (index = 0U; index < WG_PCM_BUFFER_COUNT; ++index)
-    {
-        if (!wg_wave_used[index])
-        {
-            size_t byte_count = frame_count * 2U * sizeof(*samples);
-
-            memcpy(wg_wave_samples[index], samples, byte_count);
-            wg_wave_headers[index].dwBufferLength = (DWORD)byte_count;
-            wg_wave_headers[index].dwFlags &= ~WHDR_DONE;
+    wg_waveout_submit_t publish=NULL;
+    int ok;
 #ifdef WG_INPOUT32
-            if (wg_native_playback)
-            {
-                if (!WG_OPLPlaybackSubmit(samples, frame_count, &wg_wave_headers[index]))
-                {
-                    WG_PrintLauncherError(WG_InpOutStatus()); return 0;
-                }
-            }
-            else
+    if (wg_native_playback) publish=WG_OPLPlaybackSubmit;
 #endif
-            if (waveOutWrite(wg_wave_out, &wg_wave_headers[index],
-                             sizeof(wg_wave_headers[index]))
-                != MMSYSERR_NOERROR)
-            {
-                return 0;
-            }
-            wg_wave_used[index] = 1U;
-            return 1;
-        }
-    }
-    return 0;
+    ok=WG_WaveOutSubmit(&wg_pcm,samples,frames,publish);
+#ifdef WG_INPOUT32
+    if(!ok && publish)WG_PrintLauncherError(WG_InpOutStatus());
+#endif
+    return ok;
 }
 
 int WG_InstallPlatform(void)
@@ -1609,6 +1496,9 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     }
     launcher_argc = launcher_arguments.argc;
     launcher_argv = launcher_arguments.argv;
+    if(WG_ParseAudioOutput(launcher_argc,launcher_argv,0,1)<0) {
+        WG_FreeLauncherArguments(&launcher_arguments);return 1;
+    }
 #if (defined(WG_WIN9X) || defined(WG_CONSOLE_WIN32)) && !defined(WG_BACKEND_EMBEDDED)
     no_pause = WG_NoPause(launcher_argc, launcher_argv);
 #endif

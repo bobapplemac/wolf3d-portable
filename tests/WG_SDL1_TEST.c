@@ -29,9 +29,11 @@ static int (SDLCALL *test_push_event)(SDL_Event *);
 /* Negotiate the large callbacks used by legacy waveOut, using real SDL audio
    storage/callback setup instead of changing the host's queue limits directly. */
 static Uint16 test_audio_samples;
+static int test_audio_fail,test_audio_opens;
 static int SDLCALL test_open_audio(SDL_AudioSpec *wanted,SDL_AudioSpec *obtained)
 {
     SDL_AudioSpec request=*wanted;
+    ++test_audio_opens;if(test_audio_fail)return -1;
     if(test_audio_samples)request.samples=test_audio_samples;
     return SDL_OpenAudio(&request,obtained);
 }
@@ -96,6 +98,9 @@ static void checked_gl_swap(void)
 }
 #undef SDL_GL_SwapBuffers
 #define SDL_GL_SwapBuffers checked_gl_swap
+#ifdef _WIN32
+#include "WG_WAVEOUT_MOCK.h"
+#endif
 #include "../platforms/sdl1/WG_SDL1.c"
 #ifdef _WIN32
 static int native_text_calls,driver_attempts,accept_directx,accept_windib;
@@ -284,6 +289,26 @@ int main(void)
         }
         test_audio_samples=0;
     }
+#ifdef _WIN32
+    {
+        int opens=test_audio_opens;
+        unsigned waves=wave_opens;
+        pcm_output_choice=2;
+        assert(pcm_init_ex(&request,&got) && pcm_output_wave && test_audio_opens==opens);
+        assert(writable()==512 && submit(samples,8));pcm_shutdown();
+        assert(wave_opens==waves+1 && !pcm_wave.handle);
+        test_audio_fail=1;pcm_output_choice=1;waves=wave_opens;
+        assert(!pcm_init_ex(&request,&got) && wave_opens==waves); /* Strict SDL. */
+        pcm_output_choice=0;
+        assert(pcm_init_ex(&request,&got) && pcm_output_wave);pcm_shutdown(); /* Auto fallback. */
+        wave_fail_open=1;pcm_output_choice=2;opens=test_audio_opens;
+        assert(!pcm_init_ex(&request,&got) && test_audio_opens==opens); /* Strict waveOut. */
+        pcm_output_choice=0;assert(!pcm_init_ex(&request,&got)); /* Both unavailable. */
+        test_audio_fail=wave_fail_open=0;
+        waves=wave_opens;assert(pcm_init_ex(&request,&got) && !pcm_output_wave && wave_opens==waves);
+        pcm_shutdown();
+    }
+#endif
     {
         char report[4096]="";
         test_report_dsound=1; /* Run the size sweep against deterministic dummy audio. */

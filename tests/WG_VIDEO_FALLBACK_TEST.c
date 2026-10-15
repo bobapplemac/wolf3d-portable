@@ -28,6 +28,16 @@ static int launch_choice(const char *choice)
 }
 int main(void)
 {
+    {
+        char *args[]={"test","--audio-output","waveout","--audio-output","sdl"};
+        assert(WG_ParseAudioOutput(1,args,1,1)==0);
+        assert(WG_ParseAudioOutput(3,args,1,1)==2);
+        assert(WG_ParseAudioOutput(5,args,1,1)==1); /* Last value wins, including CLI after config. */
+        assert(WG_ParseAudioOutput(5,args,0,1)<0);
+        assert(WG_ParseAudioOutput(3,args,1,0)<0);
+        assert(WG_ParseAudioOutput(2,args,1,1)<0);
+        args[2]="invalid";assert(WG_ParseAudioOutput(3,args,1,1)<0);
+    }
     available = 0;
     assert(launch_choice("auto") == 0 && gdi_runs == 1 && !sdl_runs && !unloads);
     assert(launch_choice("sdl3") == 1 && !gdi_runs);

@@ -2,6 +2,9 @@
 #define WG_HELP_H
 
 #include <stddef.h>
+/* 0 auto, 1 SDL, 2 shared Windows waveOut; -1 invalid/unsupported. */
+int WG_ParseAudioOutput(int argc,char **argv,int sdl,int waveout);
+void WG_SetAudioOutputInfo(const char *requested,const char *selected,const char *driver);
 int WG_ValidateSingleBackend(int argc, char **argv, const char *backend);
 
 typedef struct wg_game_arguments

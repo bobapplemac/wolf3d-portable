@@ -30,6 +30,13 @@ static wg_fullscreen_options_t fullscreen_options={-1,0,0};
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include "../win32/WG_WAVEOUT.h"
+static wg_waveout_t wg_pcm_wave;
+static int wg_output_wave;
+#endif
+static int wg_output_choice;
+static void WG_SDLPCMShutdown(void);
 #define WG_SDL_LOGICAL_WIDTH 320
 #define WG_SDL_LOGICAL_HEIGHT 240
 #define WG_SDL_AUDIO_TARGET_FRAMES 2048U
@@ -50,13 +57,13 @@ static void WG_SDLNativeShutdown(void)
 }
 static int WG_SDLNativeInit(void)
 {
-    if (!wg_audio || !wg_audio_rate) return 0;
+    if ((!wg_audio && !wg_output_wave) || !wg_audio_rate) return 0;
     if (!WG_DOSAdLibInit())
     {
         wolf3d_SetOPLError(WG_InpOutStatus());
         return 0;
     }
-    if (!WG_OPLPlaybackStart(NULL, wg_audio_rate))
+    if (!WG_OPLPlaybackStart(wg_output_wave?wg_pcm_wave.handle:NULL, wg_audio_rate))
     {
         WG_DOSAdLibShutdown();
         wolf3d_SetOPLError("native OPL playback worker could not start");
@@ -353,7 +360,7 @@ static int wg_video_init_failed;
 static int WG_SDLInit(void)
 {
     wg_video_init_failed = 1;
-    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD))
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
     {
         fprintf(stderr, "wolf3d: SDL initialization failed: %s\n",
                 SDL_GetError());
@@ -450,11 +457,7 @@ static void WG_SDLShutdown(void)
 {
     SDL_RemoveEventWatch(WG_SDLModalFrameWatch, NULL);
     wg_sdl_modal_window_id = 0;
-    if (wg_audio != NULL)
-    {
-        SDL_DestroyAudioStream(wg_audio);
-        wg_audio = NULL;
-    }
+    WG_SDLPCMShutdown();
     WG_SDLCloseGamepads();
     SDL_DestroyTexture(wg_texture);
     SDL_DestroyRenderer(wg_renderer);
@@ -686,13 +689,14 @@ static void WG_SDLPresentText(const uint8_t *cells, uint16_t columns,
     wg_text_rows = rows;
 }
 
-static int WG_SDLPCMInit(uint32_t sample_rate, uint16_t channels)
+static int WG_SDLPCMInitSDL(uint32_t sample_rate, uint16_t channels)
 {
     SDL_AudioSpec specification;
     if (channels == 0U || channels > 2U)
     {
         return 0;
     }
+    if(!SDL_InitSubSystem(SDL_INIT_AUDIO))return 0;
     specification.format = SDL_AUDIO_S16;
     specification.channels = (int)channels;
     specification.freq = (int)sample_rate;
@@ -700,8 +704,6 @@ static int WG_SDLPCMInit(uint32_t sample_rate, uint16_t channels)
                                          &specification, NULL, NULL);
     if (wg_audio == NULL || !SDL_ResumeAudioStreamDevice(wg_audio))
     {
-        fprintf(stderr, "wolf3d: SDL audio unavailable: %s\n",
-                SDL_GetError());
         if (wg_audio != NULL)
         {
             SDL_DestroyAudioStream(wg_audio);
@@ -709,11 +711,28 @@ static int WG_SDLPCMInit(uint32_t sample_rate, uint16_t channels)
         }
         return 0;
     }
+    WG_SetAudioOutputInfo(NULL,"sdl",SDL_GetCurrentAudioDriver());
     wg_audio_channels = channels;
 #ifdef WG_INPOUT32
     wg_audio_rate = sample_rate;
 #endif
     return 1;
+}
+
+static int WG_SDLPCMInit(uint32_t rate,uint16_t channels)
+{
+    WG_SDLPCMShutdown();
+    if(wg_output_choice!=2 && WG_SDLPCMInitSDL(rate,channels))return 1;
+#ifdef _WIN32
+    if(wg_output_choice!=1 && WG_WaveOutOpen(&wg_pcm_wave,rate,channels)) {
+        wg_output_wave=1;wg_audio_channels=channels;
+#ifdef WG_INPOUT32
+        wg_audio_rate=rate;
+#endif
+        WG_SetAudioOutputInfo(NULL,"waveout","Windows waveOut (4 x 512 frames)");return 1;
+    }
+#endif
+    WG_SetAudioOutputInfo(NULL,"unavailable","PCM initialization failed");return 0;
 }
 
 static int WG_SDLPCMInitEx(const wolf3d_pcm_format_t *requested,
@@ -742,6 +761,9 @@ static void WG_SDLPCMShutdown(void)
     WG_LinuxOPLShutdown();
     WG_LinuxOPLSetRate(0);
 #endif
+#ifdef _WIN32
+    WG_WaveOutClose(&wg_pcm_wave);wg_output_wave=0;
+#endif
     if (wg_audio != NULL)
     {
         SDL_DestroyAudioStream(wg_audio);
@@ -753,6 +775,9 @@ static size_t WG_SDLPCMWritableFrames(void)
 {
     int queued;
     size_t frames;
+#ifdef _WIN32
+    if(wg_output_wave)return WG_WaveOutWritable(&wg_pcm_wave);
+#endif
     if (wg_audio == NULL || wg_audio_channels == 0U)
     {
         return 0U;
@@ -770,6 +795,15 @@ static size_t WG_SDLPCMWritableFrames(void)
 static int WG_SDLPCMSubmit(const int16_t *samples, size_t frame_count)
 {
     size_t bytes;
+#ifdef _WIN32
+    if(wg_output_wave) {
+        wg_waveout_submit_t publish=NULL;
+#ifdef WG_INPOUT32
+        if(wg_native_opl)publish=WG_OPLPlaybackSubmit;
+#endif
+        return WG_WaveOutSubmit(&wg_pcm_wave,samples,frame_count,publish);
+    }
+#endif
     if (wg_audio == NULL || samples == NULL || frame_count == 0U)
     {
         return 0;
@@ -879,7 +913,7 @@ static void WG_SDLDiagnosticReport(char *report, size_t report_size)
         displays = SDL_GetDisplays(&display_count);
         mouse_present = SDL_HasMouse() ? 1 : 0;
     }
-    if (SDL_InitSubSystem(SDL_INIT_AUDIO))
+    if (wg_output_choice!=2 && SDL_InitSubSystem(SDL_INIT_AUDIO))
     {
         audio_driver = SDL_GetCurrentAudioDriver();
         audio_devices = SDL_GetAudioPlaybackDevices(&audio_count);
@@ -920,6 +954,12 @@ static int WG_SDLRunMain(int argc, char **argv)
     }
     argc = launcher_arguments.argc;
     argv = launcher_arguments.argv;
+#ifdef _WIN32
+    wg_output_choice=WG_ParseAudioOutput(argc,argv,1,1);
+#else
+    wg_output_choice=WG_ParseAudioOutput(argc,argv,1,0);
+#endif
+    if(wg_output_choice<0) {WG_FreeLauncherArguments(&launcher_arguments);return 1;}
 
     for (index = 1; index < argc; ++index)
     {
@@ -974,7 +1014,7 @@ static int WG_SDLRunMain(int argc, char **argv)
         char report[1024];
 
         WG_SDLDiagnosticReport(report, sizeof(report));
-        (void)SDL_InitSubSystem(SDL_INIT_AUDIO);
+        /* PCM output is initialized by the audio probe below. */
         (void)WG_InstallPlatform();
         WG_SetVideoInfo("sdl3","sdl3",NULL);
         result = WG_PrintDiagnostics(argc, argv, launcher_arguments.config_path,

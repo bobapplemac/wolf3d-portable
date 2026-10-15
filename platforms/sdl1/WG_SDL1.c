@@ -14,6 +14,9 @@ static wg_fullscreen_options_t fullscreen_options={-1,0,0};
 #ifdef _WIN32
 #undef main
 #include <windows.h>
+#include "../win32/WG_WAVEOUT.h"
+static wg_waveout_t pcm_wave;
+static int pcm_output_wave;
 static void ui_shutdown(void);
 #define HOST_SHUTDOWN ui_shutdown
 #else
@@ -27,10 +30,11 @@ static void ui_shutdown(void);
 #include "../win32/WG_OPL_PLAYBACK.h"
 #include "../dos/WG_DOS_ADLIB.h"
 static unsigned pcm_rate;
-static void opl_shutdown(void) {WG_OPLPlaybackStop();WG_DOSAdLibShutdown();}
+static int pcm_native;
+static void opl_shutdown(void) {WG_OPLPlaybackStop();pcm_native=0;WG_DOSAdLibShutdown();}
 static int opl_init(void) {
     if(!WG_DOSAdLibInit())return 0;
-    if(WG_OPLPlaybackStart(NULL,pcm_rate))return 1;
+    if(WG_OPLPlaybackStart(pcm_output_wave?pcm_wave.handle:NULL,pcm_rate)) {pcm_native=1;return 1;}
     WG_DOSAdLibShutdown();return 0;
 }
 #endif
@@ -61,6 +65,7 @@ static int16_t *pcm;
 static size_t pcm_read, pcm_count, pcm_limit, pcm_capacity;
 static unsigned pcm_channels;
 static int pcm_open;
+static int pcm_output_choice;
 static unsigned pcm_callback_samples;
 /* Only collected by the short silent --diag probe, under SDL's audio lock. */
 static int pcm_probe_active;
@@ -259,6 +264,9 @@ static void pcm_shutdown(void)
 #ifdef WG_LINUX_OPL
     WG_LinuxOPLShutdown();
     WG_LinuxOPLSetRate(0);
+#endif
+#ifdef _WIN32
+    WG_WaveOutClose(&pcm_wave);pcm_output_wave=0;
 #endif
     if (pcm_open) SDL_CloseAudio();
     free(pcm);pcm=NULL;pcm_capacity=pcm_limit=0;
@@ -481,7 +489,7 @@ static int pcm_init_buffered(const wolf3d_pcm_format_t *request,wolf3d_pcm_forma
     if(SDL_InitSubSystem(SDL_INIT_AUDIO)<0) return 0;
     memset(&want,0,sizeof(want));want.freq=(int)request->sample_rate;
     want.channels=(Uint8)request->channels;want.format=AUDIO_S16SYS;want.samples=callback_frames;want.callback=audio_callback;
-    if(SDL_OpenAudio(&want,&got)<0) {error(SDL_GetError());return 0;}
+    if(SDL_OpenAudio(&want,&got)<0) return 0;
     pcm_open=1;
     if(got.format!=AUDIO_S16SYS || got.channels<1 || got.channels>2 || got.freq<=0 || !got.samples) {pcm_shutdown();return 0;}
     pcm_channels=got.channels;pcm_limit=(size_t)got.freq/10;
@@ -493,7 +501,7 @@ static int pcm_init_buffered(const wolf3d_pcm_format_t *request,wolf3d_pcm_forma
     pcm_capacity=pcm_limit>WG_QUEUE_FRAMES?pcm_limit:WG_QUEUE_FRAMES;
     if(pcm_capacity>((size_t)-1)/pcm_channels/sizeof(*pcm)) {pcm_shutdown();return 0;}
     pcm=(int16_t *)malloc(pcm_capacity*pcm_channels*sizeof(*pcm));
-    if(!pcm) {pcm_shutdown();error("SDL1: cannot allocate PCM queue");return 0;}
+    if(!pcm) {pcm_shutdown();return 0;}
     obtained->sample_rate=(uint32_t)got.freq;obtained->channels=got.channels;obtained->bits_per_sample=16;
 #ifdef WG_LINUX_OPL
     WG_LinuxOPLSetRate(obtained->sample_rate);
@@ -501,11 +509,30 @@ static int pcm_init_buffered(const wolf3d_pcm_format_t *request,wolf3d_pcm_forma
 #ifdef WG_SDL1_OPL_WORKER
     pcm_rate=obtained->sample_rate;
 #endif
+    {
+        char driver[64];
+        if(!SDL_AudioDriverName(driver,sizeof(driver)))strcpy(driver,"unknown SDL driver");
+        WG_SetAudioOutputInfo(NULL,"sdl",driver);
+    }
     SDL_PauseAudio(0);return 1;
 }
 static int pcm_init_ex(const wolf3d_pcm_format_t *request,wolf3d_pcm_format_t *obtained)
 {
-    return pcm_init_buffered(request,obtained,512);
+    if(pcm_output_choice!=2 && pcm_init_buffered(request,obtained,512))return 1;
+#ifdef _WIN32
+    if(pcm_output_choice!=1) {
+        pcm_shutdown();
+        if(request && obtained && request->bits_per_sample==16
+            && WG_WaveOutOpen(&pcm_wave,request->sample_rate,request->channels)) {
+            pcm_output_wave=1;*obtained=*request;
+#ifdef WG_SDL1_OPL_WORKER
+            pcm_rate=request->sample_rate;
+#endif
+            WG_SetAudioOutputInfo(NULL,"waveout","Windows waveOut (4 x 512 frames)");return 1;
+        }
+    }
+#endif
+    WG_SetAudioOutputInfo(NULL,"unavailable","PCM initialization failed");return 0;
 }
 static int pcm_init(uint32_t rate,uint16_t channels)
 {
@@ -514,12 +541,26 @@ static int pcm_init(uint32_t rate,uint16_t channels)
 }
 static size_t writable(void)
 {
-    size_t result;if(!pcm_open)return 0;
+    size_t result;
+#ifdef _WIN32
+    if(pcm_output_wave)return WG_WaveOutWritable(&pcm_wave);
+#endif
+    if(!pcm_open)return 0;
     SDL_LockAudio();result=pcm_limit-pcm_count;SDL_UnlockAudio();return result;
 }
 static int submit(const int16_t *samples,size_t frames)
 {
-    size_t write,first;if(!pcm_open || !samples)return 0;
+    size_t write,first;
+#ifdef _WIN32
+    if(pcm_output_wave) {
+        wg_waveout_submit_t publish=NULL;
+#ifdef WG_SDL1_OPL_WORKER
+        if(pcm_native)publish=WG_OPLPlaybackSubmit;
+#endif
+        return WG_WaveOutSubmit(&pcm_wave,samples,frames,publish);
+    }
+#endif
+    if(!pcm_open || !samples)return 0;
     SDL_LockAudio();
     if(frames>pcm_limit-pcm_count) {SDL_UnlockAudio();return 0;}
     write=pcm_read+pcm_count;if(write>=pcm_capacity)write-=pcm_capacity;
@@ -546,7 +587,7 @@ static int pcm_probe_buffer(char *report,size_t capacity,Uint16 callback_frames)
     unsigned long calls,requested,consumed,polls=0;
     size_t used=strlen(report);
     if(!pcm_init_buffered(&request,&got,callback_frames)) {
-        snprintf(report+used,capacity-used,"  SDL PCM probe: initialization failed: %s\n",SDL_GetError());return 0;
+        snprintf(report+used,capacity-used,"  SDL PCM probe: initialization failed: %s\n",SDL_GetError());return -1;
     }
     if(!SDL_AudioDriverName(driver,sizeof(driver)))strcpy(driver,"unknown");
     SDL_LockAudio();
@@ -585,7 +626,20 @@ static int pcm_probe_buffer(char *report,size_t capacity,Uint16 callback_frames)
 }
 static void pcm_diagnostics(char *report,size_t capacity)
 {
-    if(pcm_probe_buffer(report,capacity,512)) {
+    int probe=0;
+#ifdef _WIN32
+    if(pcm_output_choice!=2)probe=pcm_probe_buffer(report,capacity,512);
+    if(pcm_output_choice==2 || (probe<0 && pcm_output_choice==0)) {
+        wolf3d_pcm_format_t request={22050,2,16},got;
+        size_t used=strlen(report);
+        int ok=pcm_init_ex(&request,&got);
+        snprintf(report+used,capacity-used,"  Shared waveOut probe: %s; 4 x 512 frames at 22050 Hz\n",ok?"initialized":"failed");
+        pcm_shutdown();return;
+    }
+#else
+    probe=pcm_probe_buffer(report,capacity,512);
+#endif
+    if(probe==1) {
         /* Compare fragment sizes without changing the gameplay default. */
         (void)pcm_probe_buffer(report,capacity,1024);
         (void)pcm_probe_buffer(report,capacity,2048);
@@ -646,6 +700,12 @@ static int run_main(int argc,char **argv)
     char problem[2048];int i,ok;wolf3d_result_t result;
     if(!WG_LoadLauncherArguments(argc,argv,&launcher,problem,sizeof(problem))) {WG_PrintLauncherError(problem);return 1;}
     argc=launcher.argc;argv=launcher.argv;
+#ifdef _WIN32
+    pcm_output_choice=WG_ParseAudioOutput(argc,argv,1,1);
+#else
+    pcm_output_choice=WG_ParseAudioOutput(argc,argv,1,0);
+#endif
+    if(pcm_output_choice<0) {WG_FreeLauncherArguments(&launcher);return 1;}
 #ifndef WG_SDL1_DYNAMIC
     if(!WG_ValidateSingleBackend(argc,argv,"sdl1")) {WG_FreeLauncherArguments(&launcher);return 1;}
 #endif

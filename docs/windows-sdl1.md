@@ -194,6 +194,12 @@ cursor below it; it no longer guesses and redraws an existing shell prompt.
 
 ## PCM timing diagnostics
 
+`--audio-output waveout` shares GDI's four-buffer Windows implementation,
+not SDL's internal waveOut driver. See [output selection and fallback](running.md#windows-pcm-audio-output).
+`auto` defaults to SDL and falls back only on initialization failure. With
+shared waveOut selected, diagnostics report its initialization and buffer
+geometry instead of running the SDL callback sweep below.
+
 `WOLF3D.EXE --backend sdl1 --diag --no-pause` includes a two-second silent PCM
 probe at 22050 Hz. With DirectSound it compares requested buffer sizes of
 512, 1024, 2048 and 4096 frames (about eight seconds total). It reports the
@@ -216,8 +222,10 @@ The host sizes its PCM queue from SDL's obtained callback size, retaining room
 for at least two callbacks. This is necessary for legacy waveOut drivers that
 replace the requested 512-frame buffer with a quarter-second buffer. Buffering
 can add latency; the fix prevents oversized callbacks from discarding most of
-each interval as silence. Win9x DirectSound pacing is still being investigated
-on the Yamaha OPL3-SAx test system; use explicit waveOut for that comparison.
+each interval as silence. Slow Win9x DirectSound playback on the Yamaha
+OPL3-SAx test system was traced to the system acceleration slider set to None;
+Full restores correct performance. Shared `--audio-output waveout` is an
+alternative when that global setting must remain None.
 
 To investigate DirectSound, use `set SDL_AUDIODRIVER=dsound`, then run the
 diagnostic command above. Compare the requested frame rates across the four

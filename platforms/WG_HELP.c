@@ -10,6 +10,30 @@
 #include <stdlib.h>
 #include <string.h>
 
+static char wg_audio_requested[16],wg_audio_selected[16],wg_audio_driver[128];
+void WG_SetAudioOutputInfo(const char *requested,const char *selected,const char *driver)
+{
+    if(requested) {strncpy(wg_audio_requested,requested,sizeof(wg_audio_requested)-1);wg_audio_requested[sizeof(wg_audio_requested)-1]=0;}
+    if(selected) {strncpy(wg_audio_selected,selected,sizeof(wg_audio_selected)-1);wg_audio_selected[sizeof(wg_audio_selected)-1]=0;}
+    if(driver) {strncpy(wg_audio_driver,driver,sizeof(wg_audio_driver)-1);wg_audio_driver[sizeof(wg_audio_driver)-1]=0;}
+}
+int WG_ParseAudioOutput(int argc,char **argv,int sdl,int waveout)
+{
+    int i,choice=0;const char *name="auto";
+    for(i=1;i<argc;++i) if(!strcmp(argv[i],"--audio-output")) {
+        if(++i==argc) {WG_PrintLauncherError("--audio-output requires auto, sdl or waveout.\n");return -1;}
+        name=argv[i];
+        if(!strcmp(name,"auto"))choice=0;
+        else if(!strcmp(name,"sdl"))choice=1;
+        else if(!strcmp(name,"waveout"))choice=2;
+        else {WG_PrintLauncherError("--audio-output requires auto, sdl or waveout.\n");return -1;}
+    }
+    if((choice==1 && !sdl) || (choice==2 && !waveout)) {
+        WG_PrintLauncherError("Requested audio output is unavailable with this video backend/platform.\n");return -1;
+    }
+    WG_SetAudioOutputInfo(name,"not initialized","");return choice;
+}
+
 #ifdef _WIN32
 #include <windows.h>
 
@@ -228,6 +252,11 @@ void WG_PrintCommandLineHelp(const char *program,
 #endif
     if(wg_compiled_video)
         WG_HelpWrite(&stream,"  --backend NAME      auto, or a compiled video backend listed above\n\n");
+#ifdef _WIN32
+    WG_HelpWrite(&stream,"  --audio-output auto|sdl|waveout  PCM output (default auto)\n"
+                             "      SDL video: auto prefers SDL, falls back to waveOut on init failure.\n"
+                             "      GDI video: auto/waveout use shared Windows waveOut; sdl unavailable.\n\n");
+#endif
     WG_HelpWrite(&stream,"\n");
     WG_HelpWrite(&stream, wolf3d_GetCommandLineHelp());
     if (host_options != NULL && host_options[0] != '\0')
@@ -1552,6 +1581,9 @@ int WG_PrintDiagnostics(int argc, char **argv,
     WG_HelpWrite(&stream, host_report != NULL ? host_report
                                                : "  No host report available.\n");
     WG_HelpWrite(&stream, "\nAudio runtime\n");
+    if(wg_audio_requested[0]) {
+        WG_HelpWrite(&stream,"  Requested PCM output: ");WG_HelpWrite(&stream,wg_audio_requested);WG_HelpWrite(&stream,"\n");
+    }
     {
         const char *requested = NULL;
         const char *rate = "auto";
@@ -1568,6 +1600,10 @@ int WG_PrintDiagnostics(int argc, char **argv,
         WG_HelpWrite(&stream, "\n");
         audio_ok = wolf3d_ProbeAudio(requested, rate);
         WG_HelpWrite(&stream, wolf3d_GetAudioDiagnostics());
+        if(wg_audio_requested[0]) {
+            WG_HelpWrite(&stream,"  Selected PCM output: ");WG_HelpWrite(&stream,wg_audio_selected);
+            WG_HelpWrite(&stream,"; ");WG_HelpWrite(&stream,wg_audio_driver);WG_HelpWrite(&stream,"\n");
+        }
         if (!audio_ok)
         {
             WG_HelpWrite(&stream, "  Audio initialization failed: ");

@@ -57,8 +57,8 @@ static int opl_init(void) {
 
 /* The engine stays on the main thread. SDL's callback only drains this queue. */
 #define WG_QUEUE_FRAMES 16384U
-static int16_t pcm[WG_QUEUE_FRAMES * 2U];
-static size_t pcm_read, pcm_count, pcm_limit;
+static int16_t *pcm;
+static size_t pcm_read, pcm_count, pcm_limit, pcm_capacity;
 static unsigned pcm_channels;
 static int pcm_open;
 static unsigned pcm_callback_samples;
@@ -261,6 +261,7 @@ static void pcm_shutdown(void)
     WG_LinuxOPLSetRate(0);
 #endif
     if (pcm_open) SDL_CloseAudio();
+    free(pcm);pcm=NULL;pcm_capacity=pcm_limit=0;
     pcm_open = 0; pcm_count = pcm_read = 0;
 }
 static void shutdown_host(void)
@@ -459,16 +460,18 @@ static int poll_event(wolf3d_event_t *out)
 }
 static void SDLCALL audio_callback(void *unused, Uint8 *stream, int length)
 {
-    size_t frames=(size_t)length/(pcm_channels*sizeof(int16_t)),i,c;
+    size_t frames=(size_t)length/(pcm_channels*sizeof(int16_t)),first;
     int16_t *dst=(int16_t *)stream;
     (void)unused;
     memset(stream,0,(size_t)length);
     if(pcm_probe_active) {++pcm_probe_calls;pcm_probe_requested+=(unsigned long)frames;}
     if(frames>pcm_count) frames=pcm_count;
     if(pcm_probe_active)pcm_probe_consumed+=(unsigned long)frames;
-    for(i=0;i<frames;++i) for(c=0;c<pcm_channels;++c)
-        dst[i*pcm_channels+c]=pcm[((pcm_read+i)%WG_QUEUE_FRAMES)*pcm_channels+c];
-    pcm_read=(pcm_read+frames)%WG_QUEUE_FRAMES;pcm_count-=frames;
+    first=pcm_capacity-pcm_read;if(first>frames)first=frames;
+    memcpy(dst,pcm+pcm_read*pcm_channels,first*pcm_channels*sizeof(*pcm));
+    memcpy(dst+first*pcm_channels,pcm,(frames-first)*pcm_channels*sizeof(*pcm));
+    pcm_read+=frames;if(pcm_read>=pcm_capacity)pcm_read-=pcm_capacity;
+    pcm_count-=frames;
 }
 static int pcm_init_ex(const wolf3d_pcm_format_t *request,wolf3d_pcm_format_t *obtained)
 {
@@ -480,11 +483,17 @@ static int pcm_init_ex(const wolf3d_pcm_format_t *request,wolf3d_pcm_format_t *o
     want.channels=(Uint8)request->channels;want.format=AUDIO_S16SYS;want.samples=512;want.callback=audio_callback;
     if(SDL_OpenAudio(&want,&got)<0) {error(SDL_GetError());return 0;}
     pcm_open=1;
-    if(got.format!=AUDIO_S16SYS || got.channels<1 || got.channels>2 || got.freq<=0) {pcm_shutdown();return 0;}
+    if(got.format!=AUDIO_S16SYS || got.channels<1 || got.channels>2 || got.freq<=0 || !got.samples) {pcm_shutdown();return 0;}
     pcm_channels=got.channels;pcm_limit=(size_t)got.freq/10;
     pcm_callback_samples=got.samples;
     if(pcm_limit<1024) pcm_limit=1024;
-    if(pcm_limit>WG_QUEUE_FRAMES) pcm_limit=WG_QUEUE_FRAMES;
+    /* SDL waveOut can replace our 512-frame request with a quarter-second
+       callback. Keep two negotiated callbacks ready, not just 100 ms. */
+    if(pcm_limit<(size_t)got.samples*2U)pcm_limit=(size_t)got.samples*2U;
+    pcm_capacity=pcm_limit>WG_QUEUE_FRAMES?pcm_limit:WG_QUEUE_FRAMES;
+    if(pcm_capacity>((size_t)-1)/pcm_channels/sizeof(*pcm)) {pcm_shutdown();return 0;}
+    pcm=(int16_t *)malloc(pcm_capacity*pcm_channels*sizeof(*pcm));
+    if(!pcm) {pcm_shutdown();error("SDL1: cannot allocate PCM queue");return 0;}
     obtained->sample_rate=(uint32_t)got.freq;obtained->channels=got.channels;obtained->bits_per_sample=16;
 #ifdef WG_LINUX_OPL
     WG_LinuxOPLSetRate(obtained->sample_rate);
@@ -506,11 +515,13 @@ static size_t writable(void)
 }
 static int submit(const int16_t *samples,size_t frames)
 {
-    size_t i,c;if(!pcm_open || !samples)return 0;
+    size_t write,first;if(!pcm_open || !samples)return 0;
     SDL_LockAudio();
     if(frames>pcm_limit-pcm_count) {SDL_UnlockAudio();return 0;}
-    for(i=0;i<frames;++i) for(c=0;c<pcm_channels;++c)
-        pcm[((pcm_read+pcm_count+i)%WG_QUEUE_FRAMES)*pcm_channels+c]=samples[i*pcm_channels+c];
+    write=pcm_read+pcm_count;if(write>=pcm_capacity)write-=pcm_capacity;
+    first=pcm_capacity-write;if(first>frames)first=frames;
+    memcpy(pcm+write*pcm_channels,samples,first*pcm_channels*sizeof(*pcm));
+    memcpy(pcm,samples+first*pcm_channels,(frames-first)*pcm_channels*sizeof(*pcm));
     pcm_count+=frames;
 #ifdef WG_LINUX_OPL
     /* Publish before unlocking: the callback must not drain unannounced PCM. */
@@ -535,7 +546,7 @@ static void pcm_diagnostics(char *report,size_t capacity)
     }
     if(!SDL_AudioDriverName(driver,sizeof(driver)))strcpy(driver,"unknown");
     SDL_LockAudio();
-    memset(pcm,0,sizeof(pcm));pcm_read=0;pcm_count=pcm_limit;
+    memset(pcm,0,pcm_capacity*pcm_channels*sizeof(*pcm));pcm_read=0;pcm_count=pcm_limit;
     pcm_probe_calls=pcm_probe_requested=pcm_probe_consumed=0;pcm_probe_active=1;
     SDL_UnlockAudio();
     sdl_start=SDL_GetTicks();

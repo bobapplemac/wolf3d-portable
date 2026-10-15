@@ -207,3 +207,9 @@ For a comparison using SDL's waveOut driver, set `SDL_AUDIODRIVER=waveout` in
 the command prompt before launching. The diagnostic driver line confirms the
 selection. Clear the override afterward with `set SDL_AUDIODRIVER=`.
 
+The host sizes its PCM queue from SDL's obtained callback size, retaining room
+for at least two callbacks. This is necessary for legacy waveOut drivers that
+replace the requested 512-frame buffer with a quarter-second buffer. Buffering
+can add latency; the fix prevents oversized callbacks from discarding most of
+each interval as silence. Win9x DirectSound pacing is still being investigated
+on the Yamaha OPL3-SAx test system; use explicit waveOut for that comparison.

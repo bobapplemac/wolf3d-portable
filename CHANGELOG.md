@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - SDL1 negotiated audio queue size
+
+- Size the PCM queue for at least two negotiated SDL callbacks. Legacy waveOut
+  can request quarter-second blocks larger than the previous 100 ms queue,
+  causing repeated underruns and slowing the engine's OPL music schedule.
+- Allocate larger rings when required, copy wrapped audio in contiguous spans,
+  and test 5512/11025-frame callbacks, back-to-back consumption and shutdown.
+  The separately observed slow DirectSound callback pacing remains under investigation.
+
 ## Unreleased - SDL1 PCM timing diagnostics
 
 - Add a two-second silent 22050 Hz PCM probe to SDL1 `--diag`: selected SDL

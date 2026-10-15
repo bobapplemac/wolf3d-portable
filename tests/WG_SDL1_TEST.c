@@ -26,6 +26,17 @@ int WG_LinuxOPLSubmit(size_t frames,uint64_t queued)
 static int (SDLCALL *test_push_event)(SDL_Event *);
 #define SDL_PushEvent test_push_event
 #endif
+/* Negotiate the large callbacks used by legacy waveOut, using real SDL audio
+   storage/callback setup instead of changing the host's queue limits directly. */
+static Uint16 test_audio_samples;
+static int SDLCALL test_open_audio(SDL_AudioSpec *wanted,SDL_AudioSpec *obtained)
+{
+    SDL_AudioSpec request=*wanted;
+    if(test_audio_samples)request.samples=test_audio_samples;
+    return SDL_OpenAudio(&request,obtained);
+}
+#undef SDL_OpenAudio
+#define SDL_OpenAudio test_open_audio
 #ifdef _WIN32
 /* Model SDL1 DirectInput's cursor confinement without trapping the test user's
    actual cursor. Event pumping/teardown can establish a clip after GrabOff. */
@@ -235,6 +246,33 @@ int main(void)
     assert(!mock_active && !mock_rate);
 #endif
     assert(pcm_init_ex(&request,&got));pcm_shutdown();
+    {
+        static const Uint16 callback_sizes[]={5512,11025};
+        unsigned pass;
+        for(pass=0;pass<2;++pass) {
+            size_t frames=callback_sizes[pass],n;
+            int16_t *large_samples=(int16_t *)malloc(frames*2*sizeof(int16_t));
+            int16_t *large_output=(int16_t *)malloc(frames*2*sizeof(int16_t));
+            assert(large_samples && large_output);
+            test_audio_samples=callback_sizes[pass];
+            assert(pcm_init_ex(&request,&got));SDL_PauseAudio(1);
+            assert(pcm_callback_samples==frames && pcm_limit>=2*frames);
+            assert(pcm_capacity>=pcm_limit);
+            /* Cross the end of the allocated ring on the first callback. */
+            pcm_read=pcm_capacity-17;pcm_count=0;
+            for(n=0;n<frames*2;++n)large_samples[n]=(int16_t)(n%30000+1);
+            assert(submit(large_samples,frames));assert(submit(large_samples,frames));
+            pcm_probe_active=1;pcm_probe_requested=pcm_probe_consumed=pcm_probe_calls=0;
+            for(n=0;n<2;++n) {
+                audio_callback(NULL,(Uint8 *)large_output,(int)(frames*2*sizeof(int16_t)));
+                assert(!memcmp(large_samples,large_output,frames*2*sizeof(int16_t)));
+            }
+            assert(!pcm_count && pcm_probe_requested==frames*2 && pcm_probe_consumed==frames*2);
+            pcm_probe_active=0;pcm_shutdown();assert(!pcm && !pcm_capacity);
+            free(large_samples);free(large_output);
+        }
+        test_audio_samples=0;
+    }
     {
         char report[1024]="";
         pcm_diagnostics(report,sizeof(report));

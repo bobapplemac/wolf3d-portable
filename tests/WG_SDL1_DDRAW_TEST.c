@@ -11,6 +11,7 @@
 #include <ddraw.h>
 #include <SDL/SDL.h>
 #include <SDL/SDL_syswm.h>
+#include "../platforms/sdl1/WG_SDL1_DYNAMIC.h"
 #undef main
 static DWORD buffer[200][324];
 static int released,blits,fail_blit,fail_lock,fills;

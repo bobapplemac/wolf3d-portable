@@ -21,16 +21,16 @@ or the local submodule's `lib/wolf3d/docs/support-matrix.md`.
 
 | Desired package | Build host | Command | Staged result |
 | --- | --- | --- | --- |
-| Windows Win32/GDI | Windows | `.\build.ps1 -Wrapper win32` | `dist/wolf3d-portable_<version>_<platform>_<arch>_gdi_<toolchain>/` |
-| Windows SDL3 | Windows with VS2019/2022/2026 or MinGW UCRT64 | `.\build.ps1 -Wrapper sdl3` | `dist/wolf3d-portable_<version>_win10_<arch>_sdl3_<toolchain>/` |
-| Both modern Windows wrappers | Windows with VS2019/2022/2026 or MinGW UCRT64 | `.\build.ps1 -Wrapper all` | Both folders above |
-| Native Linux SDL3 | Linux | `./build.sh` or `make sdl3-release CC=clang` | `dist/wolf3d-portable_<version>_linux-glibc_<arch>_sdl3_<toolchain>/` |
-| Native Linux console | Linux | `make console-release` | `dist/wolf3d-portable_<version>_linux-glibc_<arch>_kms-fbdev_<toolchain>/` |
-| Both native Linux wrappers | Linux | `make releases` | Both native folders |
+| Windows Win32/GDI | Windows | `.\build.ps1 -Wrapper win32` | `dist/wolf3d-portable_<version>_<platform>_<arch>_<toolchain>/` |
+| Windows SDL3 | Windows with VS2019/2022/2026 or MinGW UCRT64 | `.\build.ps1 -Wrapper sdl3` | `dist/wolf3d-portable_<version>_win10_<arch>_<toolchain>/` |
+| Combined modern Windows backends | Windows with VS2019/2022/2026 or MinGW UCRT64 | `.\build.ps1 -Wrapper all` | One package with both compiled backends |
+| Native Linux SDL3 | Linux | `./build.sh` or `make sdl3-release CC=clang` | `dist/wolf3d-portable_<version>_linux-glibc_<arch>_<toolchain>/` |
+| Native Linux console | Linux | `make console-release` | `dist/wolf3d-portable_<version>_linux-glibc_<arch>_<toolchain>/` |
+| Combined native Linux backends | Linux | `make releases` | Both native folders |
 | Portable glibc Linux wrappers | Linux + Docker | `./build.sh` or `make portable` | SDL3 and KMS/fbdev x64 folders audited to glibc 2.28; `LINUX_ARCH=x86` selects i686 |
 | Bundled-musl Linux SDL3 | Linux + Docker | `./build.sh` or `make musl-sdl3` | Relocatable AppDir-style x86-64 folder |
 | Bundled-musl Linux KMS/fbdev | Linux + Docker | `make musl-console` | Relocatable x64 folder; fbdev console runtime confirmed on ajmbuild01; DRM/audio validation remains separate |
-| 32-bit protected-mode DOS | Linux + Docker | `./build.sh` or `make dos` | `dist/wolf3d-portable_<version>_dos32_x86_vga_openwatcom<major>/` |
+| 32-bit protected-mode DOS | Linux + Docker | `./build.sh` or `make dos` | `dist/wolf3d-portable_<version>_dos32_x86_openwatcom<major>/` |
 | Complete Windows cross matrix | Linux + Docker | `./build.sh` or `make windows-cross` | Compiler/OS-labelled Win32 and SDL3 folders under `dist/` |
 
 Run `./build.sh`, `make help`, `.\build.ps1`, or root `build.cmd` without
@@ -68,9 +68,10 @@ for the mapping and the distinction from MSBuild toolset selection.
 | Visual Studio .NET 2002 SP1 | v70 / MSVC 13.00 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Compile/package validated on XP SP3 x86 |
 | Visual C++ 6.0 SP6 | v60 / MSVC 12.00 | x86 | Validated | Not supported | `scripts\windows\legacy\build.cmd` | Game runtime validated on XP SP3 x86 with WL1 and on Windows 11 x64 under WOW64 |
 
-SDL3 is deliberately a modern wrapper. Historical Windows reach belongs to
-the dependency-free Win32/GDI host; the project will not backport SDL3 or add
-SDL1/SDL2 maintenance branches.
+SDL3 serves modern targets; SDL1 serves legacy targets. Each package can include
+GDI plus the appropriate SDL version, or a subset. SDL1 and SDL3 never coexist.
+The SDL1 expansion for older Microsoft compilers needs target-host retesting;
+previous GDI validation does not establish SDL1 gameplay compatibility.
 
 The compiler/toolset, Windows SDK, CRT selection, and imports jointly determine
 the real OS floor. A compiler-labelled package is not advertised for an older
@@ -84,15 +85,15 @@ default; dynamic CRT packages require the matching Microsoft redistributable.
 | `ide/visual-studio/vs2026/wolf3d-portable.sln` | VS2026/v145; Win32 and SDL3; x86/x64; publish configurations stage `dist/` |
 | `ide/visual-studio/vs2022/wolf3d-portable.sln` | VS2022/v143; Win32 and SDL3; x86/x64; publish configurations stage `dist/` |
 | `ide/visual-studio/vs2019/wolf3d-portable.sln` | VS2019/v142; Win32 and SDL3; x86/x64; publish configurations stage `dist/` |
-| `ide/visual-studio/vs2017/wolf3d-portable.sln` | VS2017/v141; Win32 only; x86/x64 |
-| `ide/visual-studio/vs2015/wolf3d-portable.sln` | VS2015/v140 and v140_xp; Win32 only; x86/x64 |
-| `ide/visual-studio/vs2010/`, `vs2012/`, `vs2013/` | Matching native IDE/toolset; Win32 only; x86/x64 |
-| `ide/visual-studio/vs2008/wolf3d-portable.sln` | Native VS2008/v90; Win32 only; x86/x64 |
-| `ide/visual-studio/vs2002/`, `vs2003/`, `vs2005/` | Matching period IDE/compiler; Win32 x86 only |
-| `ide/visual-studio/vc6/wolf3d-portable.dsw` | Native VC6 workspace/project; Win32 x86 only |
+| `ide/visual-studio/vs2017/wolf3d-portable.sln` | VS2017/v141; GDI + optional SDL1; x86/x64 |
+| `ide/visual-studio/vs2015/wolf3d-portable.sln` | VS2015/v140 and v140_xp; GDI + optional SDL1; x86/x64 |
+| `ide/visual-studio/vs2010/`, `vs2012/`, `vs2013/` | Matching native IDE/toolset; GDI + optional SDL1; x86/x64 |
+| `ide/visual-studio/vs2008/wolf3d-portable.sln` | Native VS2008/v90; GDI + optional SDL1; x86/x64 |
+| `ide/visual-studio/vs2002/`, `vs2003/`, `vs2005/` | Matching period IDE/compiler; GDI + optional SDL1, x86 |
+| `ide/visual-studio/vc6/wolf3d-portable.dsw` | Native VC6 workspace/project; GDI + optional SDL1, x86 |
 | Root `build.ps1` | Interactive or scripted selection from VS2008 through VS2026 and MinGW UCRT64; SDL3 for VS2019/2022/2026 and MinGW |
 | Direct CMake presets | Same modern compiler profiles as the dispatcher; useful for automation |
-| `scripts\windows\legacy\build.cmd` | VC6, VS2002, VS2003, VS2005; Win32 x86 only; build or package |
+| `scripts\windows\legacy\build.cmd` | VC6, VS2002, VS2003, VS2005; GDI + optional SDL1, x86; build or package |
 
 ## Linux wrapper/compiler matrix
 
@@ -156,8 +157,11 @@ pending Linux 2.4 and physical original-Pentium runtime confirmation.
 
 Experimental Windows SDL 1.2: see [Windows SDL1](windows-sdl1.md) for the Win2k Docker target, validation limits and GDI comparison switches.
 
-## Modular Win2k pilot
+## Runtime backend selection
 
-The [optional-backend Win2k package](windows-backends.md) supports GDI-only,
-SDL1-only, or combined GDI/SDL1 with runtime selection. All three compile and
-pass PE checks; combined-package physical gameplay validation is pending.
+The [runtime backend contract](windows-backends.md) now applies across the
+matrix. Build flags choose the compiled set; `--backend` selects it at startup.
+Backends share one executable and distribution folder. SDL is optional at load
+time, so native hosts still work if its library is absent. DOS remains VGA-only,
+and RH9 remains SDL1-only. Existing table validation describes the established
+hosts; newly combined legacy/compiler configurations require destination testing.

@@ -3,11 +3,17 @@ wolf3d-portable @PROJECT_VERSION@ - Windows release
 
 This folder contains:
 
-  wolf3d.exe              Win32 video, input, timing, and audio host
+  wolf3d.exe              Windows video, input, timing, and audio host
   wolf3d.dll              Platform-neutral Wolf3D engine
 @W3P_OPL_FILE_LINE@
   README.TXT             Getting started and runtime options
   DOCS/                  Build details, component notices and licenses
+
+Compiled video backends: @W3P_VIDEO_BACKENDS@
+Use --backend auto (default), gdi, or sdl1 to select a compiled host.
+SDL1 builds include SDL.dll. Automatic selection can fall back to GDI if that
+DLL is unavailable; explicit selections report errors instead. --help and
+--diag show the selected host's options and capabilities.
 
 Official packages embed the MSVC runtime, so the Microsoft Visual C++
 Redistributable is not required on the destination system. Custom builds made
@@ -21,7 +27,7 @@ The window aspect-corrects the original 320x200 VGA framebuffer to 4:3.
 Resizing to another shape keeps the game centered at 4:3 with black bars.
 While dragging/resizing the window, gameplay, audio and the internal image
 continue advancing. The visible image refreshes when the drag ends, avoiding
-expensive scaled GDI redraws during movement.
+expensive presentation work during movement.
 Press F11 or Alt+Enter to toggle borderless desktop fullscreen. F11 is handled
 only by the host and will not dismiss an in-game "Press a key" prompt.
 

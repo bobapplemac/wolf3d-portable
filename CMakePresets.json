@@ -131,285 +131,357 @@
     },
     {
       "name": "windows-vs2008-dev-x64", "inherits": "windows-vs2008-base",
-      "binaryDir": "${sourceDir}/build/windows-vs2008-dev-x64", "architecture": "x64"
+      "binaryDir": "${sourceDir}/build/windows-vs2008-dev-x64", "architecture": "x64",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl1" }
     },
     {
       "name": "windows-vs2008-dev-x86", "inherits": "windows-vs2008-base",
-      "binaryDir": "${sourceDir}/build/windows-vs2008-dev-x86", "architecture": "Win32"
+      "binaryDir": "${sourceDir}/build/windows-vs2008-dev-x86", "architecture": "Win32",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl1" }
     },
     {
       "name": "windows-vs2008-release-x64", "inherits": "windows-vs2008-dev-x64",
       "binaryDir": "${sourceDir}/build/windows-vs2008-release-x64",
-      "cacheVariables": { "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2008-release-x86", "inherits": "windows-vs2008-dev-x86",
       "binaryDir": "${sourceDir}/build/windows-vs2008-release-x86",
-      "cacheVariables": { "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2010-dev-x64", "inherits": "windows-vs2010-base",
-      "binaryDir": "${sourceDir}/build/windows-vs2010-dev-x64", "architecture": "x64"
+      "binaryDir": "${sourceDir}/build/windows-vs2010-dev-x64", "architecture": "x64",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl1" }
     },
     {
       "name": "windows-vs2010-dev-x86", "inherits": "windows-vs2010-base",
-      "binaryDir": "${sourceDir}/build/windows-vs2010-dev-x86", "architecture": "Win32"
+      "binaryDir": "${sourceDir}/build/windows-vs2010-dev-x86", "architecture": "Win32",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl1" }
     },
     {
       "name": "windows-vs2010-release-x64", "inherits": "windows-vs2010-dev-x64",
       "binaryDir": "${sourceDir}/build/windows-vs2010-release-x64",
-      "cacheVariables": { "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2010-release-x86", "inherits": "windows-vs2010-dev-x86",
       "binaryDir": "${sourceDir}/build/windows-vs2010-release-x86",
-      "cacheVariables": { "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2012-dev-x64", "inherits": "windows-vs2012-base",
-      "binaryDir": "${sourceDir}/build/windows-vs2012-dev-x64", "architecture": "x64"
+      "binaryDir": "${sourceDir}/build/windows-vs2012-dev-x64", "architecture": "x64",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl1" }
     },
     {
       "name": "windows-vs2012-dev-x86", "inherits": "windows-vs2012-base",
-      "binaryDir": "${sourceDir}/build/windows-vs2012-dev-x86", "architecture": "Win32"
+      "binaryDir": "${sourceDir}/build/windows-vs2012-dev-x86", "architecture": "Win32",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl1" }
     },
     {
       "name": "windows-vs2012-release-x64", "inherits": "windows-vs2012-dev-x64",
       "binaryDir": "${sourceDir}/build/windows-vs2012-release-x64",
-      "cacheVariables": { "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2012-release-x86", "inherits": "windows-vs2012-dev-x86",
       "binaryDir": "${sourceDir}/build/windows-vs2012-release-x86",
-      "cacheVariables": { "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2013-dev-x64", "inherits": "windows-vs2013-base",
-      "binaryDir": "${sourceDir}/build/windows-vs2013-dev-x64", "architecture": "x64"
+      "binaryDir": "${sourceDir}/build/windows-vs2013-dev-x64", "architecture": "x64",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl1" }
     },
     {
       "name": "windows-vs2013-dev-x86", "inherits": "windows-vs2013-base",
-      "binaryDir": "${sourceDir}/build/windows-vs2013-dev-x86", "architecture": "Win32"
+      "binaryDir": "${sourceDir}/build/windows-vs2013-dev-x86", "architecture": "Win32",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl1" }
     },
     {
       "name": "windows-vs2013-release-x64", "inherits": "windows-vs2013-dev-x64",
       "binaryDir": "${sourceDir}/build/windows-vs2013-release-x64",
-      "cacheVariables": { "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2013-release-x86", "inherits": "windows-vs2013-dev-x86",
       "binaryDir": "${sourceDir}/build/windows-vs2013-release-x86",
-      "cacheVariables": { "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2015-xp-dev-x64",
       "displayName": "Visual Studio 2015 XP-targeting Win32 development (x64)",
       "inherits": "windows-vs2015-xp-base",
       "binaryDir": "${sourceDir}/build/windows-vs2015-xp-dev-x64",
-      "architecture": "x64"
+      "architecture": "x64",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl1" }
     },
     {
       "name": "windows-vs2015-xp-dev-x86",
       "displayName": "Visual Studio 2015 XP-targeting Win32 development (x86)",
       "inherits": "windows-vs2015-xp-base",
       "binaryDir": "${sourceDir}/build/windows-vs2015-xp-dev-x86",
-      "architecture": "Win32"
+      "architecture": "Win32",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl1" }
     },
     {
       "name": "windows-vs2015-xp-release-x64",
       "displayName": "Visual Studio 2015 XP-targeting Win32 release (x64)",
       "inherits": "windows-vs2015-xp-dev-x64",
       "binaryDir": "${sourceDir}/build/windows-vs2015-xp-release-x64",
-      "cacheVariables": { "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2015-xp-release-x86",
       "displayName": "Visual Studio 2015 XP-targeting Win32 release (x86)",
       "inherits": "windows-vs2015-xp-dev-x86",
       "binaryDir": "${sourceDir}/build/windows-vs2015-xp-release-x86",
-      "cacheVariables": { "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2015-dev-x64",
       "displayName": "Visual Studio 2015 Win32 host development (x64)",
       "inherits": "windows-vs2015-base",
       "binaryDir": "${sourceDir}/build/windows-vs2015-dev-x64",
-      "architecture": "x64"
+      "architecture": "x64",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl1" }
     },
     {
       "name": "windows-vs2015-dev-x86",
       "displayName": "Visual Studio 2015 Win32 host development (x86)",
       "inherits": "windows-vs2015-base",
       "binaryDir": "${sourceDir}/build/windows-vs2015-dev-x86",
-      "architecture": "Win32"
+      "architecture": "Win32",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl1" }
     },
     {
       "name": "windows-vs2015-release-x64",
       "displayName": "Visual Studio 2015 Win32 release (x64)",
       "inherits": "windows-vs2015-dev-x64",
       "binaryDir": "${sourceDir}/build/windows-vs2015-release-x64",
-      "cacheVariables": { "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2015-release-x86",
       "displayName": "Visual Studio 2015 Win32 release (x86)",
       "inherits": "windows-vs2015-dev-x86",
       "binaryDir": "${sourceDir}/build/windows-vs2015-release-x86",
-      "cacheVariables": { "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2017-dev-x64",
       "displayName": "Visual Studio 2017 toolset Win32 host development (x64)",
       "inherits": "windows-vs2017-base",
       "binaryDir": "${sourceDir}/build/windows-vs2017-dev-x64",
-      "architecture": "x64"
+      "architecture": "x64",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl1" }
     },
     {
       "name": "windows-vs2017-dev-x86",
       "displayName": "Visual Studio 2017 toolset Win32 host development (x86)",
       "inherits": "windows-vs2017-base",
       "binaryDir": "${sourceDir}/build/windows-vs2017-dev-x86",
-      "architecture": "Win32"
+      "architecture": "Win32",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl1" }
     },
     {
       "name": "windows-vs2017-release-x64",
       "displayName": "Visual Studio 2017 toolset Win32 release (x64)",
       "inherits": "windows-vs2017-dev-x64",
       "binaryDir": "${sourceDir}/build/windows-vs2017-release-x64",
-      "cacheVariables": { "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2017-release-x86",
       "displayName": "Visual Studio 2017 toolset Win32 release (x86)",
       "inherits": "windows-vs2017-dev-x86",
       "binaryDir": "${sourceDir}/build/windows-vs2017-release-x86",
-      "cacheVariables": { "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-dev-x64",
       "displayName": "Windows hosts (x64)",
       "inherits": "windows-base",
       "binaryDir": "${sourceDir}/build/windows-vs2019-dev-x64",
-      "architecture": "x64"
+      "architecture": "x64",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl3" }
     },
     {
       "name": "windows-dev-x86",
       "displayName": "Windows hosts (x86)",
       "inherits": "windows-base",
       "binaryDir": "${sourceDir}/build/windows-vs2019-dev-x86",
-      "architecture": "Win32"
+      "architecture": "Win32",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl3" }
     },
     {
       "name": "windows-release-x64",
       "displayName": "Windows Win32 release (x64)",
       "inherits": "windows-dev-x64",
       "binaryDir": "${sourceDir}/build/windows-vs2019-release-x64",
-      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-release-x86",
       "displayName": "Windows Win32 release (x86)",
       "inherits": "windows-dev-x86",
       "binaryDir": "${sourceDir}/build/windows-vs2019-release-x86",
-      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-sdl3-x64",
       "displayName": "Windows SDL3 release (x64)",
       "inherits": "windows-dev-x64",
       "binaryDir": "${sourceDir}/build/windows-vs2019-sdl3-x64",
-      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "sdl3"
+      }
     },
     {
       "name": "windows-sdl3-x86",
       "displayName": "Windows SDL3 release (x86)",
       "inherits": "windows-dev-x86",
       "binaryDir": "${sourceDir}/build/windows-vs2019-sdl3-x86",
-      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "sdl3"
+      }
     },
     {
       "name": "windows-vs2022-dev-x64",
       "displayName": "Visual Studio 2022 hosts (x64)",
       "inherits": "windows-vs2022-base",
       "binaryDir": "${sourceDir}/build/windows-vs2022-dev-x64",
-      "architecture": "x64"
+      "architecture": "x64",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl3" }
     },
     {
       "name": "windows-vs2022-dev-x86",
       "displayName": "Visual Studio 2022 hosts (x86)",
       "inherits": "windows-vs2022-base",
       "binaryDir": "${sourceDir}/build/windows-vs2022-dev-x86",
-      "architecture": "Win32"
+      "architecture": "Win32",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl3" }
     },
     {
       "name": "windows-vs2022-release-x64",
       "displayName": "Visual Studio 2022 Win32 release (x64)",
       "inherits": "windows-vs2022-dev-x64",
       "binaryDir": "${sourceDir}/build/windows-vs2022-release-x64",
-      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2022-release-x86",
       "displayName": "Visual Studio 2022 Win32 release (x86)",
       "inherits": "windows-vs2022-dev-x86",
       "binaryDir": "${sourceDir}/build/windows-vs2022-release-x86",
-      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2022-sdl3-x64",
       "displayName": "Visual Studio 2022 SDL3 release (x64)",
       "inherits": "windows-vs2022-dev-x64",
       "binaryDir": "${sourceDir}/build/windows-vs2022-sdl3-x64",
-      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "sdl3"
+      }
     },
     {
       "name": "windows-vs2022-sdl3-x86",
       "displayName": "Visual Studio 2022 SDL3 release (x86)",
       "inherits": "windows-vs2022-dev-x86",
       "binaryDir": "${sourceDir}/build/windows-vs2022-sdl3-x86",
-      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "sdl3"
+      }
     },
     {
       "name": "windows-vs2026-dev-x64",
       "displayName": "Visual Studio 2026 hosts (x64)",
       "inherits": "windows-vs2026-base",
       "binaryDir": "${sourceDir}/build/windows-vs2026-dev-x64",
-      "architecture": "x64"
+      "architecture": "x64",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl3" }
     },
     {
       "name": "windows-vs2026-dev-x86",
       "displayName": "Visual Studio 2026 hosts (x86)",
       "inherits": "windows-vs2026-base",
       "binaryDir": "${sourceDir}/build/windows-vs2026-dev-x86",
-      "architecture": "Win32"
+      "architecture": "Win32",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl3" }
     },
     {
       "name": "windows-vs2026-release-x64",
       "displayName": "Visual Studio 2026 Win32 release (x64)",
       "inherits": "windows-vs2026-dev-x64",
       "binaryDir": "${sourceDir}/build/windows-vs2026-release-x64",
-      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2026-release-x86",
       "displayName": "Visual Studio 2026 Win32 release (x86)",
       "inherits": "windows-vs2026-dev-x86",
       "binaryDir": "${sourceDir}/build/windows-vs2026-release-x86",
-      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-vs2026-sdl3-x64",
       "displayName": "Visual Studio 2026 SDL3 release (x64)",
       "inherits": "windows-vs2026-dev-x64",
       "binaryDir": "${sourceDir}/build/windows-vs2026-sdl3-x64",
-      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "sdl3"
+      }
     },
     {
       "name": "windows-vs2026-sdl3-x86",
       "displayName": "Visual Studio 2026 SDL3 release (x86)",
       "inherits": "windows-vs2026-dev-x86",
       "binaryDir": "${sourceDir}/build/windows-vs2026-sdl3-x86",
-      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "sdl3"
+      }
     },
     {
       "name": "windows-mingw-ucrt64-base",
@@ -429,21 +501,26 @@
       "name": "windows-mingw-ucrt64-dev-x64",
       "displayName": "MinGW UCRT64 Windows hosts (x64)",
       "inherits": "windows-mingw-ucrt64-base",
-      "binaryDir": "${sourceDir}/build/windows-mingw-ucrt64-dev-x64"
+      "binaryDir": "${sourceDir}/build/windows-mingw-ucrt64-dev-x64",
+      "cacheVariables": { "W3P_VIDEO_BACKENDS": "gdi,sdl3" }
     },
     {
       "name": "windows-mingw-ucrt64-release-x64",
       "displayName": "MinGW UCRT64 Win32 release (x64)",
       "inherits": "windows-mingw-ucrt64-base",
       "binaryDir": "${sourceDir}/build/windows-mingw-ucrt64-release-x64",
-      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "W3P_BUILD_SDL3": "OFF", "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "gdi"
+      }
     },
     {
       "name": "windows-mingw-ucrt64-sdl3-x64",
       "displayName": "MinGW UCRT64 SDL3 release (x64)",
       "inherits": "windows-mingw-ucrt64-base",
       "binaryDir": "${sourceDir}/build/windows-mingw-ucrt64-sdl3-x64",
-      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF" }
+      "cacheVariables": { "W3P_BUILD_WIN32": "OFF", "BUILD_TESTING": "OFF",
+        "W3P_VIDEO_BACKENDS": "sdl3"
+      }
     },
     {
       "name": "linux-sdl3",

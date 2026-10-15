@@ -10,7 +10,7 @@ CMake commands.
 
 .EXAMPLE
 .\build.ps1
-Publishes both x64 wrappers with the newest supported installed compiler.
+Publishes one x64 package with GDI + SDL with the newest supported installed compiler.
 
 .EXAMPLE
 .\build.ps1 -Compiler vs2015 -Architecture x86 -Wrapper win32
@@ -22,7 +22,7 @@ Builds (but does not stage) the x64 SDL3 Debug host.
 
 .EXAMPLE
 .\build.ps1 -Compiler mingw-ucrt64 -Wrapper all -Publish
-Publishes both MinGW UCRT64 wrappers. -Publish is an alias for -Action publish.
+Publishes one MinGW UCRT64 package with GDI + SDL3. -Publish is an alias for -Action publish.
 
 .EXAMPLE
 .\build.ps1 -List
@@ -37,7 +37,7 @@ param(
     [ValidateSet('x64', 'x86')]
     [string]$Architecture = 'x64',
 
-    [ValidateSet('all', 'win32', 'sdl3')]
+    [ValidateSet('all', 'win32', 'sdl3', 'sdl1')]
     [string]$Wrapper = 'all',
 
     [ValidateSet('Release', 'Debug')]
@@ -238,7 +238,7 @@ $toolchains = @(
     Find-MinGW -Root $Msys2Root
 )
 
-$backendNames = @{ all = 'GDI + SDL3'; win32 = 'GDI'; sdl3 = 'SDL3' }
+$backendNames = @{ all = 'GDI + SDL (one executable)'; win32 = 'GDI'; sdl3 = 'SDL3'; sdl1 = 'SDL1' }
 
 function Read-BuildChoice {
     param(
@@ -291,7 +291,7 @@ if ($PSBoundParameters.Count -eq 0 -and -not $NonInteractive -and $canPrompt) {
     $wrapperChoices = if ($promptToolchain.SupportsSDL3) {
         @('all', 'win32', 'sdl3')
     } else {
-        @('win32')
+        @('all', 'win32', 'sdl1')
     }
     $Wrapper = Read-BuildChoice 'Backend' $wrapperChoices
     $Action = Read-BuildChoice 'Action' @('publish', 'build', 'clean')
@@ -341,8 +341,8 @@ if ($selected.Name -eq 'mingw-ucrt64' -and $Architecture -ne 'x64') {
 if ($selected.Name -eq 'mingw-ucrt64' -and $Runtime -ne 'static') {
     throw 'MinGW packages require the statically linked GCC support runtime.'
 }
-if (-not $selected.SupportsSDL3 -and $Wrapper -ne 'win32') {
-    throw "$($selected.Name)/$($selected.Toolset) supports only the GDI backend; select -Wrapper win32."
+if (-not $selected.SupportsSDL3 -and $Wrapper -eq 'sdl3') {
+    throw "$($selected.Name)/$($selected.Toolset) supports GDI and SDL1; select -Wrapper all, win32, or sdl1."
 }
 
 $archPreset = if ($Architecture -eq 'x86') { 'x86' } else { 'x64' }
@@ -378,23 +378,15 @@ if ($usePresetBinaryDir) {
     $buildDir = Join-Path $root ('build\' + ($parts -join '-'))
 }
 
-$targets = @()
-if ($Action -eq 'publish') {
-    if ($Wrapper -eq 'all' -or $Wrapper -eq 'win32') {
-        $targets += 'win32-release'
-    }
-    if ($Wrapper -eq 'all' -or $Wrapper -eq 'sdl3') {
-        $targets += 'sdl3-release'
-    }
-} elseif ($Action -eq 'build') {
-    if ($Wrapper -eq 'win32') {
-        $targets += 'wolf3d-win32'
-    } elseif ($Wrapper -eq 'sdl3') {
-        $targets += 'wolf3d-sdl3'
-    }
-} else {
-    $targets += 'clean'
+$targets = @(if ($Action -eq 'publish') { 'release' } elseif ($Action -eq 'build') { 'wolf3d-host' } else { 'clean' })
+$videoBackends = switch ($Wrapper) {
+    'all' { if ($selected.SupportsSDL3) { 'gdi,sdl3' } else { 'gdi,sdl1' } }
+    'win32' { 'gdi' }
+    default { $Wrapper }
 }
+# One host configuration owns the package; do not inherit wrapper-specific preset targets.
+$useDedicatedPreset = $false
+if (-not $preset) { $preset = $devPreset }
 
 function Invoke-DisplayedCommand {
     param([string]$Executable, [string[]]$Arguments)
@@ -462,7 +454,7 @@ if ($Action -eq 'clean' -and $buildDir -and
 }
 
 if ($Action -ne 'clean') {
-    $configureArguments = @('--preset', $preset)
+    $configureArguments = @('--preset', $preset, "-DW3P_VIDEO_BACKENDS=$videoBackends")
     if ($buildDir) {
         $configureArguments += @(
             '-B', $buildDir,

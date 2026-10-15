@@ -5,7 +5,7 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
 version=$(sed -n '1p' "$root/lib/wolf3d/VERSION")
 build_dir=${W3P_OPENWATCOM_BUILD_DIR:-$root/build/openwatcom-dos32}
 . "$root/scripts/dist-openwatcom.sh"
-dist_dir=${W3P_OPENWATCOM_DIST_DIR:-$root/dist/wolf3d-portable_${version}_dos32_x86_vga_${toolchain}}
+dist_dir=${W3P_OPENWATCOM_DIST_DIR:-$root/dist/wolf3d-portable_${version}_dos32_x86_${toolchain}}
 drivers=${W3P_OPENWATCOM_OPL_DRIVERS:-dbopl,silent,adlib}
 case ",$drivers," in *,silent,*) ;; *) drivers="$drivers,silent" ;; esac
 default_driver=${W3P_OPENWATCOM_DEFAULT_OPL:-auto}

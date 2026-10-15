@@ -1,5 +1,12 @@
 # Building wolf3d-portable
 
+Video backends are compiled into one executable per configuration. Use the guided
+selector, `VIDEO_BACKENDS` for Linux-hosted Windows recipes, or CMake
+`W3P_VIDEO_BACKENDS` for explicit subsets. See the complete [backend contract](windows-backends.md).
+Folder names omit video backends; rebuilding a subset replaces the same package.
+`DOCS/BUILD.TXT` records its choices. SDL1 and SDL3 are mutually exclusive.
+
+
 The [build and compatibility matrix](support-matrix.md) is the concise record
 of supported compilers, wrappers, produced artifacts, and runtime-validated
 destination operating systems. This document supplies the detailed commands,
@@ -22,7 +29,7 @@ supported.
 ## Windows
 
 For the experimental combined Win2k GDI/SDL1 package, use
-`make windows-win2k-modular`; see [modular Windows backends](windows-backends.md)
+`make windows-win2k`; see [runtime video backends](windows-backends.md)
 for compile-time selection and optional SDL loading. Existing builds are unchanged.
 
 Visual Studio, MinGW, and CLI builds share the CMake trees under `build/`:
@@ -84,7 +91,7 @@ VC6 SP6, VS2002 SP1, VS2003 SP1, and VS2005 SP1. The VC6 package has also been
 launched on Windows XP SP3 x86 with real WL1 shareware data and manually
 validated on Windows 11 x64 under WOW64.
 
-The development preset builds both GUI hosts. Dedicated distribution presets
+The development preset builds one executable with both available video hosts. Dedicated distribution presets
 are `windows-release-{x64,x86}` for Win32 and `windows-sdl3-{x64,x86}` for
 SDL3. The MSVC runtime is statically linked by default; set
 `WG_STATIC_MSVC_RUNTIME=OFF` in a separate build tree to use the matching
@@ -97,7 +104,7 @@ build:
 
 - `Publish Win32` stages only the dependency-free Win32/GDI host.
 - `Publish SDL3` stages only the SDL3 host.
-- `Publish All` stages both hosts.
+- `Publish All` stages one package with both hosts.
 
 Choose `x64` or `Win32` independently in the platform selector. Publish
 configurations are Release builds with the static MSVC runtime and stage
@@ -286,7 +293,7 @@ make dos
 
 The guided `./build.sh` configurator also offers **DOS32 / Open Watcom** when
 Docker is usable. The result is staged at
-`dist/wolf3d-portable_1.4.REVISION_dos32_x86_vga_openwatcom<major>/` and contains:
+`dist/wolf3d-portable_1.4.REVISION_dos32_x86_openwatcom<major>/` and contains:
 
 - `WOLF3D.EXE`, the 32-bit LE protected-mode game;
 - `DOS4GW.EXE`, which is the bundled DOS/32A drop-in loader rather than the
@@ -357,7 +364,7 @@ make musl-sdl3
 `make universal-sdl3` is an equivalent descriptive alias. This target builds
 the executable, wolf3d-lib, Nuked-OPL3, and the pinned SDL3 inside a
 digest-pinned Alpine 3.20 container. It stages an AppDir-style directory named
-`wolf3d-portable_1.4.REVISION_linux-musl_x64_sdl3_gcc<major>` containing a top-level
+`wolf3d-portable_1.4.REVISION_linux-musl_x64_gcc<major>` containing a top-level
 `wolf3d` launcher, the application under `bin/`, and a closed set of shared
 objects plus the musl loader under `lib/`.
 
@@ -419,7 +426,7 @@ KMS/fbdev musl packages. `make musl-console-audit` checks an existing console
 bundle; the existing `musl-audit` target continues to check the SDL3 bundle.
 
 The console output is
-`dist/wolf3d-portable_<version>_linux-musl_x64_kms-fbdev_gcc<major>/` (or clang).
+`dist/wolf3d-portable_<version>_linux-musl_x64_gcc<major>/` (or clang).
 Docker is needed only for building/auditing. The package bundles its loader,
 libdrm, ALSA, and dependencies, with a private direct-hardware ALSA configuration.
 It does not load host ALSA configuration or glibc plugins. The launcher uses

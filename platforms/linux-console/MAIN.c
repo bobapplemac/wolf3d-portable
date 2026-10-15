@@ -1,3 +1,6 @@
+#ifdef WG_BACKEND_EMBEDDED
+#define WG_InstallPlatform WG_KMSInstallPlatform
+#endif
 #include "WOLF3D.h"
 #include "../WG_HOST.h"
 #include "WG_LINUX_CONSOLE.h"
@@ -119,7 +122,11 @@ static void WG_PrintHelp(const char *program)
         "evdev input, and ALSA devices. DRM/KMS is preferred over fbdev.\n");
 }
 
+#ifdef WG_BACKEND_EMBEDDED
+int WG_KMSRun(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
 {
     char **game_argv;
     int game_argc = 0;

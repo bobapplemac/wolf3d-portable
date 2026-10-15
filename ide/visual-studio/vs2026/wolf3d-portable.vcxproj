@@ -183,7 +183,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Publish SDL3'">
-    <NMakeOutput>$(WGBuildDir)\$(WGCMakeConfig)\wolf3d-sdl3.exe</NMakeOutput>
+    <NMakeOutput>$(WGBuildDir)\$(WGCMakeConfig)\wolf3d.exe</NMakeOutput>
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\platforms\WG_HELP.c" />

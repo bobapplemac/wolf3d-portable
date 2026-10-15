@@ -26,6 +26,36 @@ option(W3P_BUILD_WIN32 "Build the dependency-free Win32 host" ON)
 option(W3P_BUILD_LINUX_CONSOLE
     "Build the direct DRM/fbdev/evdev/ALSA Linux console host" OFF)
 option(W3P_BUILD_SDL3 "Build the cross-platform SDL3 GUI host" OFF)
+option(W3P_BUILD_SDL1 "Include the legacy SDL 1.2 host" OFF)
+set(W3P_VIDEO_BACKENDS "" CACHE STRING "Compiled video backends: comma-separated gdi,sdl1,sdl3,kms-fbdev; empty uses host switches")
+if(W3P_VIDEO_BACKENDS)
+    foreach(flag WIN32 SDL1 SDL3 LINUX_CONSOLE)
+        set(W3P_BUILD_${flag} OFF CACHE BOOL "Compiled video host" FORCE)
+    endforeach()
+    string(REPLACE "," ";" requested_backends "${W3P_VIDEO_BACKENDS}")
+    foreach(backend IN LISTS requested_backends)
+        if(backend STREQUAL "gdi" AND WIN32)
+            set(W3P_BUILD_WIN32 ON CACHE BOOL "Compiled video host" FORCE)
+        elseif(backend STREQUAL "sdl1" AND WIN32)
+            set(W3P_BUILD_SDL1 ON CACHE BOOL "Compiled video host" FORCE)
+        elseif(backend STREQUAL "sdl3")
+            set(W3P_BUILD_SDL3 ON CACHE BOOL "Compiled video host" FORCE)
+        elseif(backend STREQUAL "kms-fbdev" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+            set(W3P_BUILD_LINUX_CONSOLE ON CACHE BOOL "Compiled video host" FORCE)
+        else()
+            message(FATAL_ERROR "Unsupported video backend for this target: ${backend}")
+        endif()
+    endforeach()
+endif()
+if(W3P_BUILD_SDL1 AND W3P_BUILD_SDL3)
+    message(FATAL_ERROR "Select SDL1 or SDL3, never both")
+endif()
+if(W3P_BUILD_SDL3 AND (WG_DIST_PLATFORM MATCHES "^(win9x|win2k|winxp)$" OR CMAKE_VS_PLATFORM_TOOLSET MATCHES "_xp$" OR (MSVC AND MSVC_VERSION LESS 1920)))
+    message(FATAL_ERROR "Legacy Windows targets require SDL1 instead of SDL3")
+endif()
+if(W3P_BUILD_SDL1 AND NOT WIN32)
+    message(FATAL_ERROR "Use the dedicated RH9 profile for legacy Linux SDL1")
+endif()
 option(W3P_USE_SYSTEM_SDL3
     "Use an installed SDL3 package instead of the pinned submodule" OFF)
 option(W3P_WARNINGS_AS_ERRORS "Treat wrapper warnings as errors" ON)
@@ -54,8 +84,8 @@ set(WG_BUILD_HEADLESS OFF CACHE BOOL "" FORCE)
 set(WG_WARNINGS_AS_ERRORS ${W3P_WARNINGS_AS_ERRORS} CACHE BOOL "" FORCE)
 set(WG_DIST_ROOT "${CMAKE_BINARY_DIR}/wolf3d-lib-dist" CACHE PATH "" FORCE)
 if(W3P_ENABLE_INPOUT32)
-    if(NOT WIN32 OR (NOT W3P_BUILD_WIN32 AND NOT W3P_BUILD_SDL3))
-        message(FATAL_ERROR "InpOut requires a Windows GDI or SDL3 host")
+    if(NOT WIN32 OR (NOT W3P_BUILD_WIN32 AND NOT W3P_BUILD_SDL3 AND NOT W3P_BUILD_SDL1))
+        message(FATAL_ERROR "InpOut requires a Windows GDI or SDL host")
     endif()
     set(WG_ENABLE_OPL_ADLIB ON CACHE BOOL "Native AdLib adapter" FORCE)
 endif()
@@ -231,247 +261,7 @@ function(w3p_copy_engine_runtime target)
     endif()
 endfunction()
 
-if(W3P_BUILD_WIN32)
-    add_executable(wolf3d-win32 WIN32
-        platforms/WG_HELP.c platforms/WG_TEXT_OUTPUT.c
-        platforms/win32/WG_WIN32.c)
-    w3p_windows_opl(wolf3d-win32)
-    w3p_configure_host(wolf3d-win32)
-    # Windows 2000 cannot attach a GUI process to its parent's console.
-    # Inherit it at process creation for CLI output and the B800 exit card.
-    if(WG_DIST_PLATFORM STREQUAL "win2k")
-        set_target_properties(wolf3d-win32 PROPERTIES WIN32_EXECUTABLE FALSE)
-        target_compile_definitions(wolf3d-win32 PRIVATE WG_CONSOLE_WIN32=1)
-    endif()
-    target_compile_definitions(wolf3d-win32 PRIVATE
-        WIN32_LEAN_AND_MEAN UNICODE _UNICODE)
-    if(MINGW)
-        target_link_options(wolf3d-win32 PRIVATE -municode)
-    endif()
-    target_link_libraries(wolf3d-win32 PRIVATE user32 gdi32 winmm shell32)
-    set_target_properties(wolf3d-win32 PROPERTIES OUTPUT_NAME "wolf3d")
-    w3p_copy_engine_runtime(wolf3d-win32)
-
-    wg_distribution(W3P_WIN32_RELEASE_DIR wolf3d-portable "${PROJECT_VERSION}" "gdi" "${CMAKE_CURRENT_SOURCE_DIR}" "${W3P_DIST_ROOT}")
-    set(W3P_WIN32_OPL_COMMANDS "")
-    set(W3P_WIN32_RELEASE_DEPENDS wolf3d-win32 wolf3d)
-    if(TARGET nuked-opl3)
-        list(APPEND W3P_WIN32_OPL_COMMANDS
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "$<TARGET_FILE:nuked-opl3>"
-                "${W3P_WIN32_RELEASE_DIR}/$<TARGET_FILE_NAME:nuked-opl3>"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${W3P_WOLF3D_SOURCE_DIR}/third_party/Nuked-OPL3/LICENSE"
-                "${W3P_WIN32_RELEASE_DIR}/DOCS/LICENSES/LGPL-21.TXT")
-        list(APPEND W3P_WIN32_RELEASE_DEPENDS nuked-opl3)
-    endif()
-    if(WG_ENABLE_OPL_DBOPL)
-        list(APPEND W3P_WIN32_OPL_COMMANDS
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${W3P_WOLF3D_SOURCE_DIR}/third_party/DBOPL/README.wolf3d-lib.md"
-                "${W3P_WIN32_RELEASE_DIR}/DOCS/DBOPL.TXT")
-    endif()
-    add_custom_target(win32-release
-        COMMAND ${CMAKE_COMMAND} -E remove_directory "${W3P_WIN32_RELEASE_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_WIN32_RELEASE_DIR}/DOCS/LICENSES"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${W3P_WIN32_RELEASE_DIR_INFO}" "${W3P_WIN32_RELEASE_DIR}/DOCS/BUILD.TXT"
-        COMMAND ${CMAKE_COMMAND} "-DINFO=${W3P_WIN32_RELEASE_DIR}/DOCS/BUILD.TXT"
-            "-DROOT=${CMAKE_CURRENT_SOURCE_DIR}" "-DENGINE=${CMAKE_CURRENT_SOURCE_DIR}/lib/wolf3d"
-            "-DCACHE=${CMAKE_BINARY_DIR}/CMakeCache.txt"
-            "-DSETTINGS=${CMAKE_CURRENT_BINARY_DIR}/distribution-target-settings.txt"
-            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/WGStampBuildInfo.cmake"
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_WIN32_RELEASE_DIR}/DOCS/LICENSES"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:wolf3d-win32>" "${W3P_WIN32_RELEASE_DIR}/wolf3d.exe"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:wolf3d>" "${W3P_WIN32_RELEASE_DIR}/$<TARGET_FILE_NAME:wolf3d>"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/LICENSE" "${W3P_WIN32_RELEASE_DIR}/DOCS/LICENSES/GPL-2.TXT"
-        ${W3P_WIN32_OPL_COMMANDS}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_BINARY_DIR}/WIN32-README.txt" "${W3P_WIN32_RELEASE_DIR}/README.TXT"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_BINARY_DIR}/WOLF3D-LIB.txt" "${W3P_WIN32_RELEASE_DIR}/DOCS/ENGINE.TXT"
-        COMMAND ${CMAKE_COMMAND} "-DDIST=${W3P_WIN32_RELEASE_DIR}" "-DROOT=${CMAKE_SOURCE_DIR}" "-DPRODUCT=wolf3d-portable"
-            -P "${CMAKE_SOURCE_DIR}/cmake/WGPackageDocs.cmake"
-        COMMAND ${CMAKE_COMMAND} "-DDIST=${W3P_WIN32_RELEASE_DIR}"
-            "-DROOT=${CMAKE_SOURCE_DIR}" "-DENABLED=${W3P_ENABLE_INPOUT32}"
-            "-DADLIB=${WG_ENABLE_OPL_ADLIB}"
-            -P "${CMAKE_SOURCE_DIR}/cmake/W3PPackageInpOut32.cmake"
-        DEPENDS ${W3P_WIN32_RELEASE_DEPENDS}
-        COMMENT "Staging ${W3P_WIN32_RELEASE_DIR_ARCH} GDI release" VERBATIM)
-endif()
-
-if(W3P_BUILD_SDL3)
-    if(WIN32)
-        add_executable(wolf3d-sdl3 WIN32
-            platforms/WG_HELP.c platforms/WG_TEXT_OUTPUT.c
-            platforms/sdl3/WG_SDL3.c)
-    else()
-        add_executable(wolf3d-sdl3
-            platforms/WG_HELP.c platforms/WG_TEXT_OUTPUT.c
-            platforms/sdl3/WG_SDL3.c)
-    endif()
-    w3p_configure_host(wolf3d-sdl3)
-    w3p_linux_opl(wolf3d-sdl3)
-    w3p_windows_opl(wolf3d-sdl3)
-    target_link_libraries(wolf3d-sdl3 PRIVATE SDL3::SDL3-shared)
-    set_target_properties(wolf3d-sdl3 PROPERTIES OUTPUT_NAME "wolf3d-sdl3"
-        BUILD_RPATH "$ORIGIN" BUILD_RPATH_USE_ORIGIN ON INSTALL_RPATH "$ORIGIN")
-    if(WIN32)
-        target_compile_definitions(wolf3d-sdl3 PRIVATE
-            WIN32_LEAN_AND_MEAN UNICODE _UNICODE)
-        if(MINGW)
-            target_link_options(wolf3d-sdl3 PRIVATE -municode)
-        endif()
-        w3p_copy_engine_runtime(wolf3d-sdl3)
-        add_custom_command(TARGET wolf3d-sdl3 POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "$<TARGET_FILE:SDL3::SDL3-shared>"
-                "$<TARGET_FILE_DIR:wolf3d-sdl3>/$<TARGET_FILE_NAME:SDL3::SDL3-shared>"
-            COMMENT "Copying SDL3 beside wolf3d-sdl3" VERBATIM)
-    endif()
-
-    wg_distribution(W3P_SDL3_RELEASE_DIR wolf3d-portable "${PROJECT_VERSION}" "sdl3" "${CMAKE_CURRENT_SOURCE_DIR}" "${W3P_DIST_ROOT}")
-    set(W3P_SDL3_RELEASE_DEPENDS wolf3d-sdl3 wolf3d SDL3::SDL3-shared)
-    set(W3P_SDL3_RELEASE_COMMANDS
-        COMMAND ${CMAKE_COMMAND} -E remove_directory "${W3P_SDL3_RELEASE_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_SDL3_RELEASE_DIR}/DOCS/LICENSES"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${W3P_SDL3_RELEASE_DIR_INFO}" "${W3P_SDL3_RELEASE_DIR}/DOCS/BUILD.TXT"
-        COMMAND ${CMAKE_COMMAND} "-DINFO=${W3P_SDL3_RELEASE_DIR}/DOCS/BUILD.TXT"
-            "-DROOT=${CMAKE_CURRENT_SOURCE_DIR}" "-DENGINE=${CMAKE_CURRENT_SOURCE_DIR}/lib/wolf3d"
-            "-DCACHE=${CMAKE_BINARY_DIR}/CMakeCache.txt"
-            "-DSETTINGS=${CMAKE_CURRENT_BINARY_DIR}/distribution-target-settings.txt"
-            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/WGStampBuildInfo.cmake"
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_SDL3_RELEASE_DIR}/DOCS/LICENSES"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:wolf3d-sdl3>" "${W3P_SDL3_RELEASE_DIR}/wolf3d${CMAKE_EXECUTABLE_SUFFIX}"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:wolf3d>" "${W3P_SDL3_RELEASE_DIR}/$<TARGET_FILE_NAME:wolf3d>"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:SDL3::SDL3-shared>" "${W3P_SDL3_RELEASE_DIR}/$<TARGET_FILE_NAME:SDL3::SDL3-shared>"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/LICENSE" "${W3P_SDL3_RELEASE_DIR}/DOCS/LICENSES/GPL-2.TXT"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${W3P_SDL3_LICENSE_FILE}"
-            "${W3P_SDL3_RELEASE_DIR}/DOCS/LICENSES/SDL3.TXT"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_BINARY_DIR}/SDL3-README.txt" "${W3P_SDL3_RELEASE_DIR}/README.TXT"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_BINARY_DIR}/WOLF3D-LIB.txt" "${W3P_SDL3_RELEASE_DIR}/DOCS/ENGINE.TXT")
-    if(TARGET nuked-opl3)
-        list(APPEND W3P_SDL3_RELEASE_COMMANDS
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "$<TARGET_FILE:nuked-opl3>"
-                "${W3P_SDL3_RELEASE_DIR}/$<TARGET_FILE_NAME:nuked-opl3>"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${W3P_WOLF3D_SOURCE_DIR}/third_party/Nuked-OPL3/LICENSE"
-                "${W3P_SDL3_RELEASE_DIR}/DOCS/LICENSES/LGPL-21.TXT")
-        list(APPEND W3P_SDL3_RELEASE_DEPENDS nuked-opl3)
-    endif()
-    if(WG_ENABLE_OPL_DBOPL)
-        list(APPEND W3P_SDL3_RELEASE_COMMANDS
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${W3P_WOLF3D_SOURCE_DIR}/third_party/DBOPL/README.wolf3d-lib.md"
-                "${W3P_SDL3_RELEASE_DIR}/DOCS/DBOPL.TXT")
-    endif()
-    if(UNIX AND NOT APPLE)
-        list(APPEND W3P_SDL3_RELEASE_COMMANDS
-            COMMAND ${CMAKE_COMMAND} -E create_symlink
-                "$<TARGET_FILE_NAME:wolf3d>" "${W3P_SDL3_RELEASE_DIR}/$<TARGET_SONAME_FILE_NAME:wolf3d>"
-            COMMAND ${CMAKE_COMMAND} -E create_symlink
-                "$<TARGET_SONAME_FILE_NAME:wolf3d>" "${W3P_SDL3_RELEASE_DIR}/$<TARGET_LINKER_FILE_NAME:wolf3d>"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "$<TARGET_SONAME_FILE:SDL3::SDL3-shared>"
-                "${W3P_SDL3_RELEASE_DIR}/$<TARGET_SONAME_FILE_NAME:SDL3::SDL3-shared>")
-    endif()
-    add_custom_target(sdl3-release ${W3P_SDL3_RELEASE_COMMANDS}
-        COMMAND ${CMAKE_COMMAND} "-DDIST=${W3P_SDL3_RELEASE_DIR}" "-DROOT=${CMAKE_SOURCE_DIR}" "-DPRODUCT=wolf3d-portable"
-            -P "${CMAKE_SOURCE_DIR}/cmake/WGPackageDocs.cmake"
-        DEPENDS ${W3P_SDL3_RELEASE_DEPENDS}
-        COMMENT "Staging ${W3P_SDL3_RELEASE_DIR_ARCH} SDL3 release" VERBATIM)
-    if(BUILD_TESTING)
-        add_test(NAME sdl3-help COMMAND wolf3d-sdl3 --help)
-        add_executable(wg-sdl-modal-frame-test tests/WG_SDL_MODAL_FRAME_TEST.c)
-        target_link_libraries(wg-sdl-modal-frame-test PRIVATE SDL3::SDL3-shared)
-        if(WIN32)
-            add_custom_command(TARGET wg-sdl-modal-frame-test POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "$<TARGET_FILE:SDL3::SDL3-shared>"
-                    "$<TARGET_FILE_DIR:wg-sdl-modal-frame-test>"
-                VERBATIM)
-        endif()
-        add_test(NAME sdl3-modal-frame COMMAND wg-sdl-modal-frame-test)
-    endif()
-endif()
-
-if(W3P_BUILD_LINUX_CONSOLE)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(LIBDRM REQUIRED IMPORTED_TARGET libdrm)
-    pkg_check_modules(ALSA REQUIRED IMPORTED_TARGET alsa)
-    add_executable(wolf3d-console platforms/WG_HELP.c platforms/WG_TEXT_OUTPUT.c
-        platforms/linux-console/MAIN.c platforms/linux-console/WG_LINUX_CONSOLE.c)
-    w3p_configure_host(wolf3d-console)
-    w3p_linux_opl(wolf3d-console)
-    target_link_libraries(wolf3d-console PRIVATE PkgConfig::LIBDRM PkgConfig::ALSA)
-    set_target_properties(wolf3d-console PROPERTIES OUTPUT_NAME "wolf3d"
-        BUILD_RPATH "$ORIGIN" BUILD_RPATH_USE_ORIGIN ON INSTALL_RPATH "$ORIGIN")
-
-    wg_distribution(W3P_CONSOLE_RELEASE_DIR wolf3d-portable "${PROJECT_VERSION}" "kms-fbdev" "${CMAKE_CURRENT_SOURCE_DIR}" "${W3P_DIST_ROOT}")
-    set(W3P_CONSOLE_OPL_COMMANDS "")
-    set(W3P_CONSOLE_RELEASE_DEPENDS wolf3d-console wolf3d)
-    if(TARGET nuked-opl3)
-        list(APPEND W3P_CONSOLE_OPL_COMMANDS
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "$<TARGET_FILE:nuked-opl3>"
-                "${W3P_CONSOLE_RELEASE_DIR}/$<TARGET_FILE_NAME:nuked-opl3>"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${W3P_WOLF3D_SOURCE_DIR}/third_party/Nuked-OPL3/LICENSE"
-                "${W3P_CONSOLE_RELEASE_DIR}/DOCS/LICENSES/LGPL-21.TXT")
-        list(APPEND W3P_CONSOLE_RELEASE_DEPENDS nuked-opl3)
-    endif()
-    if(WG_ENABLE_OPL_DBOPL)
-        list(APPEND W3P_CONSOLE_OPL_COMMANDS
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${W3P_WOLF3D_SOURCE_DIR}/third_party/DBOPL/README.wolf3d-lib.md"
-                "${W3P_CONSOLE_RELEASE_DIR}/DOCS/DBOPL.TXT")
-    endif()
-    add_custom_target(console-release
-        COMMAND ${CMAKE_COMMAND} -E remove_directory "${W3P_CONSOLE_RELEASE_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_CONSOLE_RELEASE_DIR}/DOCS/LICENSES"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${W3P_CONSOLE_RELEASE_DIR_INFO}" "${W3P_CONSOLE_RELEASE_DIR}/DOCS/BUILD.TXT"
-        COMMAND ${CMAKE_COMMAND} "-DINFO=${W3P_CONSOLE_RELEASE_DIR}/DOCS/BUILD.TXT"
-            "-DROOT=${CMAKE_CURRENT_SOURCE_DIR}" "-DENGINE=${CMAKE_CURRENT_SOURCE_DIR}/lib/wolf3d"
-            "-DCACHE=${CMAKE_BINARY_DIR}/CMakeCache.txt"
-            "-DSETTINGS=${CMAKE_CURRENT_BINARY_DIR}/distribution-target-settings.txt"
-            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/WGStampBuildInfo.cmake"
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${W3P_CONSOLE_RELEASE_DIR}/DOCS/LICENSES"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:wolf3d-console>" "${W3P_CONSOLE_RELEASE_DIR}/wolf3d"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:wolf3d>" "${W3P_CONSOLE_RELEASE_DIR}/$<TARGET_FILE_NAME:wolf3d>"
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
-            "$<TARGET_FILE_NAME:wolf3d>" "${W3P_CONSOLE_RELEASE_DIR}/$<TARGET_SONAME_FILE_NAME:wolf3d>"
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
-            "$<TARGET_SONAME_FILE_NAME:wolf3d>" "${W3P_CONSOLE_RELEASE_DIR}/$<TARGET_LINKER_FILE_NAME:wolf3d>"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/LICENSE" "${W3P_CONSOLE_RELEASE_DIR}/DOCS/LICENSES/GPL-2.TXT"
-        ${W3P_CONSOLE_OPL_COMMANDS}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_BINARY_DIR}/LINUX-CONSOLE-README.txt" "${W3P_CONSOLE_RELEASE_DIR}/README.TXT"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_BINARY_DIR}/WOLF3D-LIB.txt" "${W3P_CONSOLE_RELEASE_DIR}/DOCS/ENGINE.TXT"
-        COMMAND ${CMAKE_COMMAND} "-DDIST=${W3P_CONSOLE_RELEASE_DIR}" "-DROOT=${CMAKE_SOURCE_DIR}" "-DPRODUCT=wolf3d-portable"
-            -P "${CMAKE_SOURCE_DIR}/cmake/WGPackageDocs.cmake"
-        DEPENDS ${W3P_CONSOLE_RELEASE_DEPENDS}
-        COMMENT "Staging ${W3P_CONSOLE_RELEASE_DIR_ARCH} KMS/fbdev release" VERBATIM)
-    if(BUILD_TESTING)
-        add_test(NAME console-help COMMAND wolf3d-console --help)
-    endif()
-endif()
+include(cmake/W3PBackends.cmake)
 
 if(BUILD_TESTING)
     add_executable(wg-discovery-probe

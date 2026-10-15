@@ -226,8 +226,8 @@ void WG_PrintCommandLineHelp(const char *program,
 #ifdef _WIN32
     WG_HelpWrite(&stream,"  --no-pause          Close an owned console without waiting for a key\n");
 #endif
-    if(wg_compiled_video && strchr(wg_compiled_video,' '))
-        WG_HelpWrite(&stream,"  --backend auto|gdi|sdl1  Host selection; auto prefers SDL1 then GDI\n\n");
+    if(wg_compiled_video)
+        WG_HelpWrite(&stream,"  --backend NAME      auto, or a compiled video backend listed above\n\n");
     WG_HelpWrite(&stream,"\n");
     WG_HelpWrite(&stream, wolf3d_GetCommandLineHelp());
     if (host_options != NULL && host_options[0] != '\0')
@@ -1648,4 +1648,26 @@ void WG_PrintLauncherError(const char *message)
         WG_HelpWrite(&stream, message != NULL ? message : "launcher error\n");
     }
     WG_CloseHelpStream(&stream);
+}
+
+/* Singleton hosts still accept the same selection vocabulary as combined ones. */
+int WG_ValidateSingleBackend(int argc, char **argv, const char *backend)
+{
+    int index;
+    const char *selected = "auto";
+    for (index = 1; index < argc; ++index) {
+        if (!strcmp(argv[index], "--backend")) {
+            if (++index == argc) {
+                WG_PrintLauncherError("--backend requires a value.\n");
+                return 0;
+            }
+            selected = argv[index];
+        }
+    }
+    if (strcmp(selected, "auto") && strcmp(selected, backend)) {
+        WG_PrintLauncherError("Requested video backend is not compiled into this package.\n");
+        return 0;
+    }
+    WG_SetVideoInfo(backend, backend, NULL);
+    return 1;
 }

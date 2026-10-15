@@ -56,7 +56,7 @@ if(BUILD_TESTING)
 endif()
 # Driven only by the dedicated RH9 container profile.
 string(REGEX MATCH "^[0-9]+" COMPILER_MAJOR "${CMAKE_C_COMPILER_VERSION}")
-set(DIST "${ROOT}/dist/wolf3d-portable_${PROJECT_VERSION}_linux-glibc_x86_sdl1_gcc${COMPILER_MAJOR}")
+set(DIST "${ROOT}/dist/wolf3d-portable_${PROJECT_VERSION}_linux-glibc_x86_gcc${COMPILER_MAJOR}_rh9")
 file(WRITE "${CMAKE_BINARY_DIR}/release.path" "${DIST}")
 add_custom_target(sdl1-release
  COMMAND ${CMAKE_COMMAND} "-DROOT=${ROOT}" "-DBUILD=${CMAKE_BINARY_DIR}" "-DDIST=${DIST}"

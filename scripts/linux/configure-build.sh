@@ -81,9 +81,10 @@ if [ ${#families[@]} -eq 0 ]; then echo 'No usable build tools detected.' >&2; e
 family=$(choose 'What would you like to produce?' "${families[@]}")
 for ((i=0; i<${#families[@]}; ++i)); do [ "$family" = "${families[$i]}" ] && family=${family_targets[$i]}; done
 linux_arch=x64
+video_backends=
 case "$family" in
     local)
-        backend=$(choose 'Linux backend' SDL3 KMS/fbdev both)
+        backend=$(choose 'Compiled video backends (one executable)' both SDL3 KMS/fbdev)
         case "$backend" in SDL3) target=sdl3-release ;; KMS/fbdev) target=console-release ;; both) target=releases ;; esac
         label="Linux $host_arch $backend (local toolchain)" ;;
     linux)
@@ -95,7 +96,7 @@ case "$family" in
         if [[ $profile == 'Red Hat'* ]]; then
             backend='SDL 1.2'; target=rh9-sdl1; linux_arch=x86
         else
-        backend=$(choose 'Linux backend' SDL3 KMS/fbdev both)
+        backend=$(choose 'Compiled video backends (one executable)' both SDL3 KMS/fbdev)
         if [[ $profile == glibc* ]]; then
             case "$backend" in SDL3) target=portable-sdl3 ;; KMS/fbdev) target=portable-console ;; both) target=portable ;; esac
         else
@@ -115,6 +116,10 @@ case "$family" in
             win9x) target=windows-win9x ;;
             *) target=windows-cross ;;
         esac
+        if [[ $os != 'all supported profiles'  ]]; then
+            if [[ $os == win2k || $os == winxp || $os == win9x ]]; then sdl=sdl1; else sdl=sdl3; fi
+            video_backends=$(choose 'Compiled video backends (one executable)' "gdi,$sdl" gdi "$sdl")
+        fi
         label="Windows $os (Docker: $target)" ;;
     dos) target=dos-release; label='DOS32 x86 VGA Open Watcom (Docker)' ;;
     clean) target=clean; label='Clean local build outputs' ;;
@@ -189,6 +194,7 @@ if [[ $target == rh9-* ]]; then
           "RH9_DBOPL=$(case $drivers in *dbopl*) echo ON;; *) echo OFF;; esac)" "RH9_ADLIB=$(case $drivers in *adlib*) echo ON;; *) echo OFF;; esac)" "RH9_OPL_DEFAULT=$default_opl")
 fi
 [[ $target == portable* ]] && args+=("LINUX_ARCH=$linux_arch")
+[ -n "$video_backends" ] && args+=("VIDEO_BACKENDS=$video_backends")
 [ -n "$jobs" ] && args+=("JOBS=$jobs")
 
 compiler_display=$compiler

@@ -14,6 +14,8 @@ BUILD_TYPE ?= Release
 CMAKE_ARGS ?=
 JOBS ?=
 USE_SYSTEM_SDL3 ?= OFF
+VIDEO_BACKENDS ?=
+LINUX_COMBINED ?= OFF
 LINUX_ARCH ?= x64
 OPL_DRIVERS ?= $(if $(filter x86,$(LINUX_ARCH)),dbopl$(comma)silent$(comma)adlib,nuked$(comma)dbopl$(comma)silent$(comma)adlib)
 WINDOWS_OPL_DRIVERS = $(if $(filter file default undefined,$(origin OPL_DRIVERS)),nuked$(comma)dbopl$(comma)silent,$(OPL_DRIVERS))
@@ -98,7 +100,7 @@ help:
 		'  make | make all              Build the SDL3 distribution (default).' \
 		'  make sdl3-release            Build the SDL3 distribution.' \
 		'  make console-release         Build the KMS/fbdev distribution (evdev/ALSA).' \
-		'  make releases                Build both Linux distributions.' \
+		'  make releases                Build one Linux distribution with SDL3 + KMS/fbdev.' \
 		'  make fresh                   Offer compatible source updates, then build.' \
 		'  make dependencies            Initialize the recorded submodule revisions.' \
 		'' \
@@ -121,7 +123,7 @@ help:
 		'' \
 		'Linux-hosted Windows cross-builds (Docker):' \
 		'  make windows-win9x          Open Watcom Win9x x86 GDI package.' \
-		'  make windows-win2k-modular  Win2k runtime GDI/SDL1 selection (pilot).' \
+		'  make windows-win2k-modular  Compatibility alias for windows-win2k.' \
 		'  make windows-win2k-sdl1   Experimental Windows 2000 SDL 1.2 package.' \
 		'  make windows-win2k        MinGW GCC/MSVCRT Windows 2000 x86 package.' \
 		'  make windows-xp             MinGW GCC/MSVCRT XP x86 GDI package.' \
@@ -181,7 +183,7 @@ configure-sdl3:
 		printf '%s\n' 'Pinned SDL3 is missing; run: make dependencies'; exit 2; fi
 	$(CMAKE) -S . -B "$(SDL3_BUILD_DIR)" -G "$(CMAKE_GENERATOR)" \
 		-DCMAKE_BUILD_TYPE="$(BUILD_TYPE)" -DW3P_BUILD_SDL3=ON \
-		-DW3P_BUILD_LINUX_CONSOLE=OFF -DW3P_USE_SYSTEM_SDL3=$(USE_SYSTEM_SDL3) \
+		-DW3P_BUILD_LINUX_CONSOLE=$(LINUX_COMBINED) -DW3P_VIDEO_BACKENDS="$(VIDEO_BACKENDS)" -DW3P_USE_SYSTEM_SDL3=$(USE_SYSTEM_SDL3) \
 		-DW3P_WARNINGS_AS_ERRORS=ON $(CMAKE_COMPILER_ARG) $(CMAKE_AUDIO_ARGS) $(CMAKE_ARGS)
 
 sdl3-build: configure-sdl3
@@ -195,7 +197,7 @@ configure-console:
 		printf '%s\n' 'wolf3d-lib is missing; run: make dependencies'; exit 2; fi
 	$(CMAKE) -S . -B "$(CONSOLE_BUILD_DIR)" -G "$(CMAKE_GENERATOR)" \
 		-DCMAKE_BUILD_TYPE="$(BUILD_TYPE)" -DW3P_BUILD_SDL3=OFF \
-		-DW3P_BUILD_LINUX_CONSOLE=ON -DW3P_WARNINGS_AS_ERRORS=ON \
+		-DW3P_BUILD_LINUX_CONSOLE=ON -DW3P_VIDEO_BACKENDS="$(VIDEO_BACKENDS)" -DW3P_WARNINGS_AS_ERRORS=ON \
 		$(CMAKE_COMPILER_ARG) $(CMAKE_AUDIO_ARGS) $(CMAKE_ARGS)
 
 console-release: configure-console
@@ -204,7 +206,8 @@ console-release: configure-console
 linux-console-release: console-release
 sdl3: sdl3-release
 console: console-release
-releases: sdl3-release console-release
+releases: LINUX_COMBINED=ON
+releases: sdl3-release
 
 portable-image:
 	@case "$(LINUX_ARCH)" in x64|x86) ;; *) echo "LINUX_ARCH must be x64 or x86"; exit 2;; esac
@@ -213,7 +216,7 @@ portable-image:
 portable-sdl3-release: portable-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
-		"$(PORTABLE_BUILD_IMAGE)" make sdl3-release CC=gcc \
+		"$(PORTABLE_BUILD_IMAGE)" make sdl3-release LINUX_COMBINED="$(LINUX_COMBINED)" VIDEO_BACKENDS="$(VIDEO_BACKENDS)" CC=gcc \
 		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" \
 		SDL3_BUILD_DIR="$(PORTABLE_SDL3_BUILD_DIR)" JOBS="$(JOBS)" USE_SYSTEM_SDL3=OFF CMAKE_ARGS="$(PORTABLE_CMAKE_ARGS) $(CMAKE_ARGS)"
 	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
@@ -225,7 +228,7 @@ portable-sdl3-release: portable-image
 portable-console-release: portable-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
-		"$(PORTABLE_BUILD_IMAGE)" make console-release CC=gcc \
+		"$(PORTABLE_BUILD_IMAGE)" make console-release VIDEO_BACKENDS="$(VIDEO_BACKENDS)" CC=gcc \
 		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" \
 		CONSOLE_BUILD_DIR="$(PORTABLE_CONSOLE_BUILD_DIR)" JOBS="$(JOBS)" CMAKE_ARGS="$(PORTABLE_CMAKE_ARGS) $(CMAKE_ARGS)"
 	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
@@ -236,10 +239,10 @@ portable-console-release: portable-image
 
 portable-sdl3: portable-sdl3-release
 portable-console: portable-console-release
-portable: portable-sdl3-release portable-console-release
+portable: LINUX_COMBINED=ON
+portable: portable-sdl3-release
 portable-glibc-audit:
 	sh tools/WG_GLIBC_AUDIT.sh "$(PORTABLE_SDL3_DIST_DIR)" "$(PORTABLE_GLIBC_MAX)"
-	sh tools/WG_GLIBC_AUDIT.sh "$(PORTABLE_CONSOLE_DIST_DIR)" "$(PORTABLE_GLIBC_MAX)"
 
 musl-image:
 	$(DOCKER) build --platform linux/amd64 --tag "$(MUSL_BUILD_IMAGE)" packaging/linux-musl
@@ -247,7 +250,7 @@ musl-image:
 musl-sdl3-release: musl-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
-		"$(MUSL_BUILD_IMAGE)" make sdl3-release CC="$(CC)" \
+		"$(MUSL_BUILD_IMAGE)" make sdl3-release LINUX_COMBINED="$(LINUX_COMBINED)" VIDEO_BACKENDS="$(VIDEO_BACKENDS)" CC="$(CC)" \
 		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" \
 		SDL3_BUILD_DIR="$(MUSL_SDL3_BUILD_DIR)" JOBS="$(JOBS)" \
 		USE_SYSTEM_SDL3=OFF CMAKE_ARGS="-DWG_LINUX_LIBC=musl $(MUSL_SDL3_CMAKE_ARGS)"
@@ -265,7 +268,7 @@ musl-sdl3-release: musl-image
 musl-console-release: musl-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
-		"$(MUSL_BUILD_IMAGE)" make console-release CC="$(CC)" \
+		"$(MUSL_BUILD_IMAGE)" make console-release VIDEO_BACKENDS="$(VIDEO_BACKENDS)" CC="$(CC)" \
 		OPL_DRIVERS="$(OPL_DRIVERS)" OPL_DEFAULT="$(OPL_DEFAULT)" \
 		CONSOLE_BUILD_DIR="$(MUSL_CONSOLE_BUILD_DIR)" JOBS="$(JOBS)" \
 		CMAKE_ARGS="$(MUSL_CONSOLE_CMAKE_ARGS)"
@@ -278,7 +281,8 @@ musl-console-release: musl-image
 		"$(MUSL_CONSOLE_DIST_DIR)" kms-fbdev
 
 musl-console: musl-console-release
-musl-all: musl-sdl3-release musl-console-release
+musl-all: LINUX_COMBINED=ON
+musl-all: musl-sdl3-release
 musl-console-audit: musl-image
 	$(DOCKER) run --rm --volume "$(CURDIR):/src:ro" --workdir /src \
 		$(DOCKER_RUN_ARGS) "$(MUSL_BUILD_IMAGE)" sh tools/W3P_MUSL_AUDIT.sh \
@@ -326,36 +330,44 @@ windows-llvm-ucrt-image:
 windows-win9x: dos-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
-		--env W3P_OPENWATCOM_WINDOWS_BUILD_DIR="/src/$(WINDOWS_OPENWATCOM_BUILD_DIR)" \
+		--env W3P_VIDEO_BACKENDS="$(VIDEO_BACKENDS)" --env W3P_OPENWATCOM_WINDOWS_BUILD_DIR="/src/$(WINDOWS_OPENWATCOM_BUILD_DIR)" \
 		--env W3P_OPENWATCOM_WINDOWS_DIST_DIR="$(if $(WINDOWS_OPENWATCOM_DIST_DIR),/src/$(WINDOWS_OPENWATCOM_DIST_DIR))" \
 		--env W3P_OPENWATCOM_WINDOWS_OPL_DRIVERS="$(WIN9X_OPL_DRIVERS)" \
 		--env W3P_OPENWATCOM_WINDOWS_DEFAULT_OPL="$(WIN9X_OPL_DEFAULT)" \
 		"$(DOS_BUILD_IMAGE)" sh scripts/linux/openwatcom/build-windows.sh
 
-windows-win2k: windows-mingw-image
+ifeq ($(VIDEO_BACKENDS),gdi)
+WINDOWS_LEGACY_IMAGE_TARGET = windows-mingw-image
+WINDOWS_LEGACY_BUILD_IMAGE = $(WINDOWS_MINGW_BUILD_IMAGE)
+else
+WINDOWS_LEGACY_IMAGE_TARGET = windows-sdl1-image
+WINDOWS_LEGACY_BUILD_IMAGE = $(WINDOWS_SDL1_BUILD_IMAGE)
+endif
+
+windows-win2k: $(WINDOWS_LEGACY_IMAGE_TARGET)
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		--env W3P_WINDOWS_CROSS_PROFILE=mingw-win2k-x86 \
-		--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
+		--env W3P_VIDEO_BACKENDS="$(VIDEO_BACKENDS)" --env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
 		--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(WIN2K_OPL_DRIVERS)" \
 		--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(WIN2K_OPL_DEFAULT)" \
-		"$(WINDOWS_MINGW_BUILD_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh
+		"$(WINDOWS_LEGACY_BUILD_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh
 
-windows-xp: windows-mingw-image
+windows-xp: $(WINDOWS_LEGACY_IMAGE_TARGET)
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		--env W3P_WINDOWS_CROSS_PROFILE=mingw-xp-x86 \
-		--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
+		--env W3P_VIDEO_BACKENDS="$(VIDEO_BACKENDS)" --env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
 		--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(WINXP_OPL_DRIVERS)" \
 		--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(WINXP_OPL_DEFAULT)" \
-		"$(WINDOWS_MINGW_BUILD_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh
+		"$(WINDOWS_LEGACY_BUILD_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh
 
 windows-win7: windows-mingw-image
 	@for profile in mingw-win7-x86 mingw-win7-x64; do \
 		$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 			--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 			--env W3P_WINDOWS_CROSS_PROFILE="$$profile" \
-			--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
+			--env W3P_VIDEO_BACKENDS="$(VIDEO_BACKENDS)" --env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
 			--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(WINDOWS_OPL_DRIVERS)" \
 			--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(OPL_DEFAULT)" \
 			"$(WINDOWS_MINGW_BUILD_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh || exit $$?; \
@@ -366,7 +378,7 @@ windows-llvm-win7: windows-llvm-msvcrt-image
 		$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 			--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 			--env W3P_WINDOWS_CROSS_PROFILE="$$profile" \
-			--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
+			--env W3P_VIDEO_BACKENDS="$(VIDEO_BACKENDS)" --env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
 			--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(WINDOWS_OPL_DRIVERS)" \
 			--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(OPL_DEFAULT)" \
 			"$(WINDOWS_LLVM_MINGW_MSVC_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh || exit $$?; \
@@ -376,7 +388,7 @@ windows-win10: windows-llvm-ucrt-image
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		--volume "$(CURDIR):/src" --workdir /src $(DOCKER_RUN_ARGS) \
 		--env W3P_WINDOWS_CROSS_PROFILE=llvm-mingw-win10-x64 \
-		--env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
+		--env W3P_VIDEO_BACKENDS="$(VIDEO_BACKENDS)" --env W3P_WINDOWS_CROSS_JOBS="$(JOBS)" \
 		--env W3P_WINDOWS_CROSS_OPL_DRIVERS="$(WINDOWS_OPL_DRIVERS)" \
 		--env W3P_WINDOWS_CROSS_DEFAULT_OPL="$(OPL_DEFAULT)" \
 		"$(WINDOWS_LLVM_MINGW_UCRT_IMAGE)" sh scripts/linux/windows-cross/build-portable.sh
@@ -447,7 +459,7 @@ windows-win2k-sdl1: windows-sdl1-image
 		-e WIN2K_OPL_DRIVERS="$(WIN2K_OPL_DRIVERS)" -e WIN2K_OPL_DEFAULT="$(WIN2K_OPL_DEFAULT)" \
 		-e JOBS=$(if $(JOBS),$(JOBS),4) $(DOCKER_RUN_ARGS) "$(WINDOWS_SDL1_IMAGE)" sh scripts/linux/build-windows-sdl1.sh
 
-# Initial optional-backend Win2k pilot. A GDI-only build never builds SDL.
+# Compatibility alias. A GDI-only build never builds SDL.
 WIN2K_BACKENDS ?= gdi,sdl1
 .PHONY: windows-win2k-modular
 ifeq ($(WIN2K_BACKENDS),gdi)

@@ -4,13 +4,12 @@ The experimental Win2k x86 SDL1 target uses genuine SDL 1.2.15. It is built
 with MinGW GCC/MSVCRT on Linux; it does not require a Windows build VM.
 Both windib and directx video have run successfully on the Windows 2000 test machine.
 DirectDraw hardware scaling has also been confirmed fast on the Win2k/Nvidia test machine.
-The border-flicker fix is confirmed. Accelerated borderless and display fullscreen are confirmed on that machine. Win9x and WinXP SDL1
-packages, including applicable Visual Studio builds on the XP/Win7 build hosts,
-are follow-up work after Win2k validation. This is separate from the existing
-RH9 SDL1 target and does not change its Linux runtime requirements.
+The border-flicker fix is confirmed. Accelerated borderless and display fullscreen are confirmed on that machine. Win9x/XP and legacy Microsoft builds can now include SDL1 alongside GDI.
+New target combinations still need destination gameplay confirmation. The RH9
+SDL1 target retains its separate historical Linux runtime requirements.
 
-For a single executable with runtime GDI/SDL1 selection, see the
-[modular Win2k pilot](windows-backends.md).
+See the [runtime backend contract](windows-backends.md) for shared build and
+selection behavior.
 
 ## Build
 
@@ -23,10 +22,10 @@ The target builds the existing MinGW image, then a checksum-pinned SDL image.
 for GDI. Defaults are `dbopl,silent,adlib` and `auto`; silent is always included.
 Nuked may be explicitly added. InpOut32 is bundled only when AdLib is included.
 All CMake cache options and source revisions are recorded in `DOCS/BUILD.TXT`.
-The distribution name is `wolf3d-portable_<version>_win2k_x86_sdl1_mingw-gcc<major>-msvcrt`.
-The dedicated CMake entry is `cmake/windows-sdl1`; `SDL1_ROOT` points to the SDL
-headers, import library, DLL and COPYING file. Other toolchain packaging is not
-yet supported; the initial release identity is specifically Win2k/x86/MinGW.
+The distribution name is `wolf3d-portable_<version>_win2k_x86_mingw-gcc<major>-msvcrt`.
+The common root CMake entry accepts `W3P_VIDEO_BACKENDS=gdi,sdl1` or `sdl1`.
+`SDL1_ROOT` can supply headers, DLL and COPYING; an import library is unnecessary.
+Native builds otherwise download the checksum-pinned official SDL 1.2 SDK.
 
 ## Compare video drivers
 

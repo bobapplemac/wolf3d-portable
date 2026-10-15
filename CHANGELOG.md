@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased - unified video backend packages
+
+- Build one executable with a selectable subset of GDI/SDL1 on legacy Windows,
+  GDI/SDL3 on modern Windows, or SDL3/KMS-fbdev on modern Linux. DOS remains VGA;
+  experimental RH9 remains SDL1. SDL1 and SDL3 cannot coexist in one build.
+- Share runtime selection and optional SDL loading, strict explicit choices,
+  configuration precedence and initialization-only fallback across hosts.
+- Consolidate release staging and build-script selections. Remove video/backend
+  and modular fields from package names; retain an RH9 compatibility suffix to
+  distinguish its older ABI/CPU baseline from modern GCC 8 Linux x86 packages.
+- Record compiled backends in build information and diagnostics. Pin the official
+  SDL1 SDK for native legacy builds; omit SDL entirely from native-only builds.
+
+
 ## Unreleased - Runtime diagnostics and console cleanup
 
 - Quiet SDL startup/resize announcements; group compiled video/audio capabilities and runtime diagnostics consistently across hosts.

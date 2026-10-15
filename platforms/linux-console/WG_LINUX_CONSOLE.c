@@ -1,3 +1,6 @@
+#ifdef WG_BACKEND_EMBEDDED
+#define WG_InstallPlatform WG_KMSInstallPlatform
+#endif
 #ifdef WG_LINUX_OPL
 #include "../linux/WG_LINUX_OPL.h"
 #endif

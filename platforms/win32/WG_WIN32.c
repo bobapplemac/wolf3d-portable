@@ -1,3 +1,6 @@
+#ifdef WG_BACKEND_EMBEDDED
+#define WG_InstallPlatform WG_GDIInstallPlatform
+#endif
 /* Windows 2000 predates Raw Input; use the existing legacy mouse path. */
 #if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0501
 #ifndef WG_LEGACY_WIN32
@@ -45,7 +48,7 @@ static void WG_NTAdLibShutdown(void);
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(WG_WIN9X) || defined(WG_CONSOLE_WIN32)
+#if (defined(WG_WIN9X) || defined(WG_CONSOLE_WIN32)) && !defined(WG_BACKEND_EMBEDDED)
 #include "WG_WIN32_CONSOLE.h"
 #endif
 
@@ -1509,7 +1512,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     wg_launcher_arguments_t launcher_arguments;
     wg_game_arguments_t game_arguments;
     wolf3d_result_t result;
-#if defined(WG_WIN9X) || defined(WG_CONSOLE_WIN32)
+#if (defined(WG_WIN9X) || defined(WG_CONSOLE_WIN32)) && !defined(WG_BACKEND_EMBEDDED)
     int owned_console = WG_OwnConsole();
     int no_pause = 0;
 #endif
@@ -1580,7 +1583,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     }
 #endif
 
-#if defined(WG_WIN9X) || defined(WG_CONSOLE_WIN32)
+#if (defined(WG_WIN9X) || defined(WG_CONSOLE_WIN32)) && !defined(WG_BACKEND_EMBEDDED)
     no_pause = WG_NoPause(argc, argv);
 #endif
     if (!WG_LoadLauncherArguments(argc, argv, &launcher_arguments,
@@ -1592,7 +1595,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     }
     launcher_argc = launcher_arguments.argc;
     launcher_argv = launcher_arguments.argv;
-#if defined(WG_WIN9X) || defined(WG_CONSOLE_WIN32)
+#if (defined(WG_WIN9X) || defined(WG_CONSOLE_WIN32)) && !defined(WG_BACKEND_EMBEDDED)
     no_pause = WG_NoPause(launcher_argc, launcher_argv);
 #endif
     for (index = 1; index < launcher_argc; ++index)
@@ -1660,7 +1663,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
             "Win32 host options:\n"
             "  --fullscreen         Start in the selected fullscreen mode\n"
             "  --windowed           Start in windowed mode\n"
-#if defined(WG_WIN9X) || defined(WG_CONSOLE_WIN32)
+#if (defined(WG_WIN9X) || defined(WG_CONSOLE_WIN32)) && !defined(WG_BACKEND_EMBEDDED)
             "  --no-pause           Close a newly created console without waiting\n"
 #endif
             "  --window-scale N     Initial 320x240 scale, 1-8 (default 3)\n"
@@ -1715,7 +1718,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     WG_FreeLauncherArguments(&launcher_arguments);
 
 cleanup:
-#if defined(WG_WIN9X) || defined(WG_CONSOLE_WIN32)
+#if (defined(WG_WIN9X) || defined(WG_CONSOLE_WIN32)) && !defined(WG_BACKEND_EMBEDDED)
     WG_PauseConsole(owned_console, no_pause);
 #endif
 #if !defined(WG_WIN9X) && !defined(WG_BACKEND_EMBEDDED)

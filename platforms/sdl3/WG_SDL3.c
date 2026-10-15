@@ -1,3 +1,8 @@
+#ifdef WG_BACKEND_EMBEDDED
+#define SDL_MAIN_HANDLED
+#define WG_InstallPlatform WG_SDL3InstallPlatform
+#include "../win32/WG_BACKEND.h"
+#endif
 #ifdef WG_INPOUT32
 #include "../win32/WG_INPOUT32.h"
 #include "../win32/WG_OPL_PLAYBACK.h"
@@ -15,6 +20,9 @@ static wg_fullscreen_options_t fullscreen_options={-1,0,0};
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
+#ifdef WG_SDL3_DYNAMIC
+#include "WG_SDL3_DYNAMIC.h"
+#endif
 
 #include <limits.h>
 #include <stdint.h>
@@ -341,8 +349,10 @@ static int WG_SDLEmitGamepad(wolf3d_event_t *event)
     return 0;
 }
 
+static int wg_video_init_failed;
 static int WG_SDLInit(void)
 {
+    wg_video_init_failed = 1;
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD))
     {
         fprintf(stderr, "wolf3d: SDL initialization failed: %s\n",
@@ -432,6 +442,7 @@ static int WG_SDLInit(void)
         return 0;
     }
     WG_SDLRefreshGamepads();
+    wg_video_init_failed = 0;
     return 1;
 }
 
@@ -893,7 +904,7 @@ static void WG_SDLDiagnosticReport(char *report, size_t report_size)
     SDL_Quit();
 }
 
-int main(int argc, char **argv)
+static int WG_SDLRunMain(int argc, char **argv)
 {
     int index;
     char launcher_error[2048];
@@ -968,6 +979,7 @@ int main(int argc, char **argv)
         WG_SetVideoInfo("sdl3","sdl3",NULL);
         result = WG_PrintDiagnostics(argc, argv, launcher_arguments.config_path,
                             report);
+        SDL_Quit();
         WG_FreeLauncherArguments(&launcher_arguments);
         return result ? 0 : 1;
     }
@@ -994,3 +1006,18 @@ int main(int argc, char **argv)
     return result == WOLF3D_RESULT_QUIT || result == WOLF3D_RESULT_NOT_IMPLEMENTED
                ? 0 : 1;
 }
+
+#ifdef WG_BACKEND_EMBEDDED
+int WG_SDL3Run(int argc, char **argv)
+{
+    int result;
+    wg_video_init_failed = 0;
+    SDL_SetMainReady();
+    result = WG_SDLRunMain(argc, argv);
+    /* Diagnostics/early exits must stop SDL workers before unloading the DLL. */
+    SDL_Quit();
+    return wg_video_init_failed ? WG_BACKEND_UNAVAILABLE : result;
+}
+#else
+int main(int argc, char **argv) { return WG_SDLRunMain(argc, argv); }
+#endif

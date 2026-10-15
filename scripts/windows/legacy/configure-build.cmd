@@ -37,6 +37,8 @@ set /p "CONFIG=Configuration - Release or Debug [Release]: "
 if "%CONFIG%"=="" set "CONFIG=Release"
 set /p "RUNTIME=Compiler runtime - static or dynamic [static]: "
 if "%RUNTIME%"=="" set "RUNTIME=static"
+set /p "BACKENDS=Compiled video backends - gdi,sdl1 or gdi or sdl1 [gdi,sdl1]: "
+if "%BACKENDS%"=="" set "BACKENDS=gdi,sdl1"
 set /p "DRIVERS=Compiled OPL drivers - all, a name, or hyphenated pair [all]: "
 if "%DRIVERS%"=="" set "DRIVERS=all"
 set /p "DEFAULT_OPL=Default OPL driver - auto, nuked, dbopl, or silent [auto]: "
@@ -44,16 +46,16 @@ if "%DEFAULT_OPL%"=="" set "DEFAULT_OPL=auto"
 
 echo.
 echo Build plan:
-echo   %COMPILER% x86 GDI, %CONFIG%, %ACTION%
+echo   %COMPILER% x86 %BACKENDS%, %CONFIG%, %ACTION%
 echo   runtime=%RUNTIME%, drivers=%DRIVERS%, default=%DEFAULT_OPL%
 echo.
 echo Reproducible command:
-echo   scripts\windows\legacy\build.cmd %COMPILER% %CONFIG% %DRIVERS% %DEFAULT_OPL% %RUNTIME% %ACTION%
+echo   scripts\windows\legacy\build.cmd %COMPILER% %CONFIG% %DRIVERS% %DEFAULT_OPL% %RUNTIME% %ACTION% %BACKENDS%
 echo.
 set /p "CONFIRM=Run this build now? [Y/n]: "
 if /I "%CONFIRM%"=="n" exit /b 0
 if /I "%CONFIRM%"=="no" exit /b 0
-call "%~dp0build.cmd" %COMPILER% %CONFIG% %DRIVERS% %DEFAULT_OPL% %RUNTIME% %ACTION%
+call "%~dp0build.cmd" %COMPILER% %CONFIG% %DRIVERS% %DEFAULT_OPL% %RUNTIME% %ACTION% %BACKENDS%
 exit /b %ERRORLEVEL%
 
 :detect

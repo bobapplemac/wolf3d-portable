@@ -37,9 +37,9 @@ with tempfile.TemporaryDirectory(prefix='wolf backend ') as directory:
     run(options=['--gl-library','missing-test-gl.dll','--diag'],expected=1,contains='OpenGL library')
     run(options=['--backend','sdl1','--sdl-render','invalid'], expected=1, contains='requires auto, opengl or surface')
     run(options=['--backend','sdl1','--sdl-render','surface','--diag','--opl','silent'], contains='Selected video backend: sdl1')
-    run(options=['--diag','--opl','silent'], contains='Compiled video backends: gdi sdl1')
+    run(options=['--diag','--opl','silent'], contains='Compiled video backends: sdl1 gdi')
     run(options=['--backend', 'gdi', '--help'], contains='Selected video backend: gdi')
-    run(options=['--backend', 'unknown'], expected=1, contains='--backend requires')
+    run(options=['--backend', 'unknown'], expected=1, contains='not compiled')
     run(options=['--backend'], expected=1, contains='--backend requires')
     (root / 'wolf3d.ini').write_text('--backend sdl1\n--no-pause\n'.replace('\\n','\n'))
     run(options=['--backend', 'gdi', '--help'], contains='Selected video backend: gdi')
@@ -63,7 +63,7 @@ with tempfile.TemporaryDirectory(prefix='wolf backend ') as directory:
     (root / 'SDL.saved').rename(root / 'SDL.dll')
     run('test.exe', contains='SDL test backend executed', WG_TEST_BACKEND_RESULT='0')
     run('test.exe', contains='GDI test backend executed', WG_TEST_BACKEND_RESULT='-2')
-    output=run('test.exe', ['--backend','sdl1'], expected=1, contains='initialization failed', WG_TEST_BACKEND_RESULT='-2')
+    output=run('test.exe', ['--backend','sdl1'], expected=1, contains='could not initialize', WG_TEST_BACKEND_RESULT='-2')
     assert 'GDI test backend executed' not in output
     output=run('test.exe', expected=1, WG_TEST_BACKEND_RESULT='1')
     assert 'GDI test backend executed' not in output # Never hide game/runtime errors.

@@ -108,8 +108,8 @@ foreach ($toolchain in $available) {
 $compiler = Read-Choice 'Toolchain' $available 'DisplayName'
 $architectures = if ($compiler.Name -eq 'mingw-ucrt64') { @('x64') } else { @('x64', 'x86') }
 $architecture = Read-Choice 'Architecture' $architectures
-$wrappers = if ($compiler.SupportsSDL3) { @('all', 'win32', 'sdl3') } else { @('win32') }
-$backendNames = @{ all = 'GDI + SDL3'; win32 = 'GDI'; sdl3 = 'SDL3' }
+$wrappers = if ($compiler.SupportsSDL3) { @('all', 'win32', 'sdl3') } else { @('all', 'win32', 'sdl1') }
+$backendNames = @{ all = 'GDI + SDL (one executable)'; win32 = 'GDI'; sdl3 = 'SDL3'; sdl1 = 'SDL1' }
 $backendOptions = @($wrappers | ForEach-Object { [pscustomobject]@{ Value = $_; Label = $backendNames[$_] } })
 $wrapper = (Read-Choice 'Backend' $backendOptions 'Label').Value
 $action = Read-Choice 'What would you like to produce?' @('publish', 'build', 'clean')

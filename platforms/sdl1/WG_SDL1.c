@@ -1,3 +1,6 @@
+#if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 #include "../WG_ENGINE_COMPAT.h"
 #include "../WG_HELP.h"
 #include "../WG_FULLSCREEN.h"
@@ -28,11 +31,16 @@ static int opl_init(void) {
     WG_DOSAdLibShutdown();return 0;
 }
 #endif
+#ifdef WG_WIN9X
+#include "../dos/WG_DOS_ADLIB.h"
+#endif
 #ifdef WG_LINUX_OPL
 #include "../linux/WG_LINUX_OPL.h"
 #define WG_SDL1_OPL_NOTE "Native OPL: direct ports 0x388-0x38b; RH9 elapsed-time waits, hardware confirmation pending"
 #elif defined(WG_INPOUT32)
 #define WG_SDL1_OPL_NOTE "Native OPL: InpOut32, timestamped playback"
+#elif defined(WG_WIN9X)
+#define WG_SDL1_OPL_NOTE "Native OPL: direct ISA ports on Windows 95/98/Me"
 #else
 #define WG_SDL1_OPL_NOTE "Native OPL: not compiled"
 #endif
@@ -42,6 +50,7 @@ static int opl_init(void) {
 #define WG_SDL1_VIDEO_HELP "Linux: X11 video and OSS PCM.\n"
 #endif
 #include <stdio.h>
+#include "../WG_PRINTF_COMPAT.h"
 #include <stdlib.h>
 #include <string.h>
 #include "WG_SDL1_GL.h"
@@ -289,13 +298,13 @@ static int init(void)
     if(!video(320*scale,240*scale)) { shutdown_host(); return 0; }
 #endif
     if(sdl_diagnostics) {
-        char driver[64];const char *presentation="SDL software surfaces";
-        SDL_VideoDriverName(driver,sizeof(driver));
+        char reported_driver[64];const char *presentation="SDL software surfaces";
+        SDL_VideoDriverName(reported_driver,sizeof(reported_driver));
 #ifdef _WIN32
         if(!gl_active && dd_open())presentation="DirectDraw hardware stretch";
 #endif
         snprintf(sdl_report,sizeof(sdl_report),"  SDL video driver: %s\n  Presentation: %s\n%s",
-            driver,gl_active?"OpenGL":presentation,gl_active?gl_report:"");
+            reported_driver,gl_active?"OpenGL":presentation,gl_active?gl_report:"");
 #ifdef _WIN32
         if(!gl_active && !dd_device) {
             size_t used=strlen(sdl_report);
@@ -424,7 +433,7 @@ static int poll_event(wolf3d_event_t *out)
     }
     return 0;
 }
-static void audio_callback(void *unused, Uint8 *stream, int length)
+static void SDLCALL audio_callback(void *unused, Uint8 *stream, int length)
 {
     size_t frames=(size_t)length/(pcm_channels*sizeof(int16_t)),i,c;
     int16_t *dst=(int16_t *)stream;
@@ -516,6 +525,8 @@ int WG_InstallPlatform(void)
         WG_LinuxOPLInit,WG_LinuxOPLShutdown,WG_LinuxOPLWrite,
 #elif defined(WG_INPOUT32)
         opl_init,opl_shutdown,WG_DOSAdLibWrite,
+#elif defined(WG_WIN9X)
+        WG_DOSAdLibInit,WG_DOSAdLibShutdown,WG_DOSAdLibWrite,
 #else
         NULL,NULL,NULL,
 #endif
@@ -541,6 +552,9 @@ static int run_main(int argc,char **argv)
     char problem[2048];int i,ok;wolf3d_result_t result;
     if(!WG_LoadLauncherArguments(argc,argv,&launcher,problem,sizeof(problem))) {WG_PrintLauncherError(problem);return 1;}
     argc=launcher.argc;argv=launcher.argv;
+#ifndef WG_SDL1_DYNAMIC
+    if(!WG_ValidateSingleBackend(argc,argv,"sdl1")) {WG_FreeLauncherArguments(&launcher);return 1;}
+#endif
     if(WG_CommandLineHelpRequested(argc,argv)) {
         WG_SetVideoInfo("sdl1","sdl1",NULL);
         WG_PrintCommandLineHelp(argv[0],"SDL 1.2 options:\n  --window-scale N     Initial 4:3 window scale (1-4; default 2)\n  --fullscreen         Start in the selected fullscreen mode\n  --windowed           Windowed mode (default)\n",WG_FULLSCREEN_HELP "F11 toggles fullscreen.\n" WG_SDL1_VIDEO_HELP "  --sdl-render auto|opengl|surface  Presentation (default auto)\n  --gl-acceleration auto|hardware|software  Require OpenGL with this acceleration\n  --gl-library FILE     Load this OpenGL implementation (implies opengl)\n" WG_SDL1_OPL_NOTE "\n");

@@ -4,7 +4,14 @@
 #ifndef DIRECTDRAW_VERSION
 #define DIRECTDRAW_VERSION 0x0300
 #endif
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4201)
+#endif
 #include <ddraw.h>
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 #include <SDL/SDL_syswm.h>
 static HMODULE dd_library;
 static LPDIRECTDRAW dd_device;

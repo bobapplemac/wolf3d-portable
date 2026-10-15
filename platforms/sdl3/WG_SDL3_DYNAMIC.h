@@ -1,0 +1,68 @@
+#ifndef WG_SDL3_DYNAMIC_H
+#define WG_SDL3_DYNAMIC_H
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
+#define WG_SDL3_FUNCTION(result,name,args) extern result (SDLCALL *wg_##name) args;
+#include "WG_SDL3_FUNCTIONS.inc"
+#undef WG_SDL3_FUNCTION
+#ifndef WG_SDL3_NO_ALIASES
+#define SDL_AddEventWatch wg_SDL_AddEventWatch
+#define SDL_CloseGamepad wg_SDL_CloseGamepad
+#define SDL_CreateRenderer wg_SDL_CreateRenderer
+#define SDL_CreateTexture wg_SDL_CreateTexture
+#define SDL_CreateWindow wg_SDL_CreateWindow
+#define SDL_Delay wg_SDL_Delay
+#define SDL_DestroyAudioStream wg_SDL_DestroyAudioStream
+#define SDL_DestroyRenderer wg_SDL_DestroyRenderer
+#define SDL_DestroyTexture wg_SDL_DestroyTexture
+#define SDL_DestroyWindow wg_SDL_DestroyWindow
+#define SDL_GetAudioPlaybackDevices wg_SDL_GetAudioPlaybackDevices
+#define SDL_GetAudioStreamQueued wg_SDL_GetAudioStreamQueued
+#define SDL_GetClosestFullscreenDisplayMode wg_SDL_GetClosestFullscreenDisplayMode
+#define SDL_GetCurrentAudioDriver wg_SDL_GetCurrentAudioDriver
+#define SDL_GetCurrentVideoDriver wg_SDL_GetCurrentVideoDriver
+#define SDL_GetDesktopDisplayMode wg_SDL_GetDesktopDisplayMode
+#define SDL_GetDisplayForWindow wg_SDL_GetDisplayForWindow
+#define SDL_GetDisplays wg_SDL_GetDisplays
+#define SDL_GetError wg_SDL_GetError
+#define SDL_GetGamepadAxis wg_SDL_GetGamepadAxis
+#define SDL_GetGamepadButton wg_SDL_GetGamepadButton
+#define SDL_GetGamepads wg_SDL_GetGamepads
+#define SDL_GetNumAudioDrivers wg_SDL_GetNumAudioDrivers
+#define SDL_GetNumVideoDrivers wg_SDL_GetNumVideoDrivers
+#define SDL_GetTicks wg_SDL_GetTicks
+#define SDL_GetWindowFlags wg_SDL_GetWindowFlags
+#define SDL_GetWindowID wg_SDL_GetWindowID
+#define SDL_HasMouse wg_SDL_HasMouse
+#define SDL_HideCursor wg_SDL_HideCursor
+#define SDL_Init wg_SDL_Init
+#define SDL_InitSubSystem wg_SDL_InitSubSystem
+#define SDL_IsMainThread wg_SDL_IsMainThread
+#define SDL_OpenAudioDeviceStream wg_SDL_OpenAudioDeviceStream
+#define SDL_OpenGamepad wg_SDL_OpenGamepad
+#define SDL_PollEvent wg_SDL_PollEvent
+#define SDL_PutAudioStreamData wg_SDL_PutAudioStreamData
+#define SDL_Quit wg_SDL_Quit
+#define SDL_RemoveEventWatch wg_SDL_RemoveEventWatch
+#define SDL_RenderClear wg_SDL_RenderClear
+#define SDL_RenderPresent wg_SDL_RenderPresent
+#define SDL_RenderTexture wg_SDL_RenderTexture
+#define SDL_ResumeAudioStreamDevice wg_SDL_ResumeAudioStreamDevice
+#define SDL_SetMainReady wg_SDL_SetMainReady
+#define SDL_SetRenderDrawColor wg_SDL_SetRenderDrawColor
+#define SDL_SetRenderLogicalPresentation wg_SDL_SetRenderLogicalPresentation
+#define SDL_SetTextureScaleMode wg_SDL_SetTextureScaleMode
+#define SDL_SetWindowAlwaysOnTop wg_SDL_SetWindowAlwaysOnTop
+#define SDL_SetWindowFullscreen wg_SDL_SetWindowFullscreen
+#define SDL_SetWindowFullscreenMode wg_SDL_SetWindowFullscreenMode
+#define SDL_SetWindowMouseGrab wg_SDL_SetWindowMouseGrab
+#define SDL_SetWindowPosition wg_SDL_SetWindowPosition
+#define SDL_SetWindowRelativeMouseMode wg_SDL_SetWindowRelativeMouseMode
+#define SDL_SetWindowTitle wg_SDL_SetWindowTitle
+#define SDL_ShowCursor wg_SDL_ShowCursor
+#define SDL_ShowSimpleMessageBox wg_SDL_ShowSimpleMessageBox
+#define SDL_UpdateTexture wg_SDL_UpdateTexture
+#define SDL_free wg_SDL_free
+#define SDL_snprintf wg_SDL_snprintf
+#endif
+#endif

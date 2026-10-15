@@ -2,6 +2,7 @@
 #define WG_HELP_H
 
 #include <stddef.h>
+int WG_ValidateSingleBackend(int argc, char **argv, const char *backend);
 
 typedef struct wg_game_arguments
 {

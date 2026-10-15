@@ -489,6 +489,10 @@ int main(int argc, char **argv)
     }
     argc = launcher_arguments.argc;
     argv = launcher_arguments.argv;
+    if (!WG_ValidateSingleBackend(argc, argv, "vga")) {
+        WG_FreeLauncherArguments(&launcher_arguments);
+        return 1;
+    }
     if (WG_CommandLineHelpRequested(argc, argv))
     {
         WG_SetVideoInfo("vga","vga",NULL);

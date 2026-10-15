@@ -50,7 +50,7 @@ bundle libGL or graphics drivers and still works without them via surfaces.
 The portable-only backend label is `sdl1`; architecture remains `x86`:
 
 ```text
-wolf3d-portable_<engine-version>_linux-glibc_x86_sdl1_gcc8/
+wolf3d-portable_<engine-version>_linux-glibc_x86_gcc8_rh9/
 ```
 
 This extends the [fixed naming order](BUILD-NAMING.md). RH9's glibc/kernel floor

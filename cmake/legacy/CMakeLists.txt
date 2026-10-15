@@ -28,17 +28,39 @@ endif()
 set(WG_DIST_ROOT "${CMAKE_BINARY_DIR}/wolf3d-lib-dist" CACHE PATH "" FORCE)
 add_subdirectory("${W3P_WOLF3D_ROOT}/cmake/legacy" wolf3d-lib)
 
-add_executable(wolf3d-win32 WIN32
+set(W3P_VIDEO_BACKENDS "gdi,sdl1" CACHE STRING "Compiled backends: gdi,sdl1; gdi; sdl1")
+string(REPLACE "," ";" backends "${W3P_VIDEO_BACKENDS}")
+add_executable(wolf3d-win32
     "${W3P_ROOT}/platforms/WG_HELP.c"
     "${W3P_ROOT}/platforms/WG_TEXT_OUTPUT.c"
-    "${W3P_ROOT}/platforms/win32/WG_WIN32.c")
+    "${W3P_ROOT}/platforms/win32/WG_LAUNCHER.c")
+target_compile_definitions(wolf3d-win32 PRIVATE WG_BACKEND_EMBEDDED=1)
+foreach(backend ${backends})
+    if(backend STREQUAL "gdi")
+        target_sources(wolf3d-win32 PRIVATE "${W3P_ROOT}/platforms/win32/WG_WIN32.c")
+        target_compile_definitions(wolf3d-win32 PRIVATE WG_HAVE_GDI=1)
+    elseif(backend STREQUAL "sdl1")
+        include("${W3P_ROOT}/cmake/W3PSDL1.cmake")
+        target_sources(wolf3d-win32 PRIVATE "${W3P_ROOT}/platforms/sdl1/WG_SDL1.c" "${W3P_ROOT}/platforms/sdl1/WG_SDL1_DYNAMIC.c")
+        target_include_directories(wolf3d-win32 PRIVATE "${SDL1_INCLUDE}")
+        target_compile_definitions(wolf3d-win32 PRIVATE WG_HAVE_SDL1=1 WG_SDL1_DYNAMIC=1)
+        add_custom_command(TARGET wolf3d-win32 POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL1_DLL}" "$<TARGET_FILE_DIR:wolf3d-win32>" VERBATIM)
+    else()
+        message(FATAL_ERROR "Legacy Windows supports gdi and sdl1: ${backend}")
+    endif()
+endforeach()
+if(NOT backends)
+    message(FATAL_ERROR "At least one video backend is required")
+endif()
+
 target_link_libraries(wolf3d-win32 wolf3d user32 gdi32 winmm shell32)
 target_include_directories(wolf3d-win32 PRIVATE
     "${W3P_WOLF3D_ROOT}/include"
     "${W3P_WOLF3D_ROOT}/compat/msvc")
 target_compile_definitions(wolf3d-win32 PRIVATE
     WIN32_LEAN_AND_MEAN UNICODE _UNICODE inline=__inline
-    WG_LEGACY_WIN32=1)
+    WG_LEGACY_WIN32=1 _CRT_SECURE_NO_WARNINGS)
 set_target_properties(wolf3d-win32 PROPERTIES OUTPUT_NAME "wolf3d")
 
 if(MSVC_VERSION LESS 1300)
@@ -48,7 +70,7 @@ else()
 endif()
 
 include("${W3P_ROOT}/cmake/WGDistribution.cmake")
-wg_distribution(W3P_RELEASE_DIR wolf3d-portable "${W3P_PROJECT_VERSION}" "gdi" "${W3P_ROOT}" "${W3P_DIST_ROOT}")
+wg_distribution(W3P_RELEASE_DIR wolf3d-portable "${W3P_PROJECT_VERSION}" "" "${W3P_ROOT}" "${W3P_DIST_ROOT}")
 
 execute_process(
     COMMAND git -C "${W3P_ROOT}" rev-parse HEAD
@@ -125,6 +147,12 @@ if(WG_ENABLE_OPL_DBOPL)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${W3P_WOLF3D_ROOT}/third_party/DBOPL/README.wolf3d-lib.md"
             "${W3P_RELEASE_DIR}/DOCS/DBOPL.TXT")
+endif()
+
+if(SDL1_DLL)
+    list(APPEND W3P_RELEASE_COMMANDS
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL1_DLL}" "${W3P_RELEASE_DIR}/SDL.dll"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL1_LICENSE}" "${W3P_RELEASE_DIR}/DOCS/LICENSES/SDL1.TXT")
 endif()
 
 add_custom_target(win32_release

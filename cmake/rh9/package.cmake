@@ -21,7 +21,6 @@ execute_process(COMMAND "${CMAKE_COMMAND}" "-DINFO=${DIST}/DOCS/BUILD.TXT" "-DRO
 file(READ "${ROOT}/packaging/linux-rh9/SHA256SUMS" hashes)
 file(APPEND "${DIST}/DOCS/BUILD.TXT" "\nPinned historical inputs:\n${hashes}")
 execute_process(COMMAND "${CMAKE_COMMAND}" "-DDIST=${DIST}" "-DROOT=${ROOT}" -DPRODUCT=wolf3d-portable -P "${ROOT}/cmake/WGPackageDocs.cmake" COMMAND_ERROR_IS_FATAL ANY)
-file(APPEND "${DIST}/DOCS/NOTICES.TXT" "\nSDL 1.2.15 - Copyright (C) 1997-2012 Sam Lantinga and contributors.\nLicensed under LGPL 2.1 or later; full license: LICENSES/SDL1.TXT.\nUnmodified corresponding source: https://www.libsdl.org/release/SDL-1.2.15.tar.gz\nBuild recipe/flags: wolf3d-portable packaging/linux-rh9/Dockerfile.\nThe separate libSDL-1.2.so.0 may be replaced with a compatible modified build.\nRH9 system libraries are not redistributed in this package.\n")
 
 foreach(snapshot "${ROOT}/packaging/linux-rh9/Dockerfile" "${ROOT}/cmake/toolchains/linux-rh9-i586.cmake" "/opt/rh9/usr/include/SDL/SDL_config.h")
  file(READ "${snapshot}" content)

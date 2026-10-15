@@ -87,6 +87,11 @@ case "$profile" in
     *) dist_crt=msvcrt ;;
 esac
 
+backends=${W3P_VIDEO_BACKENDS:-}
+if [ -z "$backends" ]; then
+    case "$dist_platform" in win2k|winxp) backends=gdi,sdl1 ;; *) backends=gdi,sdl3 ;; esac
+fi
+release_targets=release
 native_opl=OFF
 case ",$drivers," in
     *,adlib,*)
@@ -98,7 +103,7 @@ cmake -S "$root" -B "$build_dir" -G Ninja \
     -DWG_DIST_PLATFORM="$dist_platform" -DWG_DIST_CRT="$dist_crt" \
     -DCMAKE_TOOLCHAIN_FILE="$root/lib/wolf3d/cmake/toolchains/$toolchain" \
     -DCMAKE_C_FLAGS="-D_WIN32_WINNT=$minimum_windows -DWINVER=$minimum_windows" \
-    -DW3P_BUILD_WIN32=ON \
+    -DW3P_VIDEO_BACKENDS="$backends" -DSDL1_ROOT=/opt/sdl1 \
     -DW3P_BUILD_SDL3="$build_sdl" \
     -DW3P_USE_SYSTEM_SDL3=OFF \
     -DW3P_WARNINGS_AS_ERRORS=ON \
@@ -121,7 +126,7 @@ done
 
 for target in $release_targets; do
     case "$target" in
-        win32-release) manifest=W3P_WIN32_RELEASE_DIR ;;
+        release) manifest=W3P_RELEASE_DIR ;;
         sdl3-release) manifest=W3P_SDL3_RELEASE_DIR ;;
     esac
     directory="$root/$(cat "$build_dir/$manifest-Release.path")"

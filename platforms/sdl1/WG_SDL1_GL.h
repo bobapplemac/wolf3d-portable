@@ -74,7 +74,7 @@ static int gl_open(void)
 #define WG_GL_LOAD(result,name,args) \
     address=SDL_GL_GetProcAddress("gl" #name); \
     if(!address) {if(render_choice==1)fprintf(stderr,"SDL1 OpenGL: missing gl%s\n",#name);return 0;} \
-    memcpy(&wg_gl##name,&address,sizeof(wg_gl##name));
+    memcpy((void *)&wg_gl##name,&address,sizeof(wg_gl##name));
     WG_GL_FUNCTIONS(WG_GL_LOAD)
 #undef WG_GL_LOAD
     renderer=(const char *)wg_glGetString(GL_RENDERER);

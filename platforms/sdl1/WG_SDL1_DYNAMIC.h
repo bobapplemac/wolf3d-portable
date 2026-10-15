@@ -1,6 +1,9 @@
 #ifndef WG_SDL1_DYNAMIC_H
 #define WG_SDL1_DYNAMIC_H
 #include <SDL/SDL.h>
+#ifdef WIN32_LEAN_AND_MEAN
+#undef WIN32_LEAN_AND_MEAN
+#endif
 #include <SDL/SDL_syswm.h>
 #define WG_SDL1_FUNCTION(result,name,args) extern result (SDLCALL *wg_##name) args;
 #include "WG_SDL1_FUNCTIONS.inc"

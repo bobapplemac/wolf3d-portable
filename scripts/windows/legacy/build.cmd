@@ -7,6 +7,8 @@ set "DRIVERS=%~3"
 set "DEFAULT_OPL=%~4"
 set "RUNTIME=%~5"
 set "ACTION=%~6"
+set "BACKENDS=%~7"
+if "%BACKENDS%"=="" set "BACKENDS=gdi,sdl1"
 
 if "%COMPILER%"=="" goto usage
 if "%CONFIG%"=="" set "CONFIG=Release"
@@ -59,7 +61,7 @@ if not exist "%BUILD_DIR%" (
 )
 
 pushd "%BUILD_DIR%"
-call "%~dp0cmake-driver.cmd" -G "%GENERATOR%" -DWG_ENABLE_OPL_NUKED=%ENABLE_NUKED% -DWG_ENABLE_OPL_DBOPL=%ENABLE_DBOPL% -DWG_ENABLE_OPL_SILENT=%ENABLE_SILENT% -DWG_DEFAULT_OPL_DRIVER=%DEFAULT_OPL% -DWG_STATIC_MSVC_RUNTIME=%STATIC_RUNTIME% "%ROOT%\cmake\legacy"
+call "%~dp0cmake-driver.cmd" -G "%GENERATOR%" -DW3P_VIDEO_BACKENDS=%BACKENDS% -DWG_ENABLE_OPL_NUKED=%ENABLE_NUKED% -DWG_ENABLE_OPL_DBOPL=%ENABLE_DBOPL% -DWG_ENABLE_OPL_SILENT=%ENABLE_SILENT% -DWG_DEFAULT_OPL_DRIVER=%DEFAULT_OPL% -DWG_STATIC_MSVC_RUNTIME=%STATIC_RUNTIME% "%ROOT%\cmake\legacy"
 if errorlevel 1 goto failed_popd
 
 if /I "%ACTION%"=="package" goto package

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - Win9x worker startup
+
+- Supply the thread-ID output required by Windows 95/98 when creating GDI,
+  SDL1 and OPL workers. Preserve startup errors through resource cleanup.
+- Exercise Win9x thread-creation rules and failure recovery in the GDI/SDL1
+  worker regression tests, including on modern Windows hosts.
+
 ## Unreleased - Win9x startup ABI correction
 
 - Limit SDL1's four-byte enum/packing requirements to its SDK headers; retain

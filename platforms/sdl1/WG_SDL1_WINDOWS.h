@@ -38,19 +38,29 @@ static DWORD WINAPI ui_run(LPVOID unused)
 }
 static int ui_init(void)
 {
+    DWORD thread_id, failure=0;
     ui_stop=ui_ok=ui_frame=ui_title=0;ui_capture=-1;ui_read=ui_count=0;
     InitializeCriticalSection(&ui_lock);
-    ui_ready=CreateEvent(NULL,FALSE,FALSE,NULL);ui_wake=CreateEvent(NULL,FALSE,FALSE,NULL);
-    ui_thread=(ui_ready && ui_wake)?CreateThread(NULL,0,ui_run,NULL,0,NULL):NULL;
-    if(!ui_thread) fprintf(stderr,"SDL1: cannot create video worker (Windows error %lu).\n",(unsigned long)GetLastError());
+    ui_ready=ui_wake=ui_thread=NULL;
+    ui_ready=CreateEvent(NULL,FALSE,FALSE,NULL);
+    if(!ui_ready) {failure=GetLastError();goto failed;}
+    ui_wake=CreateEvent(NULL,FALSE,FALSE,NULL);
+    if(!ui_wake) {failure=GetLastError();goto failed;}
+    /* Required by Win9x; NT also accepts a real thread-ID output. */
+    ui_thread=CreateThread(NULL,0,ui_run,NULL,0,&thread_id);
+    if(!ui_thread) {failure=GetLastError();goto failed;}
     if(ui_thread) {
         WaitForSingleObject(ui_ready,INFINITE);
         if(ui_ok) {SetThreadPriority(ui_thread,THREAD_PRIORITY_BELOW_NORMAL);return 1;}
         WaitForSingleObject(ui_thread,INFINITE);CloseHandle(ui_thread);ui_thread=NULL;
     }
+failed:
     if(ui_ready)CloseHandle(ui_ready);
     if(ui_wake)CloseHandle(ui_wake);
-    DeleteCriticalSection(&ui_lock);return 0;
+    ui_ready=ui_wake=NULL;
+    DeleteCriticalSection(&ui_lock);
+    if(failure) fprintf(stderr,"SDL1: cannot create video worker/events (Windows error %lu).\n",(unsigned long)failure);
+    SetLastError(failure);return 0;
 }
 static void ui_shutdown(void)
 {

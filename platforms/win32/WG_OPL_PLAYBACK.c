@@ -69,6 +69,7 @@ void WG_OPLPlaybackStop(void)
 int WG_OPLPlaybackStart(HWAVEOUT wave, uint32_t rate)
 {
     LARGE_INTEGER frequency;
+    DWORD thread_id;
     WG_OPLPlaybackStop();
     if (!rate || !QueryPerformanceFrequency(&frequency) || frequency.QuadPart <= 0)
         return 0;
@@ -78,7 +79,7 @@ int WG_OPLPlaybackStart(HWAVEOUT wave, uint32_t rate)
     wg_opl_wake = CreateEvent(NULL, FALSE, FALSE, NULL);
     if (!wg_opl_wake) { DeleteCriticalSection(&wg_opl_lock); return 0; }
     wg_opl_period = timeBeginPeriod(1) == TIMERR_NOERROR;
-    wg_opl_thread = CreateThread(NULL, 0, WG_OPLPlaybackThread, NULL, 0, NULL);
+    wg_opl_thread = CreateThread(NULL, 0, WG_OPLPlaybackThread, NULL, 0, &thread_id);
     if (!wg_opl_thread)
     {
         if (wg_opl_period) timeEndPeriod(1);

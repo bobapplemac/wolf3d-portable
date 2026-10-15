@@ -27,7 +27,25 @@ static int WINAPI slow_blit(HDC dc,int x,int y,int w,int h,int sx,int sy,int sw,
     return 200;
 }
 #define StretchDIBits slow_blit
+/* Enforce the Win9x API contract even when tests run on NT. */
+static int fail_thread;
+static HANDLE WINAPI win9x_create_thread(LPSECURITY_ATTRIBUTES security, SIZE_T stack,
+    LPTHREAD_START_ROUTINE start, LPVOID argument, DWORD flags, LPDWORD id)
+{
+    if(!id || fail_thread) {SetLastError(ERROR_INVALID_PARAMETER);return NULL;}
+    return CreateThread(security,stack,start,argument,flags,id);
+}
+static BOOL WINAPI clobber_close_handle(HANDLE handle)
+{
+    BOOL result=CloseHandle(handle);
+    SetLastError(ERROR_SUCCESS);
+    return result;
+}
+#define CloseHandle clobber_close_handle
+#define CreateThread win9x_create_thread
 #include "../platforms/win32/WG_GDI_PRESENTER.h"
+#undef CreateThread
+#undef CloseHandle
 #undef StretchDIBits
 int main(void)
 {
@@ -41,7 +59,8 @@ int main(void)
     test_window=window;
     entered=CreateEvent(NULL,TRUE,FALSE,NULL);release_blit=CreateEvent(NULL,TRUE,FALSE,NULL);
     second=CreateEvent(NULL,TRUE,FALSE,NULL);assert(entered && release_blit && second);
-    assert(WG_PresenterStart(window));
+    fail_thread=1;assert(!WG_PresenterStart(window));assert(GetLastError()==ERROR_INVALID_PARAMETER);
+    fail_thread=0;assert(WG_PresenterStart(window));
     memset(pixels,1,sizeof(pixels));memset(palette,0,sizeof(palette));palette[3]=255;
     WG_PresenterSubmit(pixels,palette,small,small);
     assert(WaitForSingleObject(entered,5000)==WAIT_OBJECT_0);
@@ -52,7 +71,8 @@ int main(void)
     assert(WaitForSingleObject(second,5000)==WAIT_OBJECT_0);
     WG_PresenterStop();assert(calls==2);
     WG_PresenterStop(); /* Idempotent. */
-    assert(WG_PresenterStart(window));WG_PresenterStop(); /* Idle restart/stop. */
+    fail_thread=1;assert(!WG_PresenterStart(window));assert(GetLastError()==ERROR_INVALID_PARAMETER);
+    fail_thread=0;assert(WG_PresenterStart(window));WG_PresenterStop(); /* Idle restart/stop. */
     DestroyWindow(window);UnregisterClass(wc.lpszClassName,wc.hInstance);
     CloseHandle(entered);CloseHandle(release_blit);CloseHandle(second);
     puts("GDI presenter: nonblocking publication, replacement, immutable frame, resize and shutdown passed");

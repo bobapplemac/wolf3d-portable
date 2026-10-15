@@ -49,12 +49,17 @@ static DWORD WINAPI WG_PresentWorker(LPVOID unused)
 }
 static int WG_PresenterStart(HWND window)
 {
+    DWORD thread_id, failure;
     wg_present_window=window;wg_present_stop=wg_present_ready=0;
     InitializeCriticalSection(&wg_present_lock);
     wg_present_wake=CreateEvent(NULL,FALSE,FALSE,NULL);
-    if(!wg_present_wake) {DeleteCriticalSection(&wg_present_lock);return 0;}
-    wg_present_thread=CreateThread(NULL,0,WG_PresentWorker,NULL,0,NULL);
-    if(!wg_present_thread) {CloseHandle(wg_present_wake);DeleteCriticalSection(&wg_present_lock);return 0;}
+    if(!wg_present_wake) {failure=GetLastError();DeleteCriticalSection(&wg_present_lock);SetLastError(failure);return 0;}
+    /* Win9x requires a non-NULL thread-ID output, even when unused. */
+    wg_present_thread=CreateThread(NULL,0,WG_PresentWorker,NULL,0,&thread_id);
+    if(!wg_present_thread) {
+        failure=GetLastError();CloseHandle(wg_present_wake);wg_present_wake=NULL;
+        DeleteCriticalSection(&wg_present_lock);SetLastError(failure);return 0;
+    }
     SetThreadPriority(wg_present_thread,THREAD_PRIORITY_BELOW_NORMAL);
     return 1;
 }

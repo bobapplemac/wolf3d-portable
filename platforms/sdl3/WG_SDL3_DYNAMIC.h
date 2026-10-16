@@ -33,6 +33,7 @@
 #define SDL_GetTicks wg_SDL_GetTicks
 #define SDL_GetWindowFlags wg_SDL_GetWindowFlags
 #define SDL_GetWindowID wg_SDL_GetWindowID
+#define SDL_GetWindowSize wg_SDL_GetWindowSize
 #define SDL_HasMouse wg_SDL_HasMouse
 #define SDL_HideCursor wg_SDL_HideCursor
 #define SDL_Init wg_SDL_Init

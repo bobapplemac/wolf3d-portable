@@ -107,3 +107,11 @@ both argument orders, config/CLI combinations, and command-line overrides.
 `python tests/WG_VIDEO_BACKENDS_TEST.py <package> --sdl sdl1` also verifies that
 whole-line `#` and `;` comments work with and without whitespace after the marker.
 These are developer tests, not Python requirements for building or playing.
+
+### SDL3 window scaling checks
+
+Run `python tests/WG_SDL3_WINDOW_SCALE_TEST.py <sdl3-package>` to exercise the
+real SDL3 window creation path with dummy video/audio and software rendering.
+It checks the default, all scales 1-8, malformed/missing values, config values,
+and command-line overrides. The existing hidden `--sdl3-video-smoke` reports
+SDL's actual window size after processing all options; it remains test-only.

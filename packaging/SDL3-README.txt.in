@@ -59,3 +59,8 @@ source details. See docs/BUILD-NAMING.md in the source tree for package naming.
 @W3P_LINUX_OPL_NOTE@
 
 @W3P_NATIVE_OPL_NOTE@
+
+Window sizing: --window-scale N accepts 1-8 (default 3), in 320x240 units.
+For example, --window-scale 2 starts at 640x480. This sets the initial windowed
+client area, not the fullscreen display resolution. Manual resizing preserves
+4:3 rendering. The option also works in wolf3d.ini/wolf3d.conf; CLI values win.

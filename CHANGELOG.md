@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - SDL3 window scaling
+
+- Support `--window-scale 1-8` in SDL3 on Windows and Linux, matching GDI units
+  and preserving the 960x720 default. Honor launcher config/CLI precedence and
+  reject invalid values. Document the option in help and package/source docs;
+  test actual SDL window sizes, validation, and overrides.
+
 ## Unreleased - explicit SDL1 option conflicts
 
 - Reject explicit DirectDraw or surface-scaling options with OpenGL. Validate

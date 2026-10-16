@@ -243,6 +243,7 @@ static void WG_WriteBackendHelp(wg_help_stream_t *stream)
             "  --fullscreen-mode borderless|display  Default borderless\n"
             "  --fullscreen-resolution WxH  Display-mode resolution (default desktop)\n");
         if(gdi)WG_HelpWrite(stream,"  --window-scale N     GDI: 1-8, default 3 (320x240 units)\n");
+        if(sdl3)WG_HelpWrite(stream,"  --window-scale N     SDL3: 1-8, default 3 (320x240 units)\n");
         if(sdl1)WG_HelpWrite(stream,"  --window-scale N     SDL1: 1-4, default 2 (320x240 units)\n");
     }
     if(sdl1) {

@@ -57,3 +57,5 @@ WG_SDL3_FUNCTION(bool, SDL_ShowSimpleMessageBox, (SDL_MessageBoxFlags flags, con
 WG_SDL3_FUNCTION(bool, SDL_UpdateTexture, (SDL_Texture *texture, const SDL_Rect *rect, const void *pixels, int pitch))
 WG_SDL3_FUNCTION(void, SDL_free, (void *mem))
 WG_SDL3_FUNCTION(int, SDL_snprintf, (char *text, size_t maxlen, const char *fmt, ...))
+
+WG_SDL3_FUNCTION(bool,SDL_GetWindowSize,(SDL_Window *window, int *w, int *h))

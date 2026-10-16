@@ -90,6 +90,7 @@ static int wg_mouse_capture_requested;
 static int wg_window_focused = 1;
 static int wg_joystick_mode = -1;
 static int wg_start_fullscreen;
+static unsigned wg_window_scale = 3;
 static int wg_fullscreen;
 static int wg_fullscreen_enter_down;
 
@@ -366,7 +367,8 @@ static int WG_SDLInit(void)
                 SDL_GetError());
         return 0;
     }
-    wg_window = SDL_CreateWindow("wolf3d", 960, 720,
+    wg_window = SDL_CreateWindow("wolf3d", WG_SDL_LOGICAL_WIDTH * wg_window_scale,
+                                 WG_SDL_LOGICAL_HEIGHT * wg_window_scale,
                                  SDL_WINDOW_RESIZABLE);
     if (wg_window == NULL)
     {
@@ -918,12 +920,15 @@ static void WG_SDLDiagnosticReport(char *report, size_t report_size)
     (void)SDL_snprintf(report, report_size,
         "  SDL video: %s, %d display(s); %d compiled driver(s)\n"
         "  SDL audio: %s, %d playback device(s); %d compiled driver(s)\n"
+        "  Window scale: %u (%ux%u)\n"
         "  Mouse: %s\n"
         "  Gamepads: %d connected\n",
         video_driver != NULL ? video_driver : "unavailable", display_count,
         SDL_GetNumVideoDrivers(),
         audio_driver != NULL ? audio_driver : "unavailable", audio_count,
-        SDL_GetNumAudioDrivers(), mouse_present ? "present" : "not detected",
+        SDL_GetNumAudioDrivers(), wg_window_scale,
+        WG_SDL_LOGICAL_WIDTH * wg_window_scale, WG_SDL_LOGICAL_HEIGHT * wg_window_scale,
+        mouse_present ? "present" : "not detected",
         gamepad_count);
     SDL_free(displays);
     SDL_free(audio_devices);
@@ -934,6 +939,7 @@ static void WG_SDLDiagnosticReport(char *report, size_t report_size)
 static int WG_SDLRunMain(int argc, char **argv)
 {
     int index;
+    int video_smoke = 0;
     char launcher_error[2048];
     wg_launcher_arguments_t launcher_arguments;
     wg_game_arguments_t game_arguments;
@@ -966,16 +972,29 @@ static int WG_SDLRunMain(int argc, char **argv)
             WG_FreeLauncherArguments(&launcher_arguments);
             return 0;
         }
-        if (strcmp(argv[index], "--sdl3-video-smoke") == 0)
+        if (strcmp(argv[index], "--window-scale") == 0)
         {
-            if (!WG_SDLInit())
+            unsigned value = 0;
+            const char *text = index + 1 < argc ? argv[index + 1] : "";
+            const char *cursor = text;
+            while (*cursor >= '0' && *cursor <= '9')
             {
+                value = value * 10U + (unsigned)(*cursor++ - '0');
+                if (value > 8U) break;
+            }
+            if (cursor == text || *cursor || value < 1U || value > 8U)
+            {
+                WG_PrintLauncherError("--window-scale requires an integer from 1 to 8.\n");
                 WG_FreeLauncherArguments(&launcher_arguments);
                 return 1;
             }
-            WG_SDLShutdown();
-            WG_FreeLauncherArguments(&launcher_arguments);
-            return 0;
+            wg_window_scale = value;
+            ++index;
+            continue;
+        }
+        if (strcmp(argv[index], "--sdl3-video-smoke") == 0)
+        {
+            video_smoke = 1;
         }
         if (strcmp(argv[index], "--mouse") == 0)
         {
@@ -1001,6 +1020,19 @@ static int WG_SDLRunMain(int argc, char **argv)
         {
             wg_start_fullscreen = 0;
         }
+    }
+    if (video_smoke)
+    {
+        int width = 0, height = 0;
+        int ok = WG_SDLInit();
+        if (ok)
+        {
+            ok = SDL_GetWindowSize(wg_window, &width, &height);
+            printf("SDL3 window size: %dx%d\n", width, height);
+            WG_SDLShutdown();
+        }
+        WG_FreeLauncherArguments(&launcher_arguments);
+        return ok ? 0 : 1;
     }
     if (WG_CommandLineDiagnosticsRequested(argc, argv))
     {

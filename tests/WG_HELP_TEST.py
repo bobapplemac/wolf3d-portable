@@ -41,7 +41,7 @@ if args.package:
         backends = re.search(r'Compiled video backends: ([^\r\n]+)', before).group(1).split()
         required = {'gdi': ['--window-scale', '--fullscreen-mode'],
                     'sdl1': ['--sdl-render', '--gl-acceleration', '--gl-library', '--window-scale'],
-                    'sdl3': ['--sdl3-help', '--fullscreen-mode'],
+                    'sdl3': ['--sdl3-help', '--fullscreen-mode', '--window-scale'],
                     'kms-fbdev': ['--video', '--alsa-device', '--input-device'], 'vga': []}
         for backend in backends:
             for option in required[backend]+['--backend', '--opl', '--sample-rate']:

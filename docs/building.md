@@ -530,6 +530,23 @@ On a Windows test host, run `tests/WG_WIN9X_SMOKE.ps1 -Profile win2k -NativeOpl`
 driver list and CLI/INI handling without accessing the physical chip.
 Running this on modern Windows does not establish Windows 2000 compatibility.
 
+## SDL3 initial window size
+
+SDL3 supports `--window-scale N` on Windows and Linux, using the same 320x240
+units as GDI and SDL1. Accepts integers 1 through 8, matching GDI; the default
+remains 3 (960x720). For example, `--backend sdl3 --window-scale 2` starts with a
+640x480 client area. Borders are additional. Invalid or missing values are errors.
+
+This controls the initial windowed size, not the internal framebuffer or the
+fullscreen display resolution. Manual resizing and 4:3 letterboxing remain
+available. Fullscreen uses the existing mode/resolution options; the requested
+windowed size is used when returning from fullscreen. Window managers may adjust
+window geometry to fit their policies.
+
+Use the same option in `wolf3d.ini` (Windows) or `wolf3d.conf` (Linux); a matching
+command-line option overrides it. `--diag` reports the requested window scale.
+SDL1 retains its existing 1-4 range and 2x default.
+
 ## Windows GDI window size and optional display mode
 
 The GDI host starts at scale 3 (a 960x720 client area). Use `--window-scale N`

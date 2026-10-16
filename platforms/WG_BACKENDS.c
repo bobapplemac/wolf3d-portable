@@ -78,6 +78,10 @@ int WG_LaunchBackends(int argc, char **argv, int *no_pause)
         snprintf(error, sizeof(error), "Backend '%s' is not compiled into this package. Available: %s\n", choice, compiled);
         WG_PrintLauncherError(error); goto done;
     }
+    if (WG_CommandLineHelpRequested(count, effective)) {
+        WG_PrintCommandLineHelp(effective[0], NULL, NULL);
+        result = 0; goto done;
+    }
     for (backend = backends; backend->name; ++backend) {
         if (!automatic && strcmp(choice, backend->name)) continue;
         if (backend->load && !backend->load(error, sizeof(error))) {

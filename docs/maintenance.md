@@ -70,3 +70,31 @@ These tools remain supported manual checks, recorded in the inventory rather
 than deleted for lacking a build-system caller. New unexplained reference leads
 fail the audit and require review. Keep this inventory current when adding,
 removing or changing ownership of shared helpers or generated assets.
+
+## Command-line help contract
+
+`--help`, `-h`, and `/?` must describe every public option supported by the
+compiled package, including all compiled video backends. Selecting GDI must
+not hide compiled SDL options. Help must work without SDL libraries, game data,
+a display, or audio hardware; the dispatcher handles it before backend loading.
+
+Keep launcher/backend option text in `platforms/WG_HELP.c` and game option text
+in wolf3d-lib's `wolf3d_GetCommandLineHelp`. Document accepted values, defaults,
+and backend/platform restrictions. New aliases also belong in help. Only
+explicitly designated internal/debug options may be omitted; give each omitted
+launcher option a reason in `tests/WG_HELP_TEST.py`'s `hidden` dictionary.
+Do not silently hide an option merely because its name looks like a test flag.
+
+Run the developer-only check after changing an argument parser or help text:
+
+```sh
+python tests/WG_HELP_TEST.py
+python tests/WG_HELP_TEST.py --package PATH_TO_DIST
+```
+
+The inventory check scans launcher C/header option literals and compares them
+with centralized help plus engine help. It catches newly added literal long
+options; computed option names and engine-only parsing still require review.
+The package check compares `--help` with `/?`, selects every compiled backend,
+and verifies help remains complete when optional Windows SDL DLLs are absent.
+Python is needed only for these developer tests, never for normal builds.

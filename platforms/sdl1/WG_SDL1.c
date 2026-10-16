@@ -48,11 +48,7 @@ static int opl_init(void) {
 #else
 #define WG_SDL1_OPL_NOTE "Native OPL: not compiled"
 #endif
-#ifdef _WIN32
-#define WG_SDL1_VIDEO_HELP "Windows options:\n  --sdl-video directx|windib  Default directx; falls back to windib\n  --sdl-scale hardware|software  Default hardware; falls back to software\n"
-#else
-#define WG_SDL1_VIDEO_HELP "Linux: X11 video and OSS PCM.\n"
-#endif
+
 #include <stdio.h>
 #include "../WG_PRINTF_COMPAT.h"
 #include <stdlib.h>
@@ -726,7 +722,7 @@ static int run_main(int argc,char **argv)
 #endif
     if(WG_CommandLineHelpRequested(argc,argv)) {
         WG_SetVideoInfo("sdl1","sdl1",NULL);
-        WG_PrintCommandLineHelp(argv[0],"SDL 1.2 options:\n  --window-scale N     Initial 4:3 window scale (1-4; default 2)\n  --fullscreen         Start in the selected fullscreen mode\n  --windowed           Windowed mode (default)\n",WG_FULLSCREEN_HELP "F11 toggles fullscreen.\n" WG_SDL1_VIDEO_HELP "  --sdl-render auto|opengl|surface  Presentation (default auto)\n  --gl-acceleration auto|hardware|software  Require OpenGL with this acceleration\n  --gl-library FILE     Load this OpenGL implementation (implies opengl)\n" WG_SDL1_OPL_NOTE "\n");
+        WG_PrintCommandLineHelp(argv[0], NULL, NULL);
         WG_FreeLauncherArguments(&launcher);return 0;
     }
     for(i=1;i<argc;++i) {

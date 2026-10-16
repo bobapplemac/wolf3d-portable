@@ -496,9 +496,7 @@ int main(int argc, char **argv)
     if (WG_CommandLineHelpRequested(argc, argv))
     {
         WG_SetVideoInfo("vga","vga",NULL);
-        WG_PrintCommandLineHelp(
-            argc > 0 ? argv[0] : "WOLF3D.EXE", NULL,
-            "The DOS host automatically selects native AdLib or emulated OPL and SB2/Pro or SB16 PCM output.\n");
+        WG_PrintCommandLineHelp(argc > 0 ? argv[0] : "WOLF3D.EXE", NULL, NULL);
         WG_FreeLauncherArguments(&launcher_arguments);
         return 0;
     }

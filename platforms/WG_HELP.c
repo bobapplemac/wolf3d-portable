@@ -177,6 +177,8 @@ int WG_CommandLineHelpRequested(int argc, char **argv)
     {
         if (argv[index] != NULL
             && (strcmp(argv[index], "--help") == 0
+                || strcmp(argv[index], "--sdl3-help") == 0
+                || strcmp(argv[index], "--linux-console-help") == 0
                 || strcmp(argv[index], "-h") == 0
                 || strcmp(argv[index], "/?") == 0))
         {
@@ -227,6 +229,49 @@ static void WG_WriteCapabilities(wg_help_stream_t *stream)
     WG_HelpWrite(stream,"\n  Default OPL driver: ");
     WG_HelpWrite(stream,wolf3d_GetSelectedOPLDriver());WG_HelpWrite(stream,"\n");
 }
+/* Help describes compiled capabilities, never whichever DLL happens to load. */
+static void WG_WriteBackendHelp(wg_help_stream_t *stream)
+{
+    int gdi=wg_compiled_video && strstr(wg_compiled_video,"gdi")!=NULL;
+    int sdl1=wg_compiled_video && strstr(wg_compiled_video,"sdl1")!=NULL;
+    int sdl3=wg_compiled_video && strstr(wg_compiled_video,"sdl3")!=NULL;
+    int kms=wg_compiled_video && strstr(wg_compiled_video,"kms-fbdev")!=NULL;
+    if(gdi || sdl1 || sdl3) {
+        WG_HelpWrite(stream,"\nWindow options (GDI/SDL, where compiled):\n"
+            "  --fullscreen         Start in the selected fullscreen mode\n"
+            "  --windowed           Start in windowed mode\n"
+            "  --fullscreen-mode borderless|display  Default borderless\n"
+            "  --fullscreen-resolution WxH  Display-mode resolution (default desktop)\n");
+        if(gdi)WG_HelpWrite(stream,"  --window-scale N     GDI: 1-8, default 3 (320x240 units)\n");
+        if(sdl1)WG_HelpWrite(stream,"  --window-scale N     SDL1: 1-4, default 2 (320x240 units)\n");
+    }
+    if(sdl1) {
+        WG_HelpWrite(stream,"\nSDL1 presentation options:\n"
+            "  --sdl-render auto|opengl|surface  Presentation (default auto)\n"
+            "  --gl-acceleration auto|hardware|software  Require OpenGL with this acceleration\n"
+            "  --gl-library FILE    Load an OpenGL implementation (implies opengl)\n");
+#ifdef _WIN32
+        WG_HelpWrite(stream,"  --sdl-video directx|windib  Default directx; falls back to windib\n"
+            "  --sdl-scale hardware|software  Surface scaling; default hardware with fallback\n"
+            "  OpenGL uses windib; --sdl-scale applies only to surface presentation.\n");
+#endif
+    }
+    if(sdl1 || sdl3) {
+#ifndef _WIN32
+        WG_HelpWrite(stream,"\nSDL audio options:\n  --audio-output auto|sdl  PCM output (default auto)\n");
+#endif
+        if(sdl3)WG_HelpWrite(stream,"  --sdl3-help          Alias for --help\n");
+    }
+    if(kms)WG_HelpWrite(stream,"\nKMS/fbdev options:\n"
+        "  --video auto|drm|fbdev  Console video output (default auto)\n"
+        "  --drm-device PATH    DRM card (default first usable card)\n"
+        "  --fb-device PATH     Framebuffer (default $FRAMEBUFFER or /dev/fb0)\n"
+        "  --input-device PATH  evdev device (repeatable; default auto)\n"
+        "  --alsa-device NAME   ALSA PCM device (default default)\n"
+        "  --no-audio           Do not open an ALSA device\n"
+        "  --linux-console-help Alias for --help\n");
+}
+
 void WG_PrintCommandLineHelp(const char *program,
                              const char *host_options,
                              const char *runtime_notes)
@@ -259,6 +304,7 @@ void WG_PrintCommandLineHelp(const char *program,
 #endif
     WG_HelpWrite(&stream,"\n");
     WG_HelpWrite(&stream, wolf3d_GetCommandLineHelp());
+    WG_WriteBackendHelp(&stream);
     if (host_options != NULL && host_options[0] != '\0')
     {
         WG_HelpWrite(&stream, "\n");

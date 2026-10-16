@@ -108,18 +108,7 @@ static void WG_LinuxConsoleDiagnosticReport(char *report, size_t report_size)
 static void WG_PrintHelp(const char *program)
 {
     WG_SetVideoInfo("kms-fbdev","kms-fbdev",NULL);
-    WG_PrintCommandLineHelp(
-        program != NULL ? program : "wolf3d",
-        "Linux console host options:\n"
-        "  --video MODE         Video backend: auto, drm, or fbdev (default: auto)\n"
-        "  --drm-device PATH    DRM card to use (default: first usable card)\n"
-        "  --fb-device PATH     Framebuffer (default: $FRAMEBUFFER or /dev/fb0)\n"
-        "  --input-device PATH  evdev device (repeatable; default: auto)\n"
-        "  --alsa-device NAME   ALSA PCM device (default: default)\n"
-        "  --no-audio           Run without opening an ALSA device\n"
-        "  --linux-console-help Alias for --help\n",
-        "Run from an active virtual console with access to the selected video,\n"
-        "evdev input, and ALSA devices. DRM/KMS is preferred over fbdev.\n");
+    WG_PrintCommandLineHelp(program, NULL, NULL);
 }
 
 #ifdef WG_BACKEND_EMBEDDED

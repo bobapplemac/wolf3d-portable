@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - complete compiled-backend help
+
+- Show options for all compiled video backends, including SDL1 OpenGL rendering,
+  acceleration and library selection, regardless of the selected backend. Print
+  help before loading optional graphics libraries, and document Linux SDL PCM
+  selection. Centralize host help and add inventory/package regression checks.
+
 ## Unreleased - Win9x SDL1 first keypress
 
 - Normalize a repeat-marked Windows key-down when SDL1's window has not seen

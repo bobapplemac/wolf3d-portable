@@ -33,7 +33,7 @@ def main():
                 assert 'Selected video backend: ' + selected in output, output
             return output
 
-        run('--no-config', '--help', selected=args.sdl)
+        run('--no-config', '--help', selected='auto')
         run('--no-config', '--backend', args.native, '--help', selected=args.native)
         run('--no-config', '--backend', 'nonexistent', '--help', success=False)
         run('--no-config', '--backend', success=False)
@@ -42,12 +42,12 @@ def main():
         run('--help', selected=args.native)
         run('--backend', args.sdl, '--help', selected=args.sdl)
         (root / dll).rename(root / (dll + '.saved'))
-        run('--no-config', '--help', selected=args.sdl if args.system_sdl_available else args.native)
-        run('--no-config', '--backend', args.sdl, '--help', success=args.system_sdl_available)
+        run('--no-config', '--help', selected='auto')
+        run('--no-config', '--backend', args.sdl, '--help', selected=args.sdl)
         # An invalid DLL must yield an application error, not a Windows dialog.
         (root / dll).write_bytes(b'not a PE library')
-        run('--no-config', '--help', selected=args.native)
-        run('--no-config', '--backend', args.sdl, '--help', success=False)
+        run('--no-config', '--help', selected='auto')
+        run('--no-config', '--backend', args.sdl, '--help', selected=args.sdl)
     print('Video selection, config precedence, missing/invalid SDL, and strict selection passed.')
 
 

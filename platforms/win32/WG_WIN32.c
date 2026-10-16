@@ -1562,17 +1562,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     if (WG_CommandLineHelpRequested(launcher_argc, launcher_argv))
     {
         WG_SetVideoInfo("gdi","gdi",NULL);
-        WG_PrintCommandLineHelp(
-            launcher_argc > 0 ? launcher_argv[0] : "wolf3d.exe",
-            "Win32 host options:\n"
-            "  --fullscreen         Start in the selected fullscreen mode\n"
-            "  --windowed           Start in windowed mode\n"
-#if (defined(WG_WIN9X) || defined(WG_CONSOLE_WIN32)) && !defined(WG_BACKEND_EMBEDDED)
-            "  --no-pause           Close a newly created console without waiting\n"
-#endif
-            "  --window-scale N     Initial 320x240 scale, 1-8 (default 3)\n"
-            WG_FULLSCREEN_HELP,
-            "Press F11 or Alt+Enter to toggle windowed/fullscreen mode.\n");
+        WG_PrintCommandLineHelp(launcher_argc > 0 ? launcher_argv[0] : "wolf3d.exe", NULL, NULL);
         result = WOLF3D_RESULT_QUIT;
     }
     else if (WG_CommandLineDiagnosticsRequested(launcher_argc,

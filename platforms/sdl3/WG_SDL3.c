@@ -884,14 +884,7 @@ int WG_InstallPlatform(void)
 static void WG_SDLPrintHelp(const char *program)
 {
     WG_SetVideoInfo("sdl3","sdl3",NULL);
-    WG_PrintCommandLineHelp(
-        program != NULL ? program : "wolf3d-sdl3",
-        "SDL3 host options:\n"
-        WG_FULLSCREEN_HELP
-        "  --fullscreen         Start in the selected fullscreen mode\n"
-        "  --windowed           Start in windowed mode\n"
-        "  --sdl3-help          Alias for --help\n",
-        "Press F11 or Alt+Enter to toggle windowed/fullscreen mode.\n");
+    WG_PrintCommandLineHelp(program, NULL, NULL);
 }
 
 static void WG_SDLDiagnosticReport(char *report, size_t report_size)

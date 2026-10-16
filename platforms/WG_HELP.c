@@ -249,11 +249,12 @@ static void WG_WriteBackendHelp(wg_help_stream_t *stream)
         WG_HelpWrite(stream,"\nSDL1 presentation options:\n"
             "  --sdl-render auto|opengl|surface  Presentation (default auto)\n"
             "  --gl-acceleration auto|hardware|software  Require OpenGL with this acceleration\n"
-            "  --gl-library FILE    Load an OpenGL implementation (implies opengl)\n");
+            "  --gl-library FILE    Load an OpenGL implementation (implies opengl)\n"
+            "  GL options require --sdl-render opengl or omission of --sdl-render.\n");
 #ifdef _WIN32
         WG_HelpWrite(stream,"  --sdl-video directx|windib  Default directx; falls back to windib\n"
             "  --sdl-scale hardware|software  Surface scaling; default hardware with fallback\n"
-            "  OpenGL uses windib; --sdl-scale applies only to surface presentation.\n");
+            "  OpenGL uses windib; explicit directx or --sdl-scale conflicts are errors.\n");
 #endif
     }
     if(sdl1 || sdl3) {

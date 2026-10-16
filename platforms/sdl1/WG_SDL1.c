@@ -709,6 +709,10 @@ static int run_main(int argc,char **argv)
 {
     wg_launcher_arguments_t launcher;wg_game_arguments_t game;
     char problem[2048];int i,ok;wolf3d_result_t result;
+    int renderer_explicit=0,gl_explicit=0;
+#ifdef _WIN32
+    int scaling_explicit=0;
+#endif
     if(!WG_LoadLauncherArguments(argc,argv,&launcher,problem,sizeof(problem))) {WG_PrintLauncherError(problem);return 1;}
     argc=launcher.argc;argv=launcher.argv;
 #ifdef _WIN32
@@ -731,14 +735,15 @@ static int run_main(int argc,char **argv)
         if(option) {++i;continue;}
         if(!strcmp(argv[i],"--gl-acceleration")) {
             if(++i>=argc || !set_gl_acceleration(argv[i])) {error("--gl-acceleration requires auto, hardware or software");WG_FreeLauncherArguments(&launcher);return 1;}
-            render_choice=1;continue;
+            gl_explicit=1;continue;
         }
         if(!strcmp(argv[i],"--gl-library")) {
             if(++i>=argc || !argv[i][0]) {error("--gl-library requires a DLL/shared-library path");WG_FreeLauncherArguments(&launcher);return 1;}
             if(strlen(argv[i])>=sizeof(gl_library_storage)) {error("OpenGL library path is too long");WG_FreeLauncherArguments(&launcher);return 1;}
-            strcpy(gl_library_storage,argv[i]);gl_library_path=gl_library_storage;render_choice=1;continue;
+            strcpy(gl_library_storage,argv[i]);gl_library_path=gl_library_storage;gl_explicit=1;continue;
         }
         if(!strcmp(argv[i],"--sdl-render")) {
+            renderer_explicit=1;
             if(++i>=argc || !set_renderer(argv[i])) {error("--sdl-render requires auto, opengl or surface");WG_FreeLauncherArguments(&launcher);return 1;}
         }
 #ifdef _WIN32
@@ -746,6 +751,7 @@ static int run_main(int argc,char **argv)
             if(++i>=argc || !set_video_driver(argv[i])) {error("--sdl-video requires directx or windib");WG_FreeLauncherArguments(&launcher);return 1;}
         }
         if(!strcmp(argv[i],"--sdl-scale")) {
+            scaling_explicit=1;
             if(++i>=argc || !set_scaling(argv[i])) {error("--sdl-scale requires hardware or software");WG_FreeLauncherArguments(&launcher);return 1;}
         }
 #endif
@@ -760,9 +766,20 @@ static int run_main(int argc,char **argv)
             scale=argv[i][0]-'0';
         }
     }
-    if((gl_library_path || gl_acceleration>=0) && render_choice!=1) {
+    if(gl_explicit && renderer_explicit && render_choice!=1) {
         error("--gl-library and --gl-acceleration require --sdl-render opengl");WG_FreeLauncherArguments(&launcher);return 1;
     }
+    /* Validate effective choices after config/CLI precedence, independent of
+       argument order. Defaults and environment hints remain automatic. */
+    if(gl_explicit)render_choice=1;
+#ifdef _WIN32
+    if(render_choice==1 && video_driver_choice && !strcmp(video_driver_choice,"directx")) {
+        error("--sdl-video directx conflicts with OpenGL; use windib or omit --sdl-video");WG_FreeLauncherArguments(&launcher);return 1;
+    }
+    if(render_choice==1 && scaling_explicit) {
+        error("--sdl-scale conflicts with OpenGL; it applies only to surface presentation");WG_FreeLauncherArguments(&launcher);return 1;
+    }
+#endif
     if(!WG_InstallPlatform()) {WG_PrintLauncherError("SDL1: engine rejected the platform interface. Replace the complete package, including wolf3d.dll.\n");WG_FreeLauncherArguments(&launcher);return 1;}
     sdl_diagnostics=WG_CommandLineDiagnosticsRequested(argc,argv);
     if(sdl_diagnostics) {

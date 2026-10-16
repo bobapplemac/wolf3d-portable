@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - explicit SDL1 option conflicts
+
+- Reject explicit DirectDraw or surface-scaling options with OpenGL. Validate
+  OpenGL-specific options against explicit renderer choices regardless of order,
+  including acceleration `auto`. Preserve config/CLI overrides and implicit
+  defaults; clarify help/docs and test conflicts and whole-line config comments.
+
 ## Unreleased - complete compiled-backend help
 
 - Show options for all compiled video backends, including SDL1 OpenGL rendering,

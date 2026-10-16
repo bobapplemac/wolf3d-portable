@@ -37,6 +37,13 @@ def main():
         run('--no-config', '--backend', args.native, '--help', selected=args.native)
         run('--no-config', '--backend', 'nonexistent', '--help', success=False)
         run('--no-config', '--backend', success=False)
+        # Whole-line comments need no space after the marker. Invalid backend
+        # values ensure accidentally parsing a commented line fails visibly.
+        for marker in ('#', '# ', ';', '; ', '  #', '\t#'):
+            config.write_text(marker + '--backend nonexistent\n')
+            run('--help', selected='auto')
+            config.write_text(marker + '--backend nonexistent\n--backend ' + args.native + '\n')
+            run('--help', selected=args.native)
         # Config defaults are parsed once; the command line wins.
         config.write_text('--backend ' + args.native + '\n')
         run('--help', selected=args.native)

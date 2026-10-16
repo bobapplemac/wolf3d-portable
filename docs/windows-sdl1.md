@@ -134,10 +134,12 @@ SDL video driver. It also works as an argument line in `wolf3d.ini`.
 - `auto` (default): Windows retains the DirectDraw/windib behavior above.
   Legacy Linux tries OpenGL, then software surfaces if GL initialization fails.
 - `opengl`: require OpenGL; initialization failure is an error. Windows uses
-  SDL's windib driver to create the GL context, overriding `--sdl-video` and
-  `SDL_VIDEODRIVER`. This does not mean GDI is drawing the game frames.
+  SDL's windib driver to create the GL context. Explicit `--sdl-video directx`
+  or `--sdl-scale` conflicts with OpenGL and is rejected. Omit these options
+  or select `--sdl-video windib`. An environment-only `SDL_VIDEODRIVER` hint
+  can still be overridden. This does not mean GDI is drawing the game frames.
 - `surface`: use the existing SDL surface path. On Windows, `--sdl-video` and
-  `--sdl-scale` retain their existing meanings. `--sdl-scale` does not affect GL.
+  `--sdl-scale` retain their existing meanings. `--sdl-scale` is rejected with GL.
 
 For the combined package, use:
 
@@ -186,7 +188,11 @@ CPU requirements. No Mesa library is bundled; current Mesa builds must not be
 assumed compatible with Win2k or Pentium III. SDL1 does not enumerate every
 installed vendor implementation; this is explicit selection of a known library.
 Combining either option with `--sdl-render surface`/`auto` is rejected; use
-`--sdl-render opengl` or omit that argument. All options work in the config file.
+`--sdl-render opengl` or omit that argument. All options work in the config file. Conflict checks are independent of argument
+order and apply after command-line overrides of the corresponding config options.
+This includes `--gl-acceleration auto`, which still explicitly requests OpenGL.
+Whole-line config comments start with `#` or `;` (optional leading whitespace);
+no space is needed after the marker. Commenting out an option restores its default.
 
 ```bat
 wolf3d.exe --backend sdl1 --gl-acceleration software

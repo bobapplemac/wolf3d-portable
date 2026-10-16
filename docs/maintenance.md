@@ -98,3 +98,12 @@ options; computed option names and engine-only parsing still require review.
 The package check compares `--help` with `/?`, selects every compiled backend,
 and verifies help remains complete when optional Windows SDL DLLs are absent.
 Python is needed only for these developer tests, never for normal builds.
+
+### SDL1 option conflict checks
+
+Run `python tests/WG_SDL1_OPTIONS_TEST.py <windows-sdl1-package>` after changing
+SDL1 presentation options. This exercises conflicting and compatible choices in
+both argument orders, config/CLI combinations, and command-line overrides.
+`python tests/WG_VIDEO_BACKENDS_TEST.py <package> --sdl sdl1` also verifies that
+whole-line `#` and `;` comments work with and without whitespace after the marker.
+These are developer tests, not Python requirements for building or playing.

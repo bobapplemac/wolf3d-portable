@@ -953,6 +953,9 @@ static int WG_SDLRunMain(int argc, char **argv)
     }
     argc = launcher_arguments.argc;
     argv = launcher_arguments.argv;
+    if (!WG_ValidateBackendOptions(argc, argv, "sdl3")) {
+        WG_FreeLauncherArguments(&launcher_arguments);return 1;
+    }
 #ifdef _WIN32
     wg_output_choice=WG_ParseAudioOutput(argc,argv,1,1);
 #else

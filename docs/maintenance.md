@@ -115,3 +115,9 @@ real SDL3 window creation path with dummy video/audio and software rendering.
 It checks the default, all scales 1-8, malformed/missing values, config values,
 and command-line overrides. The existing hidden `--sdl3-video-smoke` reports
 SDL's actual window size after processing all options; it remains test-only.
+
+Run `python tests/WG_BACKEND_OPTIONS_TEST.py <package>` to check that SDL1-only
+presentation options are rejected by incompatible backends, including config
+files and diagnostics. Run against SDL3 and SDL1/GDI packages. Help remains
+available for correcting invalid settings. This is not a general validator for
+all original engine arguments.

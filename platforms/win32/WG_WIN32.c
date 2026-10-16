@@ -1496,6 +1496,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous_instance,
     }
     launcher_argc = launcher_arguments.argc;
     launcher_argv = launcher_arguments.argv;
+    if (!WG_ValidateBackendOptions(launcher_argc, launcher_argv, "gdi")) {
+        WG_FreeLauncherArguments(&launcher_arguments);
+        result = WOLF3D_RESULT_PLATFORM_ERROR;goto cleanup;
+    }
     if(WG_ParseAudioOutput(launcher_argc,launcher_argv,0,1)<0) {
         WG_FreeLauncherArguments(&launcher_arguments);return 1;
     }

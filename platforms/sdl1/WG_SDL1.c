@@ -715,6 +715,7 @@ static int run_main(int argc,char **argv)
 #endif
     if(!WG_LoadLauncherArguments(argc,argv,&launcher,problem,sizeof(problem))) {WG_PrintLauncherError(problem);return 1;}
     argc=launcher.argc;argv=launcher.argv;
+    if(!WG_ValidateBackendOptions(argc,argv,"sdl1")) {WG_FreeLauncherArguments(&launcher);return 1;}
 #ifdef _WIN32
     pcm_output_choice=WG_ParseAudioOutput(argc,argv,1,1);
 #else

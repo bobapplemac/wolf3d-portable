@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - backend-specific option validation
+
+- Reject SDL1 presentation/GL options on SDL3, GDI and other incompatible
+  backends instead of silently ignoring them. Validate effective config/CLI
+  arguments before backend loading; keep help accessible for correcting settings.
+  Add runtime coverage for command-line, config, diagnostics and missing SDL DLLs.
+
 ## Unreleased - SDL3 window scaling
 
 - Support `--window-scale 1-8` in SDL3 on Windows and Linux, matching GDI units

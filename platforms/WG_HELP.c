@@ -1734,6 +1734,33 @@ void WG_PrintLauncherError(const char *message)
     WG_CloseHelpStream(&stream);
 }
 
+/* Presentation controls belong to SDL1, not every backend named SDL. */
+int WG_ValidateBackendOptions(int argc, char **argv, const char *backend)
+{
+    int index;
+    if (WG_CommandLineHelpRequested(argc, argv)) return 1;
+    for (index = 1; index < argc; ++index) {
+        const char *option = argv[index];
+        int windows_only = !strcmp(option, "--sdl-video") || !strcmp(option, "--sdl-scale");
+        int sdl1_only = windows_only || !strcmp(option, "--sdl-render")
+            || !strcmp(option, "--gl-acceleration") || !strcmp(option, "--gl-library");
+        int supported = !strcmp(backend, "sdl1");
+#ifndef _WIN32
+        if (windows_only) supported = 0;
+#endif
+        if (sdl1_only && !supported) {
+            char message[512];
+            (void)sprintf(message, "%s is not supported by backend '%s'; it requires %s. Remove it from the command line/config or select a compatible compiled backend.\n",
+                          option, backend, windows_only ? "SDL1 on Windows" : "SDL1");
+            WG_PrintLauncherError(message);
+            return 0;
+        }
+        /* Do not interpret an option-looking value as another option. */
+        if (sdl1_only && index + 1 < argc) ++index;
+    }
+    return 1;
+}
+
 /* Singleton hosts still accept the same selection vocabulary as combined ones. */
 int WG_ValidateSingleBackend(int argc, char **argv, const char *backend)
 {
@@ -1753,5 +1780,5 @@ int WG_ValidateSingleBackend(int argc, char **argv, const char *backend)
         return 0;
     }
     WG_SetVideoInfo(backend, backend, NULL);
-    return 1;
+    return WG_ValidateBackendOptions(argc, argv, backend);
 }

@@ -134,6 +134,9 @@ int main(int argc, char **argv)
     }
     argc = launcher_arguments.argc;
     argv = launcher_arguments.argv;
+    if (!WG_ValidateBackendOptions(argc, argv, "kms-fbdev")) {
+        WG_FreeLauncherArguments(&launcher_arguments);return 1;
+    }
     game_argv = (char **)calloc((size_t)argc + 1U, sizeof(*game_argv));
     if (game_argv == NULL)
     {

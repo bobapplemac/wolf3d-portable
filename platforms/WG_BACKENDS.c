@@ -84,6 +84,7 @@ int WG_LaunchBackends(int argc, char **argv, int *no_pause)
     }
     for (backend = backends; backend->name; ++backend) {
         if (!automatic && strcmp(choice, backend->name)) continue;
+        if (!WG_ValidateBackendOptions(count, effective, backend->name)) goto done;
         if (backend->load && !backend->load(error, sizeof(error))) {
             if (!automatic) { WG_PrintLauncherError(error); goto done; }
             if (WG_CommandLineDiagnosticsRequested(count, effective))

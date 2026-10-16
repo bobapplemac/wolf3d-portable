@@ -130,6 +130,10 @@ filtering and acceleration still depend on the installed display driver.
 
 `--sdl-render auto|opengl|surface` selects presentation independently of the
 SDL video driver. It also works as an argument line in `wolf3d.ini`.
+These SDL1 presentation/GL options are not SDL3 or GDI options: supplying them
+to another backend is an error, including through config files. Remove them
+when switching backends. `--help` remains available without validating these
+options so you can inspect the supported choices.
 
 - `auto` (default): Windows retains the DirectDraw/windib behavior above.
   Legacy Linux tries OpenGL, then software surfaces if GL initialization fails.
